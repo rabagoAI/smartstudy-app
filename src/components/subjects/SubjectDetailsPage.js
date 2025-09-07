@@ -6,10 +6,8 @@ import subjectsData from './subjectsData';
 import '../../App.css';
 
 function SubjectDetailsPage() {
-  // Obtener el nombre de la asignatura de la URL
   const { subjectName } = useParams();
 
-  // Buscar la asignatura correspondiente
   const subject = subjectsData.find(
     (subj) => subj.name.toLowerCase().replace(/ /g, '-') === subjectName
   );
@@ -34,7 +32,7 @@ function SubjectDetailsPage() {
           <div className="section-header">
             <h3><i className="fas fa-file-alt"></i> Apuntes</h3>
           </div>
-          {subject.content.apuntes.length > 0 ? (
+          {subject.content?.apuntes?.length > 0 ? (
             <ul>
               {subject.content.apuntes.map((note, index) => (
                 <li key={index}><a href={note.link}>{note.title}</a></li>
@@ -50,7 +48,7 @@ function SubjectDetailsPage() {
           <div className="section-header">
             <h3><i className="fas fa-pencil-alt"></i> Ejercicios Resueltos</h3>
           </div>
-          {subject.content.ejercicios.length > 0 ? (
+          {subject.content?.ejercicios?.length > 0 ? (
             <ul>
               {subject.content.ejercicios.map((exercise, index) => (
                 <li key={index}><a href={exercise.link}>{exercise.title}</a></li>
@@ -66,7 +64,7 @@ function SubjectDetailsPage() {
           <div className="section-header">
             <h3><i className="fas fa-book-reader"></i> Exámenes</h3>
           </div>
-          {subject.content.examenes.length > 0 ? (
+          {subject.content?.examenes?.length > 0 ? (
             <ul>
               {subject.content.examenes.map((exam, index) => (
                 <li key={index}><a href={exam.link}>{exam.title}</a></li>

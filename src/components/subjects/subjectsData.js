@@ -1,5 +1,3 @@
-// src/components/subjects/subjectsData.js
-
 const subjectsData = [
   {
     name: 'Matemáticas',
