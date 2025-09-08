@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import '../../App.css';
-import * as pdfjsLib from 'pdfjs-dist';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 
 // Variable global para la API de Gemini
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
@@ -13,10 +13,12 @@ function AIToolsPage() {
     const [pdfFile, setPdfFile] = useState(null);
     const [result, setResult] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [quizData, setQuizData] = useState(null);
+    const [showAnswers, setShowAnswers] = useState(false);
 
     useEffect(() => {
-        // Cargar el worker de forma segura desde la ruta local
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `/src/pdf-worker/pdf.worker.min.js`;
+        // Configurar el worker con la versión específica instalada
+        GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }, []);
 
     // Maneja la selección de herramienta, limpiando los estados
@@ -25,6 +27,8 @@ function AIToolsPage() {
         setText('');
         setPdfFile(null);
         setResult('');
+        setQuizData(null);
+        setShowAnswers(false);
     };
 
     // Maneja la selección de archivo PDF
@@ -34,9 +38,12 @@ function AIToolsPage() {
             setPdfFile(file);
             setText(''); // Limpiar texto manual si se sube un archivo
             setResult('');
+            setQuizData(null);
+            setShowAnswers(false);
         } else {
             setPdfFile(null);
-            e.target.value = null; // Resetear el campo de archivo
+            // Resetear el campo de archivo para permitir subir el mismo archivo de nuevo
+            e.target.value = null; 
             setResult('Por favor, sube un archivo PDF válido.');
         }
     };
@@ -48,19 +55,26 @@ function AIToolsPage() {
             reader.onload = async (event) => {
                 const arrayBuffer = event.target.result;
                 try {
-                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    const pdf = await getDocument({ data: arrayBuffer }).promise;
                     let fullText = '';
+                    
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
                         const textContent = await page.getTextContent();
-                        fullText += textContent.items.map(item => item.str).join(' ');
+                        const pageText = textContent.items.map(item => item.str).join(' ');
+                        fullText += pageText + '\n';
                     }
+                    
                     resolve(fullText);
                 } catch (error) {
+                    console.error('Error al procesar PDF:', error);
                     reject('Error al procesar el archivo PDF: ' + error.message);
                 }
             };
-            reader.onerror = (error) => reject('Error al leer el archivo: ' + error.message);
+            reader.onerror = (error) => {
+                console.error('Error al leer archivo:', error);
+                reject('Error al leer el archivo: ' + error.message);
+            };
             reader.readAsArrayBuffer(file);
         });
     };
@@ -74,38 +88,65 @@ function AIToolsPage() {
 
         setIsLoading(true);
         setResult('');
-
-        let content = inputText;
-        if (pdfFile) {
-            try {
-                content = await extractTextFromPdf(pdfFile);
-                if (content.length === 0) {
-                    setResult('El archivo PDF no contiene texto extraíble.');
-                    setIsLoading(false);
-                    return;
-                }
-            } catch (error) {
-                setResult(error);
-                setIsLoading(false);
-                return;
-            }
-        }
-        
-        let systemInstruction = "";
-        if (tool === 'resumen') {
-            systemInstruction = "Eres un asistente de estudio. Tu tarea es resumir el texto proporcionado por el usuario de manera concisa y clara, enfocándote en los puntos clave.";
-        } else if (tool === 'cuestionario') {
-            systemInstruction = "Eres un asistente de estudio. Tu tarea es generar un cuestionario de 5 preguntas de opción múltiple basadas en el texto proporcionado por el usuario. Cada pregunta debe tener 4 opciones y la respuesta correcta debe estar claramente marcada, por ejemplo, con (Respuesta Correcta).";
-        }
-
-        const payload = {
-            contents: [{ parts: [{ text: content }] }],
-            systemInstruction: { parts: [{ text: systemInstruction }] },
-        };
-        
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        setQuizData(null);
+        setShowAnswers(false);
 
         try {
+            let content = inputText;
+            
+            if (pdfFile) {
+                try {
+                    content = await extractTextFromPdf(pdfFile);
+                    if (!content || content.trim().length === 0) {
+                        setResult('El archivo PDF no contiene texto extraíble.');
+                        return;
+                    }
+                } catch (error) {
+                    setResult(error);
+                    return;
+                }
+            }
+            
+            let systemInstruction = "";
+            let generationConfig = {};
+
+            if (tool === 'resumen') {
+                systemInstruction = "Eres un asistente de estudio. Tu tarea es resumir el texto proporcionado por el usuario de manera concisa y clara, enfocándote en los puntos clave.";
+            } else if (tool === 'cuestionario') {
+                systemInstruction = "Eres un asistente de estudio. Tu tarea es generar un cuestionario de 5 preguntas de opción múltiple con la respuesta correcta. Asegúrate de que la respuesta correcta sea una de las opciones. Presenta el resultado como un objeto JSON con una propiedad `quiz` que es un array de objetos. Cada objeto de pregunta debe tener `question`, `options` (un array de strings) y `correctAnswer` (la respuesta correcta como string).";
+                generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "quiz": {
+                                "type": "ARRAY",
+                                "items": {
+                                    "type": "OBJECT",
+                                    "properties": {
+                                        "question": { "type": "STRING" },
+                                        "options": {
+                                            "type": "ARRAY",
+                                            "items": { "type": "STRING" }
+                                        },
+                                        "correctAnswer": { "type": "STRING" }
+                                    },
+                                    "propertyOrdering": ["question", "options", "correctAnswer"]
+                                }
+                            }
+                        }
+                    }
+                };
+            }
+
+            const payload = {
+                contents: [{ parts: [{ text: content }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                generationConfig
+            };
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -114,15 +155,23 @@ function AIToolsPage() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error.message || 'Error en la API');
+                throw new Error(errorData.error?.message || 'Error en la API');
             }
 
             const data = await response.json();
-            const generatedText = data.candidates[0]?.content?.parts[0]?.text || "No se pudo generar el resultado.";
-            setResult(generatedText);
+            const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            
+            if (tool === 'cuestionario' && generatedText) {
+                const parsedData = JSON.parse(generatedText);
+                setQuizData(parsedData.quiz);
+            } else {
+                setResult(generatedText || "No se pudo generar el resultado.");
+            }
+            
         } catch (error) {
             console.error('Error al generar contenido:', error);
             setResult('Hubo un error al procesar tu solicitud. Por favor, inténtalo de nuevo más tarde.');
+            setQuizData(null);
         } finally {
             setIsLoading(false);
         }
@@ -163,6 +212,7 @@ function AIToolsPage() {
                                 accept="application/pdf"
                                 onChange={handleFileChange}
                                 className="hidden-input"
+                                key={pdfFile ? pdfFile.name : 'empty'}
                             />
                         </div>
                         <p className="or-text">o pega el texto directamente:</p>
@@ -195,10 +245,39 @@ function AIToolsPage() {
                     </div>
                 )}
 
-                {result && (
+                {quizData && (
+                    <div className="result-container">
+                        <h3>Cuestionario</h3>
+                        {quizData.map((q, index) => (
+                            <div key={index} className="quiz-question">
+                                <h4>{index + 1}. {q.question}</h4>
+                                <ul>
+                                    {q.options.map((option, optIndex) => (
+                                        <li 
+                                            key={optIndex}
+                                            className={showAnswers && option === q.correctAnswer ? 'correct-answer' : ''}
+                                        >
+                                            {option}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+                        <button 
+                            className="btn btn-secondary" 
+                            onClick={() => setShowAnswers(!showAnswers)}
+                        >
+                            {showAnswers ? 'Ocultar Respuestas' : 'Mostrar Respuestas'}
+                        </button>
+                    </div>
+                )}
+
+                {result && tool !== 'cuestionario' && (
                     <div className="result-container">
                         <h3>Resultado</h3>
-                        <p className="result-text">{result}</p>
+                        <div className="result-text" style={{whiteSpace: 'pre-wrap'}}>
+                            {result}
+                        </div>
                     </div>
                 )}
             </div>
@@ -207,6 +286,12 @@ function AIToolsPage() {
 }
 
 export default AIToolsPage;
+
+
+
+
+
+
 
 
 

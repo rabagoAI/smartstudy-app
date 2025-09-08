@@ -1,32 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import '../../App.css';
+import './Header.css';
 
 function Header() {
-  return (
-    <header className="header">
-      <div className="container header-content">
-        <div className="logo">
-          {/* Usar Link en lugar de <a> para navegar en React Router */}
-          <Link to="/">
-            <i className="fas fa-graduation-cap"></i>
-            <span>SmartStudy</span>
-          </Link>
-        </div>
-        <nav>
-          <ul className="nav-links">
-            <li><Link to="/">Inicio</Link></li>
-            <li><Link to="/asignaturas">Asignaturas</Link></li>
-            <li><Link to="/herramientas-ia">Herramientas IA</Link></li>
-          </ul>
-        </nav>
-        <div className="auth-buttons">
-          <button className="btn btn-outline">Iniciar Sesión</button>
-          <button className="btn btn-primary">Registrarse</button>
-        </div>
-      </div>
-    </header>
-  );
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
+    return (
+        <header className="main-header">
+            <div className="header-content">
+                <div className="header-logo">
+                    {/* Se ha eliminado la imagen del logo y se ha reemplazado con texto */}
+                    <Link to="/" className="logo-text">SmartStudy</Link>
+                </div>
+                
+                <nav className={`header-nav ${isMenuOpen ? 'open' : ''}`}>
+                    <ul className="nav-links">
+                        <li><Link to="/">Inicio</Link></li>
+                        <li><Link to="/asignaturas">Asignaturas</Link></li>
+                        <li><Link to="/herramientas-ia">Herramientas IA</Link></li>
+                        {/* Puedes añadir más enlaces aquí si lo necesitas */}
+                    </ul>
+                </nav>
+                
+                <div className="header-actions">
+                    <button className="btn login-btn">Iniciar Sesión</button>
+                    <button className="btn register-btn">Registrarse</button>
+                </div>
+
+                <div className="menu-toggle" onClick={toggleMenu}>
+                    <i className="fas fa-bars"></i>
+                </div>
+            </div>
+        </header>
+    );
 }
 
 export default Header;
+

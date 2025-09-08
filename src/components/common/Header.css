@@ -1,0 +1,132 @@
+/* src/components/common/Header.css */
+
+.main-header {
+    background: linear-gradient(90deg, #4A148C 0%, #880E4F 100%);
+    color: #fff;
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header-logo .logo-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+    text-decoration: none;
+}
+
+.header-nav {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links li {
+    margin: 0 1.5rem;
+}
+
+.nav-links a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #ffcc00; /* Color de ejemplo para el hover */
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 9999px; /* Para esquinas muy redondeadas */
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.login-btn {
+    background-color: transparent;
+    color: #fff;
+    border: 2px solid #fff;
+}
+
+.login-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.register-btn {
+    background-color: #E91E63; /* Color rosa del ejemplo */
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+}
+
+.register-btn:hover {
+    background-color: #D81B60; /* Un rosa un poco más oscuro */
+    transform: scale(1.05);
+}
+
+.menu-toggle {
+    display: none; /* Oculto en desktop */
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* Media Queries para diseño responsive */
+@media (max-width: 768px) {
+    .header-nav {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        text-align: center;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: #4A148C;
+        padding: 1rem 0;
+    }
+
+    .header-nav.open {
+        display: flex;
+    }
+
+    .nav-links {
+        flex-direction: column;
+    }
+
+    .nav-links li {
+        margin: 1rem 0;
+    }
+
+    .header-actions {
+        display: none;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+}
