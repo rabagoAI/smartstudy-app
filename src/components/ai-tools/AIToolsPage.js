@@ -1,14 +1,11 @@
 // src/components/ai-tools/AIToolsPage.js
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../../App.css';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Variable global para la API de Gemini
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-
-// Asegurarse de que el worker de PDF.js esté configurado
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 function AIToolsPage() {
     const [tool, setTool] = useState(null);
@@ -16,6 +13,11 @@ function AIToolsPage() {
     const [pdfFile, setPdfFile] = useState(null);
     const [result, setResult] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        // Cargar el worker de forma segura desde la ruta local
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `/src/pdf-worker/pdf.worker.min.js`;
+    }, []);
 
     // Maneja la selección de herramienta, limpiando los estados
     const handleSelectTool = (selectedTool) => {
@@ -205,5 +207,6 @@ function AIToolsPage() {
 }
 
 export default AIToolsPage;
+
 
 
