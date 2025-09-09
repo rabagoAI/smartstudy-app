@@ -1,9 +1,8 @@
-// LoginPage.js (Versión Corregida y Optimizada)
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../auth/Auth.css';
-import { auth } from '../../firebase'; // ✅ Importa la instancia ya configurada
-import { signInWithEmailAndPassword } from 'firebase/auth'; // ✅ Solo importa la función necesaria
+import { auth } from '../../firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 function LoginPage() {
     const [email, setEmail] = useState('');
@@ -20,7 +19,7 @@ function LoginPage() {
         try {
             await signInWithEmailAndPassword(auth, email, password);
             setSuccess('¡Inicio de sesión exitoso!');
-            navigate('/'); // Redirige a la página principal o dashboard
+            navigate('/');
         } catch (error) {
             console.error("Error al iniciar sesión:", error.message);
             setError('Error al iniciar sesión. Por favor, revisa tu email y contraseña.');
