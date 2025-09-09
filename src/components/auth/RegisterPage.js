@@ -1,45 +1,80 @@
-// En tu componente de registro (ej. src/pages/Register.js)
+// src/components/auth/RegisterPage.js
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore'; // Importa las funciones de Firestore
+import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
+import { Link, useNavigate } from 'react-router-dom';
+import './Auth.css'; // Asegúrate de que esta ruta sea correcta
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setError(''); 
 
     try {
-      // Paso 1: Crea el usuario en Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Paso 2: Crea el documento de perfil del usuario en Firestore
-      // Usamos el UID de Authentication como el ID del documento
       await setDoc(doc(db, "users", user.uid), {
         email: user.email,
-        // Aquí puedes añadir más información del usuario
         createdAt: new Date(),
-        // Ejemplo: nombre: "Usuario Ejemplo"
       });
 
-      console.log("¡Usuario registrado y perfil creado con éxito!");
+      navigate('/'); 
 
     } catch (error) {
       console.error("Error al registrar:", error.message);
-      // Aquí puedes manejar y mostrar el error al usuario
+      if (error.code === 'auth/weak-password') {
+        setError('La contraseña debe tener al menos 6 caracteres.');
+      } else if (error.code === 'auth/email-already-in-use') {
+        setError('Este correo electrónico ya está registrado.');
+      } else {
+        setError('Error al registrar. Por favor, revisa tus datos e inténtalo más tarde.');
+      }
     }
   };
 
   return (
-    // ... tu formulario de registro
-    <form onSubmit={handleRegister}>
-      {/* ... tus campos de email y contraseña */}
-      <button type="submit">Registrarse</button>
-    </form>
+    <div className="auth-form-container">
+      <div className="auth-form-card">
+        <h2>Registrarse</h2>
+        <form onSubmit={handleRegister}>
+          {error && <p className="error-message">{error}</p>}
+
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="password">Contraseña</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          
+          <button type="submit" className="btn-primary">Registrarse</button> 
+        </form>
+        <p className="auth-footer">
+          ¿Ya tienes una cuenta? <Link to="/iniciar-sesion">Iniciar Sesión</Link>
+        </p>
+      </div>
+    </div>
   );
 };
 
