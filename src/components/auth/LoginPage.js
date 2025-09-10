@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../firebase'; // Solo necesitamos 'auth'
+import { auth } from '../../firebase';
 import { Link, useNavigate } from 'react-router-dom';
-import './Auth.css'; // Asegúrate de que esta ruta sea correcta
+import './Auth.css';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -62,6 +62,8 @@ const LoginPage = () => {
         </form>
         <p className="auth-footer">
           ¿No tienes una cuenta? <Link to="/registrarse">Regístrate</Link>
+          <br/>
+          <Link to="/restablecer-contrasena">¿Olvidaste tu contraseña?</Link>
         </p>
       </div>
     </div>
