@@ -34,7 +34,7 @@ const UploadForm = () => {
       // 1. Subir el archivo a Cloudinary con el recurso correcto
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', 'smart_study_upload');
+      formData.append('upload_preset', 'unsigned_pdfs');
 
       // Detectar tipo de archivo
       let resourceType = 'raw'; // por defecto

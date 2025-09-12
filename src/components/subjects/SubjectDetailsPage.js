@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../../firebase'; // Asegúrate de que esta ruta sea correcta
 import { collection, query, getDocs, orderBy } from 'firebase/firestore';
+import '../../App.css'; // Asegúrate de importar tu archivo CSS
 
 const SubjectDetailsPage = () => {
   const { subjectName } = useParams();
@@ -15,13 +16,12 @@ const SubjectDetailsPage = () => {
     const fetchContent = async () => {
       try {
         setLoading(true);
-        // Creamos una consulta a la subcolección 'content' de la asignatura
         const q = query(
           collection(db, 'subjects', subjectName.toLowerCase(), 'content'),
-          orderBy('createdAt', 'asc') // Ordena por fecha de creación
+          orderBy('createdAt', 'asc')
         );
         
-        const querySnapshot = await getDocs(q); // Traemos los documentos
+        const querySnapshot = await getDocs(q);
         const contentList = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
@@ -48,40 +48,48 @@ const SubjectDetailsPage = () => {
   }
 
   return (
-    <div className="subject-details-container">
-      <h2>{subjectName.charAt(0).toUpperCase() + subjectName.slice(1)}</h2>
-      
-      {content.length > 0 ? (
-        <div className="content-list">
-          {content.map((item, index) => (
-            <div key={item.id} className="content-item">
+    <div className="subject-details">
+      <div className="container">
+        <h2 className="section-title">{subjectName.charAt(0).toUpperCase() + subjectName.slice(1)}</h2>
+        
+        {content.length > 0 ? (
+          content.map((item, index) => (
+            <div key={item.id} className="content-section">
               <h3>{item.title}</h3>
               <p>{item.description}</p>
               
-              {/* Mostrar el contenido */}
+              {/* Contenedor del video con la clase "video-container" */}
+              {item.type === 'video' && (
+                <div className="video-container">
+                  <iframe
+                    width="560"
+                    height="315"
+                    src={item.url}
+                    title={item.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+              )}
+              
+              {/* El enlace del PDF con la clase "pdf-button" */}
               {item.type === 'pdf' && (
-                <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ color: 'blue' }}>
+                <a 
+                  href={item.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="pdf-button"
+                >
                   Ver resumen en PDF
                 </a>
               )}
-              
-              {item.type === 'video' && (
-                <iframe
-                  width="560"
-                  height="315"
-                  src={item.url}
-                  title={item.title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
-              )}
             </div>
-          ))}
-        </div>
-      ) : (
-        <p>No hay contenido disponible para esta asignatura todavía.</p>
-      )}
+          ))
+        ) : (
+          <p className="no-content-message">No hay contenido disponible para esta asignatura todavía.</p>
+        )}
+      </div>
     </div>
   );
 };
