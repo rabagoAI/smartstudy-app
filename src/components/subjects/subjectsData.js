@@ -1,12 +1,12 @@
 const subjectsData = [
   {
-    name: 'Matemáticas',
+    name: 'Matematicas',
     icon: 'fas fa-calculator',
     description: 'Apuntes, ejercicios y exámenes de matemáticas para 1º de la ESO.',
     color: 'maths'
   },
   {
-    name: 'Ciencias Naturales',
+    name: 'Biologia',
     icon: 'fas fa-flask',
     description: 'Recursos para biología, geología y mucho más.',
     color: 'science'
@@ -24,13 +24,13 @@ const subjectsData = [
     color: 'social'
   },
   {
-    name: 'Inglés',
+    name: 'Ingles',
     icon: 'fas fa-language',
     description: 'Vocabulario, gramática, ejercicios y recursos audiovisuales.',
     color: 'english'
   },
   {
-    name: 'Tecnología',
+    name: 'Tecnologia',
     icon: 'fas fa-laptop-code',
     description: 'Introducción a la programación, robótica y herramientas digitales.',
     color: 'tech'

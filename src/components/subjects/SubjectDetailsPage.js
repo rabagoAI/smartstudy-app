@@ -1,82 +1,89 @@
 // src/components/subjects/SubjectDetailsPage.js
 
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import subjectsData from './subjectsData';
-import '../../App.css';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { db } from '../../firebase'; // Asegúrate de que esta ruta sea correcta
+import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 
-function SubjectDetailsPage() {
+const SubjectDetailsPage = () => {
   const { subjectName } = useParams();
+  const [content, setContent] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const subject = subjectsData.find(
-    (subj) => subj.name.toLowerCase().replace(/ /g, '-') === subjectName
-  );
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        setLoading(true);
+        // Creamos una consulta a la subcolección 'content' de la asignatura
+        const q = query(
+          collection(db, 'subjects', subjectName.toLowerCase(), 'content'),
+          orderBy('createdAt', 'asc') // Ordena por fecha de creación
+        );
+        
+        const querySnapshot = await getDocs(q); // Traemos los documentos
+        const contentList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
 
-  if (!subject) {
-    return (
-      <div className="container" style={{ textAlign: 'center', marginTop: '50px', padding: '20px', borderRadius: '10px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
-        <h2>Asignatura no encontrada</h2>
-        <p>Parece que la asignatura que buscas no está disponible.</p>
-        <Link to="/asignaturas" className="btn btn-primary" style={{ marginTop: '20px' }}>Volver a asignaturas</Link>
-      </div>
-    );
+        setContent(contentList);
+      } catch (err) {
+        console.error("Error al obtener el contenido de la asignatura:", err);
+        setError("No se pudo cargar el contenido. Por favor, inténtalo de nuevo más tarde.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, [subjectName]);
+
+  if (loading) {
+    return <div>Cargando contenido...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
   }
 
   return (
-    <section className="subject-details">
-      <div className="container">
-        <h2 className="section-title" style={{ color: 'var(--primary)', borderBottom: `2px solid var(--primary)` }}>{subject.name}</h2>
-        
-        {/* Sección de Apuntes */}
-        <div className="content-section">
-          <div className="section-header">
-            <h3><i className="fas fa-file-alt"></i> Apuntes</h3>
-          </div>
-          {subject.content?.apuntes?.length > 0 ? (
-            <ul>
-              {subject.content.apuntes.map((note, index) => (
-                <li key={index}><a href={note.link}>{note.title}</a></li>
-              ))}
-            </ul>
-          ) : (
-            <p className="no-content-message">Pronto tendremos apuntes de esta asignatura. ¡Vuelve pronto!</p>
-          )}
+    <div className="subject-details-container">
+      <h2>{subjectName.charAt(0).toUpperCase() + subjectName.slice(1)}</h2>
+      
+      {content.length > 0 ? (
+        <div className="content-list">
+          {content.map((item, index) => (
+            <div key={item.id} className="content-item">
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+              
+              {/* Mostrar el contenido */}
+              {item.type === 'pdf' && (
+                <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ color: 'blue' }}>
+                  Ver resumen en PDF
+                </a>
+              )}
+              
+              {item.type === 'video' && (
+                <iframe
+                  width="560"
+                  height="315"
+                  src={item.url}
+                  title={item.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              )}
+            </div>
+          ))}
         </div>
-
-        {/* Sección de Ejercicios */}
-        <div className="content-section">
-          <div className="section-header">
-            <h3><i className="fas fa-pencil-alt"></i> Ejercicios Resueltos</h3>
-          </div>
-          {subject.content?.ejercicios?.length > 0 ? (
-            <ul>
-              {subject.content.ejercicios.map((exercise, index) => (
-                <li key={index}><a href={exercise.link}>{exercise.title}</a></li>
-              ))}
-            </ul>
-          ) : (
-            <p className="no-content-message">Aún no hay ejercicios disponibles para esta asignatura.</p>
-          )}
-        </div>
-
-        {/* Sección de Exámenes */}
-        <div className="content-section">
-          <div className="section-header">
-            <h3><i className="fas fa-book-reader"></i> Exámenes</h3>
-          </div>
-          {subject.content?.examenes?.length > 0 ? (
-            <ul>
-              {subject.content.examenes.map((exam, index) => (
-                <li key={index}><a href={exam.link}>{exam.title}</a></li>
-              ))}
-            </ul>
-          ) : (
-            <p className="no-content-message">Aún no hay exámenes disponibles para esta asignatura.</p>
-          )}
-        </div>
-      </div>
-    </section>
+      ) : (
+        <p>No hay contenido disponible para esta asignatura todavía.</p>
+      )}
+    </div>
   );
-}
+};
 
 export default SubjectDetailsPage;

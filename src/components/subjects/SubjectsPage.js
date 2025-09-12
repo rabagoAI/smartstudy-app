@@ -1,9 +1,10 @@
 // src/components/subjects/SubjectsPage.js
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import SubjectCard from './SubjectCard';
 import subjectsData from './subjectsData';
-import '../../App.css'; // Asegúrate de que la ruta sea correcta
+import '../../App.css';
 
 function SubjectsPage() {
   return (
@@ -12,7 +13,12 @@ function SubjectsPage() {
         <h2 className="section-title">Asignaturas de 1º de la ESO</h2>
         <div className="subjects-grid">
           {subjectsData.map((subject, index) => (
-            <SubjectCard key={index} subject={subject} />
+            <Link
+              key={index}
+              to={`/asignaturas/${subject.name.toLowerCase().replace(/ /g, '-')}`}
+            >
+              <SubjectCard subject={subject} />
+            </Link>
           ))}
         </div>
       </div>

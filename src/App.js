@@ -13,6 +13,7 @@ import LoginPage from './components/auth/LoginPage';
 import RegisterPage from './components/auth/RegisterPage';
 import ProfilePage from './components/ProfilePage';
 import ResetPassword from './components/auth/ResetPassword';
+import UploadForm from './components/admin/UploadForm'; // <--- Importa el nuevo componente
 
 import './App.css';
 
@@ -42,10 +43,12 @@ function AppContent() {
             <Route path="/registrarse" element={<RegisterPage />} />
             <Route path="/restablecer-contrasena" element={<ResetPassword />} />
 
+            {/* Rutas protegidas */}
             <Route path="/perfil" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
             <Route path="/asignaturas" element={<PrivateRoute><SubjectsPage /></PrivateRoute>} />
             <Route path="/asignaturas/:subjectName" element={<PrivateRoute><SubjectDetailsPage /></PrivateRoute>} />
             <Route path="/herramientas-ia" element={<PrivateRoute><AIToolsPage /></PrivateRoute>} />
+            <Route path="/admin/upload" element={<PrivateRoute><UploadForm /></PrivateRoute>} /> {/* <--- Nueva ruta */}
           </Routes>
         </main>
         <Footer />
