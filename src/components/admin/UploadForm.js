@@ -1,9 +1,9 @@
 // src/components/admin/UploadForm.js
 
 import React, { useState } from 'react';
-import { db } from '../../firebase'; // Solo necesitamos 'db'
+import { db } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import axios from 'axios'; // Importamos axios para las peticiones HTTP
+import axios from 'axios';
 
 const UploadForm = () => {
   const [file, setFile] = useState(null);
@@ -31,13 +31,23 @@ const UploadForm = () => {
     }
 
     try {
-      // 1. Subir el archivo a Cloudinary
+      // 1. Subir el archivo a Cloudinary con el recurso correcto
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', 'smart_study_upload'); // Usamos tu preset
+      formData.append('upload_preset', 'smart_study_upload');
+
+      // Detectar tipo de archivo
+      let resourceType = 'raw'; // por defecto
+      if (file.type.startsWith('video/')) {
+        resourceType = 'video';
+      } else if (file.type === 'application/pdf') {
+        resourceType = 'raw';
+      } else if (file.type.startsWith('image/')) {
+        resourceType = 'image';
+      }
 
       const cloudinaryResponse = await axios.post(
-        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/upload`,
+        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
         formData
       );
 
@@ -48,7 +58,7 @@ const UploadForm = () => {
         title: title,
         description: description,
         type: file.type.startsWith('video/') ? 'video' : 'pdf',
-        url: downloadURL, // <-- Aquí se guarda la URL de Cloudinary
+        url: downloadURL,
         isPremium: isPremium,
         createdAt: serverTimestamp(),
       });

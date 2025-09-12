@@ -5,7 +5,7 @@ function Footer() {
     <footer className="footer">
       <div className="container footer-content">
         <div className="footer-column">
-          <h3>StudyPal</h3>
+          <h3>SmartStudy</h3>
           <p>La plataforma de apoyo educativo con tecnología de IA.</p>
         </div>
         {/* Aquí irán más columnas del footer */}
