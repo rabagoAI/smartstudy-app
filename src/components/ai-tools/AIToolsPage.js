@@ -9,7 +9,7 @@ const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
 function AIToolsPage() {
     const [tool, setTool] = useState(null);
     const [text, setText] = useState('');
-    const [pdfFile, setPdfFile] = useState(null); // ✅ Estado compartido para el PDF
+    const [pdfFile, setPdfFile] = useState(null);
     const [result, setResult] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [quizData, setQuizData] = useState(null);
@@ -55,47 +55,47 @@ function AIToolsPage() {
     };
 
     const extractTextFromPdf = async (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
 
-    reader.onload = async (event) => {
-      try {
-        const arrayBuffer = event.target.result;
+            reader.onload = async (event) => {
+                try {
+                    const arrayBuffer = event.target.result;
 
-        if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-          reject('Error: El archivo PDF está vacío o corrupto.');
-          return;
-        }
+                    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+                        reject('Error: El archivo PDF está vacío o corrupto.');
+                        return;
+                    }
 
-        const pdf = await getDocument({ data: arrayBuffer }).promise;
-        let fullText = '';
-        
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items.map(item => item.str).join(' ');
-          fullText += pageText + '\n';
-        }
-        
-        if (!fullText.trim()) {
-          reject('Error: El PDF no contiene texto extraíble.');
-          return;
-        }
+                    const pdf = await getDocument({ data: arrayBuffer }).promise;
+                    let fullText = '';
+                    
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(' ');
+                        fullText += pageText + '\n';
+                    }
+                    
+                    if (!fullText.trim()) {
+                        reject('Error: El PDF no contiene texto extraíble.');
+                        return;
+                    }
 
-        resolve(fullText);
-      } catch (error) {
-        console.error('Error detallado al procesar PDF:', error);
-        reject('Error al procesar el archivo PDF: ' + (error.message || 'Error desconocido'));
-      }
+                    resolve(fullText);
+                } catch (error) {
+                    console.error('Error detallado al procesar PDF:', error);
+                    reject('Error al procesar el archivo PDF: ' + (error.message || 'Error desconocido'));
+                }
+            };
+
+            reader.onerror = () => {
+                reject('Error al leer el archivo: ' + reader.error);
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
     };
-
-    reader.onerror = () => {
-      reject('Error al leer el archivo: ' + reader.error);
-    };
-
-    reader.readAsArrayBuffer(file);
-  });
-};
 
     // ✅ Función para copiar texto al portapapeles
     const copyToClipboard = async (textToCopy) => {
@@ -156,6 +156,8 @@ function AIToolsPage() {
                 generationConfig = {
                     responseMimeType: "application/json"
                 };
+            } else if (tool === 'explicar') {
+                systemInstruction = "Eres un profesor de ESO que explica conceptos en español de forma clara, sencilla y amigable. Usa ejemplos cotidianos, analogías o pasos si es necesario. La explicación debe ser fácil de entender para un estudiante de 12-14 años. No uses jerga técnica sin explicarla. Si el usuario pregunta sobre un concepto, responde con una explicación estructurada, con título, desarrollo y ejemplo práctico.";
             }
 
             const payload = {
@@ -206,7 +208,7 @@ function AIToolsPage() {
         <section className="ai-tools">
             <div className="container">
                 <h2 className="section-title">Herramientas de Inteligencia Artificial</h2>
-                <p className="subtitle">Potencia tus estudios con IA: resume textos y genera cuestionarios de forma instantánea.</p>
+                <p className="subtitle">Potencia tus estudios con IA: resume textos, genera cuestionarios o explica conceptos.</p>
 
                 <div className="tool-selection">
                     <button
@@ -222,6 +224,13 @@ function AIToolsPage() {
                     >
                         <h3><i className="fas fa-question-circle"></i> Genera un Cuestionario</h3>
                         <p>Crea preguntas de estudio con 4 opciones cada una.</p>
+                    </button>
+                    <button
+                        className={`tool-card ${tool === 'explicar' ? 'active' : ''}`}
+                        onClick={() => handleSelectTool('explicar')}
+                    >
+                        <h3><i className="fas fa-lightbulb"></i> Explica un Concepto</h3>
+                        <p>Pregunta cualquier duda y recibe una explicación sencilla.</p>
                     </button>
                 </div>
 
@@ -255,11 +264,11 @@ function AIToolsPage() {
                             />
                         </div>
 
-                        <p className="or-text">o pega el texto directamente:</p>
+                        <p className="or-text">o escribe tu pregunta/concepto:</p>
                         <textarea
                             className="tool-textarea"
                             rows="8"
-                            placeholder="Pega aquí el texto que quieres que la IA procese..."
+                            placeholder="Ej: ¿Qué es la fotosíntesis? o Explica el teorema de Pitágoras..."
                             value={text}
                             onChange={(e) => {
                                 setText(e.target.value);
@@ -289,7 +298,7 @@ function AIToolsPage() {
                     <div className="generating-message">
                         <div className="spinner-large"></div>
                         <p>Estamos procesando tu contenido con IA. Esto puede tardar unos segundos...</p>
-                        <p className="tip">💡 Consejo: Mientras esperas, puedes preparar tu siguiente texto o PDF.</p>
+                        <p className="tip">💡 Consejo: Mientras esperas, puedes preparar tu siguiente pregunta.</p>
                     </div>
                 )}
 
@@ -347,7 +356,7 @@ function AIToolsPage() {
                     </div>
                 )}
 
-                {result && tool !== 'cuestionario' && (
+                {result && tool === 'resumen' && (
                     <div className="result-container">
                         <div className="result-header">
                             <h3><i className="fas fa-file-alt"></i> Resultado de la IA</h3>
@@ -361,6 +370,35 @@ function AIToolsPage() {
                                 <button 
                                     className="btn btn-outline download-btn"
                                     onClick={() => downloadText(result, 'resumen.txt')}
+                                >
+                                    <i className="fas fa-download"></i> Descargar
+                                </button>
+                            </div>
+                        </div>
+                        <div className="result-text">
+                            {result.split('\n').map((line, index) => (
+                                <p key={index} className={line.startsWith('-') ? 'bullet-point' : ''}>
+                                    {line}
+                                </p>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {result && tool === 'explicar' && (
+                    <div className="result-container">
+                        <div className="result-header">
+                            <h3><i className="fas fa-lightbulb"></i> Explicación</h3>
+                            <div className="result-actions">
+                                <button 
+                                    className="btn btn-outline copy-btn"
+                                    onClick={() => copyToClipboard(result)}
+                                >
+                                    <i className="fas fa-copy"></i> Copiar
+                                </button>
+                                <button 
+                                    className="btn btn-outline download-btn"
+                                    onClick={() => downloadText(result, 'explicacion.txt')}
                                 >
                                     <i className="fas fa-download"></i> Descargar
                                 </button>
