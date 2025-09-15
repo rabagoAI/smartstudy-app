@@ -1,10 +1,9 @@
 // src/components/ai-tools/AIToolsPage.js
 
 import React, { useState, useEffect } from 'react';
-import '../../App.css';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+import './AIToolsPage.css'; // Añadiremos estilos personalizados
 
-// Variable global para la API de Gemini
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
 
 function AIToolsPage() {
@@ -17,11 +16,9 @@ function AIToolsPage() {
     const [showAnswers, setShowAnswers] = useState(false);
 
     useEffect(() => {
-        // Configurar el worker con la versión específica instalada
         GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }, []);
 
-    // Maneja la selección de herramienta, limpiando los estados
     const handleSelectTool = (selectedTool) => {
         setTool(selectedTool);
         setText('');
@@ -31,50 +28,41 @@ function AIToolsPage() {
         setShowAnswers(false);
     };
 
-    // Maneja la selección de archivo PDF
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file && file.type === 'application/pdf') {
             setPdfFile(file);
-            setText(''); // Limpiar texto manual si se sube un archivo
+            setText('');
             setResult('');
             setQuizData(null);
             setShowAnswers(false);
         } else {
             setPdfFile(null);
-            // Resetear el campo de archivo para permitir subir el mismo archivo de nuevo
-            e.target.value = null; 
+            e.target.value = null;
             setResult('Por favor, sube un archivo PDF válido.');
         }
     };
 
-    // Función para extraer texto de un archivo PDF
     const extractTextFromPdf = async (file) => {
-        const reader = new FileReader();
         return new Promise((resolve, reject) => {
+            const reader = new FileReader();
             reader.onload = async (event) => {
-                const arrayBuffer = event.target.result;
                 try {
+                    const arrayBuffer = event.target.result;
                     const pdf = await getDocument({ data: arrayBuffer }).promise;
                     let fullText = '';
-                    
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
                         const textContent = await page.getTextContent();
                         const pageText = textContent.items.map(item => item.str).join(' ');
                         fullText += pageText + '\n';
                     }
-                    
                     resolve(fullText);
                 } catch (error) {
-                    console.error('Error al procesar PDF:', error);
-                    reject('Error al procesar el archivo PDF: ' + error.message);
+                    reject('Error al procesar el PDF: ' + error.message);
                 }
             };
-            reader.onerror = (error) => {
-                console.error('Error al leer archivo:', error);
-                reject('Error al leer el archivo: ' + error.message);
-            };
+            reader.onerror = () => reject('Error al leer el archivo');
             reader.readAsArrayBuffer(file);
         });
     };
@@ -93,7 +81,6 @@ function AIToolsPage() {
 
         try {
             let content = inputText;
-            
             if (pdfFile) {
                 try {
                     content = await extractTextFromPdf(pdfFile);
@@ -106,36 +93,16 @@ function AIToolsPage() {
                     return;
                 }
             }
-            
+
             let systemInstruction = "";
             let generationConfig = {};
 
             if (tool === 'resumen') {
-                systemInstruction = "Eres un asistente de estudio. Tu tarea es resumir el texto proporcionado por el usuario de manera concisa y clara, enfocándote en los puntos clave.";
+                systemInstruction = "Eres un asistente de estudio experto. Resume el texto proporcionado de manera clara, estructurada y concisa. Usa viñetas, títulos y subtítulos cuando sea apropiado. El resumen debe ser fácil de entender para estudiantes de ESO.";
             } else if (tool === 'cuestionario') {
-                systemInstruction = "Eres un asistente de estudio. Tu tarea es generar un cuestionario de 5 preguntas de opción múltiple con la respuesta correcta. Asegúrate de que la respuesta correcta sea una de las opciones. Presenta el resultado como un objeto JSON con una propiedad `quiz` que es un array de objetos. Cada objeto de pregunta debe tener `question`, `options` (un array de strings) y `correctAnswer` (la respuesta correcta como string).";
+                systemInstruction = "Eres un profesor de ESO. Genera un cuestionario de 5 preguntas de opción múltiple. Cada pregunta debe tener 4 opciones, solo una correcta. Mezcla el orden de las opciones. Presenta el resultado como un objeto JSON con una propiedad `quiz` que es un array de objetos. Cada objeto debe tener: `question` (string), `options` (array de 4 strings), `correctAnswer` (string exacto de la opción correcta).";
                 generationConfig = {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            "quiz": {
-                                "type": "ARRAY",
-                                "items": {
-                                    "type": "OBJECT",
-                                    "properties": {
-                                        "question": { "type": "STRING" },
-                                        "options": {
-                                            "type": "ARRAY",
-                                            "items": { "type": "STRING" }
-                                        },
-                                        "correctAnswer": { "type": "STRING" }
-                                    },
-                                    "propertyOrdering": ["question", "options", "correctAnswer"]
-                                }
-                            }
-                        }
-                    }
+                    responseMimeType: "application/json"
                 };
             }
 
@@ -144,10 +111,8 @@ function AIToolsPage() {
                 systemInstruction: { parts: [{ text: systemInstruction }] },
                 generationConfig
             };
-            
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
-            const response = await fetch(apiUrl, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -160,18 +125,26 @@ function AIToolsPage() {
 
             const data = await response.json();
             const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            
+
             if (tool === 'cuestionario' && generatedText) {
-                const parsedData = JSON.parse(generatedText);
-                setQuizData(parsedData.quiz);
+                try {
+                    const parsedData = JSON.parse(generatedText);
+                    if (Array.isArray(parsedData.quiz)) {
+                        setQuizData(parsedData.quiz);
+                    } else {
+                        throw new Error('Formato de cuestionario inválido');
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing JSON:', parseError);
+                    setResult('Error al generar el cuestionario. Por favor, inténtalo de nuevo.');
+                }
             } else {
                 setResult(generatedText || "No se pudo generar el resultado.");
             }
-            
+
         } catch (error) {
             console.error('Error al generar contenido:', error);
             setResult('Hubo un error al procesar tu solicitud. Por favor, inténtalo de nuevo más tarde.');
-            setQuizData(null);
         } finally {
             setIsLoading(false);
         }
@@ -189,22 +162,40 @@ function AIToolsPage() {
                         onClick={() => handleSelectTool('resumen')}
                     >
                         <h3><i className="fas fa-file-alt"></i> Crea un Resumen</h3>
-                        <p>Convierte textos largos en resúmenes claros.</p>
+                        <p>Convierte textos largos en resúmenes claros y estructurados.</p>
                     </button>
                     <button
                         className={`tool-card ${tool === 'cuestionario' ? 'active' : ''}`}
                         onClick={() => handleSelectTool('cuestionario')}
                     >
                         <h3><i className="fas fa-question-circle"></i> Genera un Cuestionario</h3>
-                        <p>Crea preguntas de estudio basadas en tus apuntes.</p>
+                        <p>Crea preguntas de estudio con 4 opciones cada una.</p>
                     </button>
                 </div>
 
                 {tool && (
                     <div className="tool-interface">
+                        <div className="file-preview">
+                            {pdfFile && (
+                                <div className="file-info">
+                                    <i className="fas fa-file-pdf"></i>
+                                    <span>{pdfFile.name}</span>
+                                    <button 
+                                        className="remove-file" 
+                                        onClick={() => {
+                                            setPdfFile(null);
+                                            document.getElementById('pdf-upload').value = null;
+                                        }}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="file-input-container">
                             <label htmlFor="pdf-upload" className="file-label">
-                                {pdfFile ? `Archivo seleccionado: ${pdfFile.name}` : 'Sube un archivo PDF'}
+                                {pdfFile ? 'Cambiar archivo PDF' : 'Sube un archivo PDF'}
                             </label>
                             <input
                                 id="pdf-upload"
@@ -212,51 +203,59 @@ function AIToolsPage() {
                                 accept="application/pdf"
                                 onChange={handleFileChange}
                                 className="hidden-input"
-                                key={pdfFile ? pdfFile.name : 'empty'}
                             />
                         </div>
+
                         <p className="or-text">o pega el texto directamente:</p>
                         <textarea
                             className="tool-textarea"
-                            rows="10"
+                            rows="8"
                             placeholder="Pega aquí el texto que quieres que la IA procese..."
                             value={text}
                             onChange={(e) => {
                                 setText(e.target.value);
-                                setPdfFile(null); // Limpiar archivo si se empieza a escribir
+                                setPdfFile(null);
                                 document.getElementById('pdf-upload').value = null;
                             }}
                             disabled={!!pdfFile}
                         ></textarea>
+
                         <button
                             className="btn btn-primary generate-btn"
                             onClick={handleGenerate}
                             disabled={isLoading || (!text.trim() && !pdfFile)}
                         >
-                            {isLoading ? 'Generando...' : 'Generar'}
+                            {isLoading ? (
+                                <span className="loading-text">
+                                    <span className="spinner"></span>
+                                    Generando con IA...
+                                </span>
+                            ) : 'Generar Contenido'}
                         </button>
                     </div>
                 )}
 
                 {isLoading && (
-                    <div className="loading-container">
-                        <div className="spinner"></div>
-                        <p>Procesando con IA. Esto puede tardar unos segundos...</p>
+                    <div className="generating-message">
+                        <div className="spinner-large"></div>
+                        <p>Estamos procesando tu contenido con IA. Esto puede tardar unos segundos...</p>
+                        <p className="tip">💡 Consejo: Mientras esperas, puedes preparar tu siguiente texto o PDF.</p>
                     </div>
                 )}
 
                 {quizData && (
-                    <div className="result-container">
-                        <h3>Cuestionario</h3>
+                    <div className="result-container quiz-result">
+                        <h3><i className="fas fa-graduation-cap"></i> Tu Cuestionario de Estudio</h3>
                         {quizData.map((q, index) => (
                             <div key={index} className="quiz-question">
                                 <h4>{index + 1}. {q.question}</h4>
-                                <ul>
+                                <ul className="options-list">
                                     {q.options.map((option, optIndex) => (
                                         <li 
                                             key={optIndex}
-                                            className={showAnswers && option === q.correctAnswer ? 'correct-answer' : ''}
+                                            className={`option-item ${showAnswers && option === q.correctAnswer ? 'correct' : ''}`}
                                         >
+                                            <span className="option-letter">{String.fromCharCode(65 + optIndex)}.</span>
                                             {option}
                                         </li>
                                     ))}
@@ -264,7 +263,7 @@ function AIToolsPage() {
                             </div>
                         ))}
                         <button 
-                            className="btn btn-secondary" 
+                            className="btn btn-secondary toggle-answers"
                             onClick={() => setShowAnswers(!showAnswers)}
                         >
                             {showAnswers ? 'Ocultar Respuestas' : 'Mostrar Respuestas'}
@@ -274,9 +273,13 @@ function AIToolsPage() {
 
                 {result && tool !== 'cuestionario' && (
                     <div className="result-container">
-                        <h3>Resultado</h3>
-                        <div className="result-text" style={{whiteSpace: 'pre-wrap'}}>
-                            {result}
+                        <h3><i className="fas fa-file-alt"></i> Resultado de la IA</h3>
+                        <div className="result-text">
+                            {result.split('\n').map((line, index) => (
+                                <p key={index} className={line.startsWith('-') ? 'bullet-point' : ''}>
+                                    {line}
+                                </p>
+                            ))}
                         </div>
                     </div>
                 )}
@@ -286,12 +289,3 @@ function AIToolsPage() {
 }
 
 export default AIToolsPage;
-
-
-
-
-
-
-
-
-

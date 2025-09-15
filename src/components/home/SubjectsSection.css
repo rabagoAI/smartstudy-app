@@ -1,0 +1,82 @@
+.section-subtitle {
+  text-align: center;
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin-bottom: 50px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.subject-card-link {
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.3s ease;
+  display: block;
+}
+
+.subject-card-link:hover {
+  transform: translateY(-10px);
+}
+
+.subject-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.subject-card:hover {
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.subject-icon {
+  height: 140px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3.5rem;
+  color: white;
+  transition: transform 0.3s ease;
+}
+
+.subject-card:hover .subject-icon {
+  transform: scale(1.1);
+}
+
+.subject-content {
+  padding: 25px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.subject-content h3 {
+  margin-bottom: 15px;
+  color: var(--dark);
+  font-size: 1.3rem;
+  transition: color 0.3s ease;
+}
+
+.subject-card-link:hover .subject-content h3 {
+  color: var(--primary);
+}
+
+.subject-content p {
+  color: #6c757d;
+  margin-bottom: 0;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}

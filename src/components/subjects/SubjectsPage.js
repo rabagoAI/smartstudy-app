@@ -15,7 +15,7 @@ function SubjectsPage() {
           {subjectsData.map((subject, index) => (
             <Link
               key={index}
-              to={`/asignaturas/${subject.name.toLowerCase().replace(/ /g, '-')}`}
+              to={`/asignaturas/${subject.url}`} // <-- ¡Modifica esta línea!
             >
               <SubjectCard subject={subject} />
             </Link>
