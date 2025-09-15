@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
-import './AIToolsPage.css'; // Añadiremos estilos personalizados
+import './AIToolsPage.css';
 
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
 
 function AIToolsPage() {
     const [tool, setTool] = useState(null);
     const [text, setText] = useState('');
-    const [pdfFile, setPdfFile] = useState(null);
+    const [pdfFile, setPdfFile] = useState(null); // ✅ Estado compartido para el PDF
     const [result, setResult] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [quizData, setQuizData] = useState(null);
@@ -19,10 +19,21 @@ function AIToolsPage() {
         GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }, []);
 
+    // ✅ Función para seleccionar herramienta (sin limpiar el PDF)
     const handleSelectTool = (selectedTool) => {
         setTool(selectedTool);
-        setText('');
+        setText(''); // Solo limpiamos el texto manual
+        setResult('');
+        setQuizData(null);
+        setShowAnswers(false);
+        // ✅ NO limpiamos pdfFile aquí → se mantiene entre herramientas
+    };
+
+    // ✅ Función para limpiar el archivo PDF manualmente
+    const clearFile = () => {
         setPdfFile(null);
+        document.getElementById('pdf-upload').value = null;
+        setText('');
         setResult('');
         setQuizData(null);
         setShowAnswers(false);
@@ -49,7 +60,7 @@ function AIToolsPage() {
             reader.onload = async (event) => {
                 try {
                     const arrayBuffer = event.target.result;
-                    const pdf = await getDocument({ data: arrayBuffer }).promise;
+                    const pdf = await getDocument({ arrayBuffer }).promise;
                     let fullText = '';
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
@@ -65,6 +76,28 @@ function AIToolsPage() {
             reader.onerror = () => reject('Error al leer el archivo');
             reader.readAsArrayBuffer(file);
         });
+    };
+
+    // ✅ Función para copiar texto al portapapeles
+    const copyToClipboard = async (textToCopy) => {
+        try {
+            await navigator.clipboard.writeText(textToCopy);
+            alert('¡Texto copiado al portapapeles!');
+        } catch (err) {
+            console.error('Error al copiar:', err);
+            alert('No se pudo copiar el texto. Intenta seleccionarlo y copiarlo manualmente.');
+        }
+    };
+
+    // ✅ Función para descargar texto como archivo
+    const downloadText = (textToDownload, filename) => {
+        const element = document.createElement('a');
+        const file = new Blob([textToDownload], { type: 'text/plain' });
+        element.href = URL.createObjectURL(file);
+        element.download = filename;
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
     };
 
     const handleGenerate = async () => {
@@ -98,9 +131,9 @@ function AIToolsPage() {
             let generationConfig = {};
 
             if (tool === 'resumen') {
-                systemInstruction = "Eres un asistente de estudio experto. Resume el texto proporcionado de manera clara, estructurada y concisa. Usa viñetas, títulos y subtítulos cuando sea apropiado. El resumen debe ser fácil de entender para estudiantes de ESO.";
+                systemInstruction = "Eres un asistente de estudio especializado en español. Resume el texto proporcionado de manera clara, estructurada y concisa. Usa viñetas, títulos y subtítulos cuando sea apropiado. El resumen debe ser fácil de entender para estudiantes de ESO.";
             } else if (tool === 'cuestionario') {
-                systemInstruction = "Eres un profesor de ESO. Genera un cuestionario de 5 preguntas de opción múltiple. Cada pregunta debe tener 4 opciones, solo una correcta. Mezcla el orden de las opciones. Presenta el resultado como un objeto JSON con una propiedad `quiz` que es un array de objetos. Cada objeto debe tener: `question` (string), `options` (array de 4 strings), `correctAnswer` (string exacto de la opción correcta).";
+                systemInstruction = "Eres un profesor de ESO que enseña en español. Genera un cuestionario de 5 preguntas de opción múltiple en español. Cada pregunta debe tener 4 opciones, solo una correcta. Mezcla el orden de las opciones. Presenta el resultado como un objeto JSON con una propiedad `quiz` que es un array de objetos. Cada objeto debe tener: `question` (string), `options` (array de 4 strings), `correctAnswer` (string exacto de la opción correcta).";
                 generationConfig = {
                     responseMimeType: "application/json"
                 };
@@ -182,10 +215,7 @@ function AIToolsPage() {
                                     <span>{pdfFile.name}</span>
                                     <button 
                                         className="remove-file" 
-                                        onClick={() => {
-                                            setPdfFile(null);
-                                            document.getElementById('pdf-upload').value = null;
-                                        }}
+                                        onClick={clearFile}
                                     >
                                         ✕
                                     </button>
@@ -214,8 +244,9 @@ function AIToolsPage() {
                             value={text}
                             onChange={(e) => {
                                 setText(e.target.value);
-                                setPdfFile(null);
-                                document.getElementById('pdf-upload').value = null;
+                                if (pdfFile) {
+                                    clearFile(); // Limpiar PDF si se empieza a escribir
+                                }
                             }}
                             disabled={!!pdfFile}
                         ></textarea>
@@ -245,7 +276,33 @@ function AIToolsPage() {
 
                 {quizData && (
                     <div className="result-container quiz-result">
-                        <h3><i className="fas fa-graduation-cap"></i> Tu Cuestionario de Estudio</h3>
+                        <div className="result-header">
+                            <h3><i className="fas fa-graduation-cap"></i> Tu Cuestionario de Estudio</h3>
+                            <div className="result-actions">
+                                <button 
+                                    className="btn btn-outline copy-btn"
+                                    onClick={() => {
+                                        const quizText = quizData.map((q, i) => 
+                                            `${i+1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65+j)}. ${opt}`).join('\n')}\n`
+                                        ).join('\n\n');
+                                        copyToClipboard(quizText);
+                                    }}
+                                >
+                                    <i className="fas fa-copy"></i> Copiar
+                                </button>
+                                <button 
+                                    className="btn btn-outline download-btn"
+                                    onClick={() => {
+                                        const quizText = quizData.map((q, i) => 
+                                            `${i+1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65+j)}. ${opt}`).join('\n')}\n`
+                                        ).join('\n\n');
+                                        downloadText(quizText, 'cuestionario.txt');
+                                    }}
+                                >
+                                    <i className="fas fa-download"></i> Descargar
+                                </button>
+                            </div>
+                        </div>
                         {quizData.map((q, index) => (
                             <div key={index} className="quiz-question">
                                 <h4>{index + 1}. {q.question}</h4>
@@ -273,7 +330,23 @@ function AIToolsPage() {
 
                 {result && tool !== 'cuestionario' && (
                     <div className="result-container">
-                        <h3><i className="fas fa-file-alt"></i> Resultado de la IA</h3>
+                        <div className="result-header">
+                            <h3><i className="fas fa-file-alt"></i> Resultado de la IA</h3>
+                            <div className="result-actions">
+                                <button 
+                                    className="btn btn-outline copy-btn"
+                                    onClick={() => copyToClipboard(result)}
+                                >
+                                    <i className="fas fa-copy"></i> Copiar
+                                </button>
+                                <button 
+                                    className="btn btn-outline download-btn"
+                                    onClick={() => downloadText(result, 'resumen.txt')}
+                                >
+                                    <i className="fas fa-download"></i> Descargar
+                                </button>
+                            </div>
+                        </div>
                         <div className="result-text">
                             {result.split('\n').map((line, index) => (
                                 <p key={index} className={line.startsWith('-') ? 'bullet-point' : ''}>
