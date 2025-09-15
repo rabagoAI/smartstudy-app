@@ -55,28 +55,47 @@ function AIToolsPage() {
     };
 
     const extractTextFromPdf = async (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
-                    const arrayBuffer = event.target.result;
-                    const pdf = await getDocument({ arrayBuffer }).promise;
-                    let fullText = '';
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const textContent = await page.getTextContent();
-                        const pageText = textContent.items.map(item => item.str).join(' ');
-                        fullText += pageText + '\n';
-                    }
-                    resolve(fullText);
-                } catch (error) {
-                    reject('Error al procesar el PDF: ' + error.message);
-                }
-            };
-            reader.onerror = () => reject('Error al leer el archivo');
-            reader.readAsArrayBuffer(file);
-        });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = async (event) => {
+      try {
+        const arrayBuffer = event.target.result;
+
+        if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+          reject('Error: El archivo PDF está vacío o corrupto.');
+          return;
+        }
+
+        const pdf = await getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += pageText + '\n';
+        }
+        
+        if (!fullText.trim()) {
+          reject('Error: El PDF no contiene texto extraíble.');
+          return;
+        }
+
+        resolve(fullText);
+      } catch (error) {
+        console.error('Error detallado al procesar PDF:', error);
+        reject('Error al procesar el archivo PDF: ' + (error.message || 'Error desconocido'));
+      }
     };
+
+    reader.onerror = () => {
+      reject('Error al leer el archivo: ' + reader.error);
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
+};
 
     // ✅ Función para copiar texto al portapapeles
     const copyToClipboard = async (textToCopy) => {
