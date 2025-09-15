@@ -48,10 +48,13 @@
     font-size: 1rem;
     font-weight: 500;
     transition: color 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
 }
 
 .nav-links a:hover {
-    color: #ffcc00; /* Color de ejemplo para el hover */
+    color: #ffcc00;
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .header-actions {
@@ -62,7 +65,7 @@
 .btn {
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 9999px; /* Para esquinas muy redondeadas */
+    border-radius: 9999px;
     font-weight: bold;
     cursor: pointer;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
@@ -80,20 +83,27 @@
 }
 
 .register-btn {
-    background-color: #E91E63; /* Color rosa del ejemplo */
+    background-color: #E91E63;
     color: #fff;
     box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
 }
 
 .register-btn:hover {
-    background-color: #D81B60; /* Un rosa un poco más oscuro */
+    background-color: #D81B60;
     transform: scale(1.05);
 }
 
 .menu-toggle {
-    display: none; /* Oculto en desktop */
+    display: none;
     font-size: 1.5rem;
     cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.menu-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Media Queries para diseño responsive */
@@ -108,18 +118,45 @@
         left: 0;
         background: #4A148C;
         padding: 1rem 0;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        animation: slideDown 0.3s ease-out;
+        z-index: 100;
     }
 
     .header-nav.open {
         display: flex;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .nav-links {
         flex-direction: column;
+        gap: 0.5rem;
     }
 
     .nav-links li {
-        margin: 1rem 0;
+        margin: 0;
+    }
+
+    .nav-links a {
+        display: block;
+        padding: 1rem;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .nav-links a:hover {
+        background-color: rgba(255, 255, 255, 0.1);
     }
 
     .header-actions {

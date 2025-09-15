@@ -1,27 +1,36 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../AuthContext'; 
-import { auth } from '../../firebase'; 
-import { signOut } from 'firebase/auth'; 
+// src/components/common/Header.js
 
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import './Header.css';
 
 function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const { currentUser } = useAuth();
-    const navigate = useNavigate();
+    const menuRef = useRef(null);
+
+    const location = useLocation(); // Para cerrar menú al cambiar de ruta
+
+    // Cierra el menú al hacer clic fuera
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setIsMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    // Cierra el menú al cambiar de ruta
+    useEffect(() => {
+        setIsMenuOpen(false);
+    }, [location]);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
-    };
-
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            navigate('/'); 
-        } catch (error) {
-            console.error('Error al cerrar sesión:', error.message);
-        }
     };
 
     return (
@@ -31,41 +40,25 @@ function Header() {
                     <Link to="/" className="logo-text">SmartStudy</Link>
                 </div>
                 
-                <nav className={`header-nav ${isMenuOpen ? 'open' : ''}`}>
+                <nav className={`header-nav ${isMenuOpen ? 'open' : ''}`} ref={menuRef}>
                     <ul className="nav-links">
-                        <li><Link to="/">Inicio</Link></li>
-                        <li><Link to="/asignaturas">Asignaturas</Link></li>
-                        <li><Link to="/herramientas-ia">Herramientas IA</Link></li>
+                        <li><Link to="/" onClick={() => setIsMenuOpen(false)}>Inicio</Link></li>
+                        <li><Link to="/asignaturas" onClick={() => setIsMenuOpen(false)}>Asignaturas</Link></li>
+                        <li><Link to="/herramientas-ia" onClick={() => setIsMenuOpen(false)}>Herramientas IA</Link></li>
                     </ul>
                 </nav>
                 
                 <div className="header-actions">
-                    {/* Renderizado condicional */}
-                    {currentUser ? (
-                        // Si el usuario está conectado, muestra un enlace al perfil y el botón de Cerrar Sesión
-                        <>
-                            <Link to="/perfil" className="profile-link">
-                                <button className="btn login-btn">Perfil</button>
-                            </Link>
-                            <button className="btn register-btn" onClick={handleLogout}>
-                                Cerrar Sesión
-                            </button>
-                        </>
-                    ) : (
-                        // Si el usuario no está conectado, muestra los botones de Iniciar Sesión y Registrarse
-                        <>
-                            <Link to="/iniciar-sesion">
-                                <button className="btn login-btn">Iniciar Sesión</button>
-                            </Link>
-                            <Link to="/registrarse">
-                                <button className="btn register-btn">Registrarse</button>
-                            </Link>
-                        </>
-                    )}
+                    <Link to="/iniciar-sesion">
+                        <button className="btn login-btn">Iniciar Sesión</button>
+                    </Link>
+                    <Link to="/registrarse">
+                        <button className="btn register-btn">Registrarse</button>
+                    </Link>
                 </div>
 
-                <div className="menu-toggle" onClick={toggleMenu}>
-                    <i className="fas fa-bars"></i>
+                <div className="menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">
+                    <i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
                 </div>
             </div>
         </header>
@@ -73,5 +66,3 @@ function Header() {
 }
 
 export default Header;
-
-
