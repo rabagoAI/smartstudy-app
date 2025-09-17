@@ -2,13 +2,18 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext'; // ✅ Importa el contexto de autenticación
+import { signOut } from 'firebase/auth';
+import { auth } from '../../firebase'; // ✅ Importa la instancia de auth
 import './Header.css';
 
 function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef(null);
+    const authContext = useAuth();
+const { currentUser } = authContext || { currentUser: null };
 
-    const location = useLocation(); // Para cerrar menú al cambiar de ruta
+    const location = useLocation();
 
     // Cierra el menú al hacer clic fuera
     useEffect(() => {
@@ -33,6 +38,16 @@ function Header() {
         setIsMenuOpen(!isMenuOpen);
     };
 
+    // ✅ Función para cerrar sesión
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            // Firebase + AuthContext se encargan del resto
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+        }
+    };
+
     return (
         <header className="main-header">
             <div className="header-content">
@@ -49,12 +64,25 @@ function Header() {
                 </nav>
                 
                 <div className="header-actions">
-                    <Link to="/iniciar-sesion">
-                        <button className="btn login-btn">Iniciar Sesión</button>
-                    </Link>
-                    <Link to="/registrarse">
-                        <button className="btn register-btn">Registrarse</button>
-                    </Link>
+                    {currentUser ? (
+                        // ✅ Usuario logueado: muestra botón de cerrar sesión
+                        <button 
+                            className="btn login-btn"
+                            onClick={handleLogout}
+                        >
+                            Cerrar Sesión
+                        </button>
+                    ) : (
+                        // ✅ Usuario no logueado: muestra botones de login/register
+                        <>
+                            <Link to="/iniciar-sesion">
+                                <button className="btn login-btn">Iniciar Sesión</button>
+                            </Link>
+                            <Link to="/registrarse">
+                                <button className="btn register-btn">Registrarse</button>
+                            </Link>
+                        </>
+                    )}
                 </div>
 
                 <div className="menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">

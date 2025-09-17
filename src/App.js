@@ -1,3 +1,5 @@
+// src/App.js
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
@@ -13,16 +15,14 @@ import LoginPage from './components/auth/LoginPage';
 import RegisterPage from './components/auth/RegisterPage';
 import ProfilePage from './components/ProfilePage';
 import ResetPassword from './components/auth/ResetPassword';
-import UploadForm from './components/admin/UploadForm'; // <--- Importa el nuevo componente
+import UploadForm from './components/admin/UploadForm';
+import TourGuide from './components/common/TourGuide'; // ✅ Importa el tour
 
 import './App.css';
 
-// Componente que contiene el enrutamiento y la lógica de renderizado
-// Condicional según el estado de carga
 function AppContent() {
-  const { loading } = useAuth(); // Obtiene el estado de carga
+  const { loading } = useAuth();
 
-  // Si está cargando, muestra una pantalla de carga simple
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '24px' }}>
@@ -31,7 +31,6 @@ function AppContent() {
     );
   }
 
-  // Una vez que la carga ha terminado, renderiza el contenido de la aplicación
   return (
     <Router>
       <div className="App">
@@ -43,21 +42,22 @@ function AppContent() {
             <Route path="/registrarse" element={<RegisterPage />} />
             <Route path="/restablecer-contrasena" element={<ResetPassword />} />
 
-            {/* Rutas protegidas */}
-            <Route path="/perfil" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
-            <Route path="/asignaturas" element={<PrivateRoute><SubjectsPage /></PrivateRoute>} />
-            <Route path="/asignaturas/:subjectName" element={<PrivateRoute><SubjectDetailsPage /></PrivateRoute>} />
-            <Route path="/herramientas-ia" element={<PrivateRoute><AIToolsPage /></PrivateRoute>} />
-            <Route path="/admin/upload" element={<PrivateRoute><UploadForm /></PrivateRoute>} /> {/* <--- Nueva ruta */}
+            <Route element={<PrivateRoute />}>
+              <Route path="/perfil" element={<ProfilePage />} />
+              <Route path="/asignaturas" element={<SubjectsPage />} />
+              <Route path="/asignaturas/:subjectName" element={<SubjectDetailsPage />} />
+              <Route path="/herramientas-ia" element={<AIToolsPage />} />
+              <Route path="/admin/upload" element={<UploadForm />} />
+            </Route>
           </Routes>
         </main>
         <Footer />
+        <TourGuide /> {/* ✅ Añade el tour aquí */}
       </div>
     </Router>
   );
 }
 
-// El componente principal App ahora solo envuelve a AppContent con AuthProvider
 function App() {
   return (
     <AuthProvider>

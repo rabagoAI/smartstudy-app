@@ -26,6 +26,9 @@ const RegisterPage = () => {
         createdAt: new Date(),
       });
 
+      // 🎯 LÍNEA CRÍTICA - Marcar como nuevo usuario registrado para activar el tour
+      sessionStorage.setItem('newUserRegistration', 'true');
+
       navigate('/'); 
 
     } catch (error) {
@@ -79,5 +82,3 @@ const RegisterPage = () => {
 };
 
 export default RegisterPage;
-
-

@@ -1,17 +1,16 @@
 // src/components/auth/PrivateRoute.js
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../AuthContext'; 
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../../AuthContext';
 
-const PrivateRoute = ({ children }) => {
-  const { currentUser } = useAuth();
-  
-  if (currentUser) {
-    return children;
+const PrivateRoute = () => {
+  const { currentUser, loading } = useAuth();
+
+  if (loading) {
+    return <div>Cargando...</div>;
   }
-  
-  return <Navigate to="/iniciar-sesion" />;
+
+  return currentUser ? <Outlet /> : <Navigate to="/iniciar-sesion" />;
 };
 
 export default PrivateRoute;
