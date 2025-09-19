@@ -97,7 +97,23 @@ const TourGuide = () => {
       const element = document.querySelector(steps[currentStep].selector);
       if (element) {
         setTargetElement(element);
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Hacer scroll más inteligente
+        setTimeout(() => {
+          const elementRect = element.getBoundingClientRect();
+          const viewportHeight = window.innerHeight;
+          const elementCenter = elementRect.top + elementRect.height / 2;
+          
+          // Si el elemento no está visible o está muy cerca de los bordes
+          if (elementRect.top < 100 || elementRect.bottom > viewportHeight - 100) {
+            // Scroll para centrar el elemento, dejando espacio para el tooltip
+            const offsetTop = element.offsetTop - (viewportHeight / 2) + (elementRect.height / 2);
+            window.scrollTo({
+              top: Math.max(0, offsetTop),
+              behavior: 'smooth'
+            });
+          }
+        }, 100);
       }
     }
   }, [currentStep, isActive]);
@@ -131,56 +147,104 @@ const TourGuide = () => {
   const step = steps[currentStep];
   const rect = targetElement.getBoundingClientRect();
   
+  // Calcular posición del tooltip
   const getTooltipStyle = () => {
-  const tooltipWidth = 300;
-  const tooltipHeight = 200;
-  let top, left;
-
-  // Calcular la posición basada en el selector
-  switch (step.position) {
-    case 'top':
-      top = rect.top - tooltipHeight - 10;
-      left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-      break;
-    case 'bottom':
-      top = rect.bottom + 10;
-      left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-      break;
-    case 'left':
-      top = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-      left = rect.left - tooltipWidth - 10;
-      break;
-    case 'right':
-    default:
-      top = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-      left = rect.right + 10;
-      break;
-  }
-
-  // ✅ Ajustar la posición para evitar que se salga de la pantalla
-  const adjustedTop = Math.max(
-    10,
-    Math.min(
+    const tooltipWidth = 320;
+    const tooltipHeight = 180;
+    const margin = 15;
+    
+    let top, left;
+    
+    // Calcular posición inicial según step.position
+    switch (step.position) {
+      case 'top':
+        top = rect.top - tooltipHeight - margin;
+        left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+        break;
+      case 'bottom':
+        top = rect.bottom + margin;
+        left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+        break;
+      case 'left':
+        top = rect.top + (rect.height / 2) - (tooltipHeight / 2);
+        left = rect.left - tooltipWidth - margin;
+        break;
+      case 'right':
+      default:
+        top = rect.top + (rect.height / 2) - (tooltipHeight / 2);
+        left = rect.right + margin;
+        break;
+    }
+    
+    // Ajustes inteligentes para mantener el tooltip visible
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Ajuste vertical - priorizar que se vea completo
+    if (top < margin) {
+      // Si está muy arriba, moverlo abajo
+      top = rect.bottom + margin;
+    } else if (top + tooltipHeight > viewportHeight - margin) {
+      // Si está muy abajo, intentar ponerlo arriba
+      const topPosition = rect.top - tooltipHeight - margin;
+      if (topPosition >= margin) {
+        top = topPosition;
+      } else {
+        // Si no cabe ni arriba ni abajo, centrarlo en pantalla
+        top = Math.max(margin, (viewportHeight - tooltipHeight) / 2);
+      }
+    }
+    
+    // Ajuste horizontal
+    if (left < margin) {
+      left = margin;
+    } else if (left + tooltipWidth > viewportWidth - margin) {
+      left = viewportWidth - tooltipWidth - margin;
+    }
+    
+    // Asegurar que nunca se salga de los límites
+    left = Math.max(margin, Math.min(left, viewportWidth - tooltipWidth - margin));
+    top = Math.max(margin, Math.min(top, viewportHeight - tooltipHeight - margin));
+    
+    return {
+      position: 'fixed',
       top,
-      window.innerHeight - tooltipHeight - 10
-    )
-  );
-
-  const adjustedLeft = Math.max(
-    10,
-    Math.min(
       left,
-      window.innerWidth - tooltipWidth - 10
-    )
-  );
-
-  return {
-    position: 'fixed',
-    top: adjustedTop,
-    left: adjustedLeft,
-    zIndex: 10001,
+      zIndex: 10001,
+    };
   };
-};
+
+  // Calcular posición de la flecha
+  const getArrowStyle = () => {
+    const tooltipStyle = getTooltipStyle();
+    const tooltipRect = {
+      top: tooltipStyle.top,
+      left: tooltipStyle.left,
+      width: 320,
+      height: 180
+    };
+    
+    // Centro del elemento destacado
+    const targetCenterX = rect.left + rect.width / 2;
+    const targetCenterY = rect.top + rect.height / 2;
+    
+    // Centro del tooltip
+    const tooltipCenterX = tooltipRect.left + tooltipRect.width / 2;
+    const tooltipCenterY = tooltipRect.top + tooltipRect.height / 2;
+    
+    // Calcular ángulo de la flecha hacia el elemento
+    const angle = Math.atan2(targetCenterY - tooltipCenterY, targetCenterX - tooltipCenterX);
+    const degrees = (angle * 180 / Math.PI) + 90;
+    
+    return {
+      position: 'absolute',
+      top: '10px',
+      right: '15px',
+      transform: `rotate(${degrees}deg)`,
+      fontSize: '20px',
+      color: '#4361ee',
+    };
+  };
 
   return (
     <>
@@ -200,6 +264,12 @@ const TourGuide = () => {
       
       {/* Tooltip del tour */}
       <div className="tour-tooltip" style={getTooltipStyle()}>
+        {/* Flecha indicadora */}
+        <div 
+          className="tour-arrow"
+          style={getArrowStyle()}
+        />
+        
         <div className="tour-header">
           <h3>{step.title}</h3>
           <button className="tour-close" onClick={closeTour}>×</button>
