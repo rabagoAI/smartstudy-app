@@ -1,7 +1,10 @@
 // src/components/ai-tools/AIToolsPage.js
-
 import React, { useState, useEffect } from 'react';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+import { useAuth } from '../../AuthContext'; // ✅ Para obtener el UID del usuario
+import { db } from '../../firebase'; // ✅ Para guardar en Firestore
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'; // ✅ Funciones de Firestore
+import { Link } from 'react-router-dom'; // ✅ Para enlazar al historial
 import './AIToolsPage.css';
 
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
@@ -14,6 +17,9 @@ function AIToolsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [quizData, setQuizData] = useState(null);
     const [showAnswers, setShowAnswers] = useState(false);
+
+    // ✅ Obtener usuario actual
+    const { currentUser } = useAuth();
 
     useEffect(() => {
         GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -57,42 +63,34 @@ function AIToolsPage() {
     const extractTextFromPdf = async (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-
             reader.onload = async (event) => {
                 try {
                     const arrayBuffer = event.target.result;
-
                     if (!arrayBuffer || arrayBuffer.byteLength === 0) {
                         reject('Error: El archivo PDF está vacío o corrupto.');
                         return;
                     }
-
                     const pdf = await getDocument({ data: arrayBuffer }).promise;
                     let fullText = '';
-                    
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
                         const textContent = await page.getTextContent();
                         const pageText = textContent.items.map(item => item.str).join(' ');
                         fullText += pageText + '\n';
                     }
-                    
                     if (!fullText.trim()) {
                         reject('Error: El PDF no contiene texto extraíble.');
                         return;
                     }
-
                     resolve(fullText);
                 } catch (error) {
                     console.error('Error detallado al procesar PDF:', error);
                     reject('Error al procesar el archivo PDF: ' + (error.message || 'Error desconocido'));
                 }
             };
-
             reader.onerror = () => {
                 reject('Error al leer el archivo: ' + reader.error);
             };
-
             reader.readAsArrayBuffer(file);
         });
     };
@@ -180,6 +178,34 @@ function AIToolsPage() {
             const data = await response.json();
             const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
+            if (!generatedText) {
+                setResult("No se pudo generar el resultado.");
+                return;
+            }
+
+            // ✅ Guardar en historial de IA si el usuario está autenticado
+            if (currentUser) {
+                try {
+                    const promptText = pdfFile ? "📄 PDF cargado" : text.trim();
+                    const title = tool === 'resumen' ? "Resumen generado" :
+                                  tool === 'cuestionario' ? "Cuestionario generado" :
+                                  `Explicación: ${text.split(' ').slice(0, 5).join(' ')}...`;
+
+                    await addDoc(collection(db, 'users', currentUser.uid, 'ai_history'), {
+                        prompt: promptText,
+                        response: generatedText,
+                        tool: tool,
+                        timestamp: serverTimestamp(),
+                        title: title
+                    });
+                    console.log('✅ Historial de IA guardado');
+                } catch (saveError) {
+                    console.error('❌ Error al guardar en historial:', saveError);
+                    // No mostramos alerta al usuario, solo logueamos
+                }
+            }
+
+            // Procesar resultado
             if (tool === 'cuestionario' && generatedText) {
                 try {
                     const parsedData = JSON.parse(generatedText);
@@ -193,7 +219,7 @@ function AIToolsPage() {
                     setResult('Error al generar el cuestionario. Por favor, inténtalo de nuevo.');
                 }
             } else {
-                setResult(generatedText || "No se pudo generar el resultado.");
+                setResult(generatedText);
             }
 
         } catch (error) {
@@ -209,6 +235,15 @@ function AIToolsPage() {
             <div className="container">
                 <h2 className="section-title">Herramientas de Inteligencia Artificial</h2>
                 <p className="subtitle">Potencia tus estudios con IA: resume textos, genera cuestionarios o explica conceptos.</p>
+
+                {/* ✅ Botón para ver historial (solo si está autenticado) */}
+                {currentUser && (
+                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                        <Link to="/historial-ia" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>
+                            📚 Ver mi historial de IA
+                        </Link>
+                    </div>
+                )}
 
                 <div className="tool-selection">
                     <button
@@ -250,7 +285,6 @@ function AIToolsPage() {
                                 </div>
                             )}
                         </div>
-
                         <div className="file-input-container">
                             <label htmlFor="pdf-upload" className="file-label">
                                 {pdfFile ? 'Cambiar archivo PDF' : 'Sube un archivo PDF'}
@@ -263,7 +297,6 @@ function AIToolsPage() {
                                 className="hidden-input"
                             />
                         </div>
-
                         <p className="or-text">o escribe tu pregunta/concepto:</p>
                         <textarea
                             className="tool-textarea"
@@ -278,7 +311,6 @@ function AIToolsPage() {
                             }}
                             disabled={!!pdfFile}
                         ></textarea>
-
                         <button
                             className="btn btn-primary generate-btn"
                             onClick={handleGenerate}
@@ -312,7 +344,7 @@ function AIToolsPage() {
                                     onClick={() => {
                                         const quizText = quizData.map((q, i) => 
                                             `${i+1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65+j)}. ${opt}`).join('\n')}\n`
-                                        ).join('\n\n');
+                                        ).join('\n');
                                         copyToClipboard(quizText);
                                     }}
                                 >
@@ -323,7 +355,7 @@ function AIToolsPage() {
                                     onClick={() => {
                                         const quizText = quizData.map((q, i) => 
                                             `${i+1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65+j)}. ${opt}`).join('\n')}\n`
-                                        ).join('\n\n');
+                                        ).join('\n');
                                         downloadText(quizText, 'cuestionario.txt');
                                     }}
                                 >

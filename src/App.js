@@ -17,6 +17,7 @@ import ProfilePage from './components/ProfilePage';
 import ResetPassword from './components/auth/ResetPassword';
 import UploadForm from './components/admin/UploadForm';
 import TourGuide from './components/common/TourGuide'; // ✅ Importa el tour
+import AIHistoryPage from './components/ai-tools/AIHistoryPage';
 
 import './App.css';
 
@@ -48,6 +49,7 @@ function AppContent() {
               <Route path="/asignaturas/:subjectName" element={<SubjectDetailsPage />} />
               <Route path="/herramientas-ia" element={<AIToolsPage />} />
               <Route path="/admin/upload" element={<UploadForm />} />
+              <Route path="/historial-ia" element={<AIHistoryPage />} />
             </Route>
           </Routes>
         </main>
