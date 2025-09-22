@@ -8,20 +8,46 @@ import { doc, updateDoc } from 'firebase/firestore';
 const PayPalSubscription = ({ onApprove, onCancel, onError }) => {
   // ✅ Usa el plan_id desde las variables de entorno
   const planId = process.env.REACT_APP_PAYPAL_PLAN_ID;
+  const clientId = process.env.REACT_APP_PAYPAL_CLIENT_ID;
 
-  // ✅ Verifica que el plan_id esté definido
-  if (!planId) {
-    console.error('Error: REACT_APP_PAYPAL_PLAN_ID no está definido');
-    return <div>Error: Configuración de PayPal incompleta</div>;
+  // 🔍 Debug temporal - ELIMINAR EN PRODUCCIÓN
+  console.log('🔍 Plan ID:', planId);
+  console.log('🔍 Client ID:', clientId);
+  console.log('🔍 Node ENV:', process.env.NODE_ENV);
+
+  // ✅ Verifica que las variables estén definidas
+  if (!planId || !clientId) {
+    console.error('Error: Variables de entorno de PayPal no están definidas');
+    console.error('Plan ID:', planId);
+    console.error('Client ID:', clientId);
+    return (
+      <div style={{color: 'red', padding: '10px', border: '1px solid red'}}>
+        Error: Configuración de PayPal incompleta. Revisa las variables de entorno.
+      </div>
+    );
   }
 
+  // ✅ Configuración correcta de PayPal
+  const initialOptions = {
+    'client-id': clientId,
+    'enable-funding': 'venmo',
+    'disable-funding': '',
+    'data-sdk-integration-source': 'integrationbuilder_sc',
+    intent: 'subscription',
+    vault: true
+  };
+
   const createSubscription = (data, actions) => {
+    console.log('🚀 Creando suscripción con Plan ID:', planId);
+    
     return actions.subscription.create({
-      plan_id: planId, // ✅ Usa la variable de entorno
+      'plan_id': planId
     });
   };
 
   const onSubscriptionApprove = async (data, actions) => {
+    console.log('✅ Suscripción aprobada:', data);
+    
     try {
       const user = auth.currentUser;
       if (user) {
@@ -30,6 +56,9 @@ const PayPalSubscription = ({ onApprove, onCancel, onError }) => {
           subscriptionID: data.subscriptionID,
           subscriptionStartDate: new Date(),
         });
+        
+        console.log('✅ Usuario actualizado con suscripción premium');
+        
         if (onApprove) {
           onApprove(data.subscriptionID);
         }
@@ -37,7 +66,7 @@ const PayPalSubscription = ({ onApprove, onCancel, onError }) => {
         throw new Error('Usuario no autenticado');
       }
     } catch (error) {
-      console.error('Error al actualizar la suscripción:', error);
+      console.error('❌ Error al actualizar la suscripción:', error);
       if (onError) {
         onError(error);
       } else {
@@ -47,7 +76,7 @@ const PayPalSubscription = ({ onApprove, onCancel, onError }) => {
   };
 
   const handleCancel = (data, actions) => {
-    console.log('Pago cancelado:', data);
+    console.log('❌ Pago cancelado:', data);
     if (onCancel) {
       onCancel(data);
     } else {
@@ -56,7 +85,7 @@ const PayPalSubscription = ({ onApprove, onCancel, onError }) => {
   };
 
   const handleError = (error) => {
-    console.error('Error en PayPal:', error);
+    console.error('❌ Error en PayPal:', error);
     if (onError) {
       onError(error);
     } else {
@@ -66,18 +95,7 @@ const PayPalSubscription = ({ onApprove, onCancel, onError }) => {
 
   return (
     <div className="paypal-container">
-      <PayPalScriptProvider
-        options={{
-          clientId: process.env.REACT_APP_PAYPAL_CLIENT_ID,
-          intent: 'subscription',
-          vault: true,
-          // ✅ Añade modo sandbox para desarrollo
-          ...(process.env.NODE_ENV === 'development' && {
-            'data-client-token': 'sandbox',
-            components: 'buttons'
-          })
-        }}
-      >
+      <PayPalScriptProvider options={initialOptions}>
         <PayPalButtons
           style={{ 
             layout: 'vertical', 
