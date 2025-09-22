@@ -1,15 +1,19 @@
 // src/components/ai-tools/AIHistoryPage.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../AuthContext';
 import { db } from '../../firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import './AIHistoryPage.css'; // Estilos que crearemos a continuación
+import './AIHistoryPage.css';
 
 function AIHistoryPage() {
   const { currentUser } = useAuth();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // ✅ Estados para búsqueda y filtrado
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterTool, setFilterTool] = useState('all'); // 'all', 'resumen', 'cuestionario', 'explicar'
 
   // ✅ Función para copiar texto al portapapeles
   const copyToClipboard = async (textToCopy) => {
@@ -39,7 +43,6 @@ function AIHistoryPage() {
     setLoading(true);
     setError(null);
 
-    // ✅ Referencia a la subcolección ai_history del usuario
     const historyRef = collection(db, 'users', currentUser.uid, 'ai_history');
     const q = query(historyRef, orderBy('timestamp', 'desc'));
 
@@ -59,6 +62,22 @@ function AIHistoryPage() {
 
     return () => unsubscribe();
   }, [currentUser]);
+
+  // ✅ Filtrar y buscar usando useMemo para mejor rendimiento
+  const filteredHistory = useMemo(() => {
+    return history.filter(item => {
+      // Filtrar por herramienta
+      const matchesTool = filterTool === 'all' || item.tool === filterTool;
+      
+      // Buscar en prompt o response
+      const matchesSearch = searchTerm === '' || 
+        item.prompt.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.response.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.title.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return matchesTool && matchesSearch;
+    });
+  }, [history, filterTool, searchTerm]);
 
   if (loading) {
     return (
@@ -86,11 +105,42 @@ function AIHistoryPage() {
     <div className="ai-history">
       <div className="container">
         <h2 className="section-title">Historial de IA</h2>
-        {history.length === 0 ? (
-          <p className="no-history">No tienes historial de generaciones aún. ¡Empieza a usar las herramientas de IA!</p>
+
+        {/* ✅ Panel de búsqueda y filtrado */}
+        <div className="history-controls">
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Buscar en historial..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            <i className="fas fa-search search-icon"></i>
+          </div>
+
+          <select
+            value={filterTool}
+            onChange={(e) => setFilterTool(e.target.value)}
+            className="filter-select"
+          >
+            <option value="all">Todas las herramientas</option>
+            <option value="resumen">Resúmenes</option>
+            <option value="cuestionario">Cuestionarios</option>
+            <option value="explicar">Explicaciones</option>
+          </select>
+        </div>
+
+        {filteredHistory.length === 0 ? (
+          <p className="no-history">
+            {history.length === 0 
+              ? "No tienes historial de generaciones aún. ¡Empieza a usar las herramientas de IA!" 
+              : "No se encontraron resultados con tu búsqueda o filtro."
+            }
+          </p>
         ) : (
           <div className="history-list">
-            {history.map((item) => (
+            {filteredHistory.map((item) => (
               <div key={item.id} className="history-item">
                 <div className="history-header">
                   <h3>{item.title}</h3>
