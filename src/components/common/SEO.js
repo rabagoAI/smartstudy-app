@@ -1,5 +1,4 @@
 // src/components/common/SEO.js
-import { DocumentTitle } from 'react-document-title';
 import { useEffect } from 'react';
 
 const SEO = ({ title, description, image, url }) => {
