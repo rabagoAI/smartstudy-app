@@ -5,8 +5,9 @@ import { useAuth } from '../../AuthContext';
 import { db } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
-import './AIToolsPage.css';
 import SEO from '../common/SEO';
+import Flashcard from '../common/Flashcard'; // ✅ Importa el componente de tarjetas
+import './AIToolsPage.css';
 
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
 
@@ -16,7 +17,7 @@ function AIToolsPage() {
     const [pdfFile, setPdfFile] = useState(null);
     const [result, setResult] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [quizData, setQuizData] = useState(null);
+    const [quizData, setQuizData] = useState(null); // Reutilizado para tarjetas y cuestionarios
     const [showAnswers, setShowAnswers] = useState(false);
 
     const { currentUser } = useAuth();
@@ -151,6 +152,11 @@ function AIToolsPage() {
                 };
             } else if (tool === 'explicar') {
                 systemInstruction = "Eres un profesor de ESO que explica conceptos en español de forma clara, sencilla y amigable. Usa ejemplos cotidianos, analogías o pasos si es necesario. La explicación debe ser fácil de entender para un estudiante de 12-14 años. No uses jerga técnica sin explicarla. Si el usuario pregunta sobre un concepto, responde con una explicación estructurada, con título, desarrollo y ejemplo práctico.";
+            } else if (tool === 'tarjetas') {
+                systemInstruction = "Eres un profesor de ESO que crea tarjetas didácticas en español. Genera 5 tarjetas en formato JSON. Cada tarjeta debe tener: `question` (string) y `answer` (string). La pregunta debe ser clara y directa. La respuesta debe ser concisa y precisa. Presenta el resultado como un objeto JSON con una propiedad `cards` que es un array de objetos.";
+                generationConfig = {
+                    responseMimeType: "application/json"
+                };
             }
 
             const payload = {
@@ -184,6 +190,7 @@ function AIToolsPage() {
                     const promptText = pdfFile ? "📄 PDF cargado" : text.trim();
                     const title = tool === 'resumen' ? "Resumen generado" :
                                   tool === 'cuestionario' ? "Cuestionario generado" :
+                                  tool === 'tarjetas' ? "Tarjetas generadas" :
                                   `Explicación: ${text.split(' ').slice(0, 5).join(' ')}...`;
 
                     await addDoc(collection(db, 'users', currentUser.uid, 'ai_history'), {
@@ -212,6 +219,18 @@ function AIToolsPage() {
                     console.error('Error parsing JSON:', parseError);
                     setResult('Error al generar el cuestionario. Por favor, inténtalo de nuevo.');
                 }
+            } else if (tool === 'tarjetas' && generatedText) {
+                try {
+                    const parsedData = JSON.parse(generatedText);
+                    if (Array.isArray(parsedData.cards)) {
+                        setQuizData(parsedData.cards);
+                    } else {
+                        throw new Error('Formato de tarjetas inválido');
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing JSON:', parseError);
+                    setResult('Error al generar las tarjetas. Por favor, inténtalo de nuevo.');
+                }
             } else {
                 setResult(generatedText);
             }
@@ -226,18 +245,17 @@ function AIToolsPage() {
 
     return (
         <>
-            {/* ✅ Añade el componente SEO aquí */}
             <SEO
                 title="Herramientas de IA - SmartStudy"
                 description="Resume textos, genera cuestionarios o explica conceptos con nuestra IA. Ideal para estudiantes de ESO."
-                image="https://res.cloudinary.com/ds7shn66t/image/upload/v1758618850/DeWatermark.ai_1758546785863_xbsigz.jpg"
+                image="https://res.cloudinary.com/ds7shn66t/image/upload/w_1200,h_630,c_fill,f_auto,q_auto/v1758618850/DeWatermark.ai_1758546785863_xbsigz.jpg"
                 url="https://smartstudy.vercel.app/herramientas-ia"
             />
 
             <section className="ai-tools">
                 <div className="container">
                     <h2 className="section-title">Herramientas de Inteligencia Artificial</h2>
-                    <p className="subtitle">Potencia tus estudios con IA: resume textos, genera cuestionarios o explica conceptos.</p>
+                    <p className="subtitle">Potencia tus estudios con IA: resume textos, genera cuestionarios, tarjetas o explica conceptos.</p>
 
                     {currentUser && (
                         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -261,6 +279,13 @@ function AIToolsPage() {
                         >
                             <h3><i className="fas fa-question-circle"></i> Genera un Cuestionario</h3>
                             <p>Crea preguntas de estudio con 4 opciones cada una.</p>
+                        </button>
+                        <button
+                            className={`tool-card ${tool === 'tarjetas' ? 'active' : ''}`}
+                            onClick={() => handleSelectTool('tarjetas')}
+                        >
+                            <h3><i className="fas fa-clipboard-list"></i> Genera Tarjetas Didácticas</h3>
+                            <p>Crea tarjetas interactivas para memorizar conceptos.</p>
                         </button>
                         <button
                             className={`tool-card ${tool === 'explicar' ? 'active' : ''}`}
@@ -336,7 +361,7 @@ function AIToolsPage() {
                         </div>
                     )}
 
-                    {quizData && (
+                    {quizData && tool === 'cuestionario' && (
                         <div className="result-container quiz-result">
                             <div className="result-header">
                                 <h3><i className="fas fa-graduation-cap"></i> Tu Cuestionario de Estudio</h3>
@@ -387,6 +412,37 @@ function AIToolsPage() {
                             >
                                 {showAnswers ? 'Ocultar Respuestas' : 'Mostrar Respuestas'}
                             </button>
+                        </div>
+                    )}
+
+                    {quizData && tool === 'tarjetas' && (
+                        <div className="result-container">
+                            <div className="result-header">
+                                <h3><i className="fas fa-clipboard-list"></i> Tus Tarjetas Didácticas</h3>
+                                <div className="result-actions">
+                                    <button 
+                                        className="btn btn-outline download-btn"
+                                        onClick={() => {
+                                            const cardsText = quizData.map((card, i) => 
+                                                `Tarjeta ${i+1}\nPregunta: ${card.question}\nRespuesta: ${card.answer}\n\n`
+                                            ).join('');
+                                            downloadText(cardsText, 'tarjetas.txt');
+                                        }}
+                                    >
+                                        <i className="fas fa-download"></i> Descargar
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="flashcards-grid">
+                                {quizData.map((card, index) => (
+                                    <Flashcard 
+                                        key={index}
+                                        question={card.question}
+                                        answer={card.answer}
+                                        index={index}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     )}
 
