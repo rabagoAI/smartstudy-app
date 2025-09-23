@@ -49,6 +49,13 @@
   border-radius: 16px;
 }
 
+/* ✅ Aquí es clave: No rotar el contenido del dorso */
+.flashcard-back .flashcard-content p {
+  transform: rotate(180deg);
+  text-align: center;
+  line-height: 1.5;
+}
+
 .flashcard-header {
   display: flex;
   justify-content: space-between;
@@ -56,7 +63,7 @@
   margin-bottom: 20px;
 }
 
-.card-number {
+.subject-tag {
   background: rgba(255, 255, 255, 0.2);
   padding: 6px 12px;
   border-radius: 20px;
@@ -88,19 +95,4 @@
   font-size: 0.85rem;
   opacity: 0.9;
   margin-top: 15px;
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-  .flashcard {
-    height: 250px;
-  }
-  
-  .flashcard-content p {
-    font-size: 1rem;
-  }
-  
-  .answer-content p {
-    font-size: 0.95rem;
-  }
 }

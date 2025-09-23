@@ -128,6 +128,7 @@ function AIHistoryPage() {
             <option value="resumen">Resúmenes</option>
             <option value="cuestionario">Cuestionarios</option>
             <option value="explicar">Explicaciones</option>
+            <option value="tarjetas">Tarjetas Didácticas</option>
           </select>
         </div>
 
