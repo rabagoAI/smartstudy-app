@@ -5,8 +5,8 @@ import { useAuth } from '../../AuthContext';
 import { db } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
-import SEO from '../common/SEO';
 import './AIToolsPage.css';
+import SEO from '../common/SEO';
 
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
 
