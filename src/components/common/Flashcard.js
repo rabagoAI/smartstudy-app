@@ -9,6 +9,13 @@ const Flashcard = ({ question, answer, index }) => {
     setIsFlipped(!isFlipped);
   };
 
+  // ✅ Formatear el texto para que se muestre correctamente
+  const formatText = (text) => {
+    if (!text) return '';
+    // Reemplazar saltos de línea por <br />
+    return text.replace(/\n/g, '<br />');
+  };
+
   return (
     <div className="flashcard-container" onClick={handleFlip}>
       <div className={`flashcard ${isFlipped ? 'flipped' : ''}`}>
@@ -18,7 +25,7 @@ const Flashcard = ({ question, answer, index }) => {
             <span className="card-number">Tarjeta {index + 1}</span>
           </div>
           <div className="flashcard-content">
-            <p>{question}</p>
+            <p dangerouslySetInnerHTML={{ __html: formatText(question) }} />
           </div>
           <div className="flashcard-footer">
             <span>👆 Haz clic para ver la respuesta</span>
@@ -31,7 +38,7 @@ const Flashcard = ({ question, answer, index }) => {
             <span className="card-number">Tarjeta {index + 1}</span>
           </div>
           <div className="flashcard-content answer-content">
-            <p>{answer}</p>
+            <p dangerouslySetInnerHTML={{ __html: formatText(answer) }} />
           </div>
           <div className="flashcard-footer">
             <span>👆 Haz clic para volver</span>
