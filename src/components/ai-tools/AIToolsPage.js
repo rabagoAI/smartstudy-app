@@ -1,10 +1,11 @@
 // src/components/ai-tools/AIToolsPage.js
 import React, { useState, useEffect } from 'react';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
-import { useAuth } from '../../AuthContext'; // ✅ Para obtener el UID del usuario
-import { db } from '../../firebase'; // ✅ Para guardar en Firestore
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'; // ✅ Funciones de Firestore
-import { Link } from 'react-router-dom'; // ✅ Para enlazar al historial
+import { useAuth } from '../../AuthContext';
+import { db } from '../../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Link } from 'react-router-dom';
+import SEO from '../common/SEO';
 import './AIToolsPage.css';
 
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
@@ -18,24 +19,20 @@ function AIToolsPage() {
     const [quizData, setQuizData] = useState(null);
     const [showAnswers, setShowAnswers] = useState(false);
 
-    // ✅ Obtener usuario actual
     const { currentUser } = useAuth();
 
     useEffect(() => {
         GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }, []);
 
-    // ✅ Función para seleccionar herramienta (sin limpiar el PDF)
     const handleSelectTool = (selectedTool) => {
         setTool(selectedTool);
-        setText(''); // Solo limpiamos el texto manual
+        setText('');
         setResult('');
         setQuizData(null);
         setShowAnswers(false);
-        // ✅ NO limpiamos pdfFile aquí → se mantiene entre herramientas
     };
 
-    // ✅ Función para limpiar el archivo PDF manualmente
     const clearFile = () => {
         setPdfFile(null);
         document.getElementById('pdf-upload').value = null;
@@ -95,7 +92,6 @@ function AIToolsPage() {
         });
     };
 
-    // ✅ Función para copiar texto al portapapeles
     const copyToClipboard = async (textToCopy) => {
         try {
             await navigator.clipboard.writeText(textToCopy);
@@ -106,7 +102,6 @@ function AIToolsPage() {
         }
     };
 
-    // ✅ Función para descargar texto como archivo
     const downloadText = (textToDownload, filename) => {
         const element = document.createElement('a');
         const file = new Blob([textToDownload], { type: 'text/plain' });
@@ -183,7 +178,7 @@ function AIToolsPage() {
                 return;
             }
 
-            // ✅ Guardar en historial de IA si el usuario está autenticado
+            // Guardar en historial de IA
             if (currentUser) {
                 try {
                     const promptText = pdfFile ? "📄 PDF cargado" : text.trim();
@@ -201,7 +196,6 @@ function AIToolsPage() {
                     console.log('✅ Historial de IA guardado');
                 } catch (saveError) {
                     console.error('❌ Error al guardar en historial:', saveError);
-                    // No mostramos alerta al usuario, solo logueamos
                 }
             }
 
@@ -231,222 +225,231 @@ function AIToolsPage() {
     };
 
     return (
-        <section className="ai-tools">
-            <div className="container">
-                <h2 className="section-title">Herramientas de Inteligencia Artificial</h2>
-                <p className="subtitle">Potencia tus estudios con IA: resume textos, genera cuestionarios o explica conceptos.</p>
+        <>
+            {/* ✅ Añade el componente SEO aquí */}
+            <SEO
+                title="Herramientas de IA - SmartStudy"
+                description="Resume textos, genera cuestionarios o explica conceptos con nuestra IA. Ideal para estudiantes de ESO."
+                image="https://res.cloudinary.com/ds7shn66t/image/upload/v1758618850/DeWatermark.ai_1758546785863_xbsigz.jpg"
+                url="https://smartstudy.vercel.app/herramientas-ia"
+            />
 
-                {/* ✅ Botón para ver historial (solo si está autenticado) */}
-                {currentUser && (
-                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                        <Link to="/historial-ia" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>
-                            📚 Ver mi historial de IA
-                        </Link>
+            <section className="ai-tools">
+                <div className="container">
+                    <h2 className="section-title">Herramientas de Inteligencia Artificial</h2>
+                    <p className="subtitle">Potencia tus estudios con IA: resume textos, genera cuestionarios o explica conceptos.</p>
+
+                    {currentUser && (
+                        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                            <Link to="/historial-ia" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>
+                                📚 Ver mi historial de IA
+                            </Link>
+                        </div>
+                    )}
+
+                    <div className="tool-selection">
+                        <button
+                            className={`tool-card ${tool === 'resumen' ? 'active' : ''}`}
+                            onClick={() => handleSelectTool('resumen')}
+                        >
+                            <h3><i className="fas fa-file-alt"></i> Crea un Resumen</h3>
+                            <p>Convierte textos largos en resúmenes claros y estructurados.</p>
+                        </button>
+                        <button
+                            className={`tool-card ${tool === 'cuestionario' ? 'active' : ''}`}
+                            onClick={() => handleSelectTool('cuestionario')}
+                        >
+                            <h3><i className="fas fa-question-circle"></i> Genera un Cuestionario</h3>
+                            <p>Crea preguntas de estudio con 4 opciones cada una.</p>
+                        </button>
+                        <button
+                            className={`tool-card ${tool === 'explicar' ? 'active' : ''}`}
+                            onClick={() => handleSelectTool('explicar')}
+                        >
+                            <h3><i className="fas fa-lightbulb"></i> Explica un Concepto</h3>
+                            <p>Pregunta cualquier duda y recibe una explicación sencilla.</p>
+                        </button>
                     </div>
-                )}
 
-                <div className="tool-selection">
-                    <button
-                        className={`tool-card ${tool === 'resumen' ? 'active' : ''}`}
-                        onClick={() => handleSelectTool('resumen')}
-                    >
-                        <h3><i className="fas fa-file-alt"></i> Crea un Resumen</h3>
-                        <p>Convierte textos largos en resúmenes claros y estructurados.</p>
-                    </button>
-                    <button
-                        className={`tool-card ${tool === 'cuestionario' ? 'active' : ''}`}
-                        onClick={() => handleSelectTool('cuestionario')}
-                    >
-                        <h3><i className="fas fa-question-circle"></i> Genera un Cuestionario</h3>
-                        <p>Crea preguntas de estudio con 4 opciones cada una.</p>
-                    </button>
-                    <button
-                        className={`tool-card ${tool === 'explicar' ? 'active' : ''}`}
-                        onClick={() => handleSelectTool('explicar')}
-                    >
-                        <h3><i className="fas fa-lightbulb"></i> Explica un Concepto</h3>
-                        <p>Pregunta cualquier duda y recibe una explicación sencilla.</p>
-                    </button>
-                </div>
+                    {tool && (
+                        <div className="tool-interface">
+                            <div className="file-preview">
+                                {pdfFile && (
+                                    <div className="file-info">
+                                        <i className="fas fa-file-pdf"></i>
+                                        <span>{pdfFile.name}</span>
+                                        <button 
+                                            className="remove-file" 
+                                            onClick={clearFile}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="file-input-container">
+                                <label htmlFor="pdf-upload" className="file-label">
+                                    {pdfFile ? 'Cambiar archivo PDF' : 'Sube un archivo PDF'}
+                                </label>
+                                <input
+                                    id="pdf-upload"
+                                    type="file"
+                                    accept="application/pdf"
+                                    onChange={handleFileChange}
+                                    className="hidden-input"
+                                />
+                            </div>
+                            <p className="or-text">o escribe tu pregunta/concepto:</p>
+                            <textarea
+                                className="tool-textarea"
+                                rows="8"
+                                placeholder="Ej: ¿Qué es la fotosíntesis? o Explica el teorema de Pitágoras..."
+                                value={text}
+                                onChange={(e) => {
+                                    setText(e.target.value);
+                                    if (pdfFile) {
+                                        clearFile();
+                                    }
+                                }}
+                                disabled={!!pdfFile}
+                            ></textarea>
+                            <button
+                                className="btn btn-primary generate-btn"
+                                onClick={handleGenerate}
+                                disabled={isLoading || (!text.trim() && !pdfFile)}
+                            >
+                                {isLoading ? (
+                                    <span className="loading-text">
+                                        <span className="spinner"></span>
+                                        Generando con IA...
+                                    </span>
+                                ) : 'Generar Contenido'}
+                            </button>
+                        </div>
+                    )}
 
-                {tool && (
-                    <div className="tool-interface">
-                        <div className="file-preview">
-                            {pdfFile && (
-                                <div className="file-info">
-                                    <i className="fas fa-file-pdf"></i>
-                                    <span>{pdfFile.name}</span>
+                    {isLoading && (
+                        <div className="generating-message">
+                            <div className="spinner-large"></div>
+                            <p>Estamos procesando tu contenido con IA. Esto puede tardar unos segundos...</p>
+                            <p className="tip">💡 Consejo: Mientras esperas, puedes preparar tu siguiente pregunta.</p>
+                        </div>
+                    )}
+
+                    {quizData && (
+                        <div className="result-container quiz-result">
+                            <div className="result-header">
+                                <h3><i className="fas fa-graduation-cap"></i> Tu Cuestionario de Estudio</h3>
+                                <div className="result-actions">
                                     <button 
-                                        className="remove-file" 
-                                        onClick={clearFile}
+                                        className="btn btn-outline copy-btn"
+                                        onClick={() => {
+                                            const quizText = quizData.map((q, i) => 
+                                                `${i+1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65+j)}. ${opt}`).join('\n')}\n`
+                                            ).join('\n');
+                                            copyToClipboard(quizText);
+                                        }}
                                     >
-                                        ✕
+                                        <i className="fas fa-copy"></i> Copiar
+                                    </button>
+                                    <button 
+                                        className="btn btn-outline download-btn"
+                                        onClick={() => {
+                                            const quizText = quizData.map((q, i) => 
+                                                `${i+1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65+j)}. ${opt}`).join('\n')}\n`
+                                            ).join('\n');
+                                            downloadText(quizText, 'cuestionario.txt');
+                                        }}
+                                    >
+                                        <i className="fas fa-download"></i> Descargar
                                     </button>
                                 </div>
-                            )}
-                        </div>
-                        <div className="file-input-container">
-                            <label htmlFor="pdf-upload" className="file-label">
-                                {pdfFile ? 'Cambiar archivo PDF' : 'Sube un archivo PDF'}
-                            </label>
-                            <input
-                                id="pdf-upload"
-                                type="file"
-                                accept="application/pdf"
-                                onChange={handleFileChange}
-                                className="hidden-input"
-                            />
-                        </div>
-                        <p className="or-text">o escribe tu pregunta/concepto:</p>
-                        <textarea
-                            className="tool-textarea"
-                            rows="8"
-                            placeholder="Ej: ¿Qué es la fotosíntesis? o Explica el teorema de Pitágoras..."
-                            value={text}
-                            onChange={(e) => {
-                                setText(e.target.value);
-                                if (pdfFile) {
-                                    clearFile(); // Limpiar PDF si se empieza a escribir
-                                }
-                            }}
-                            disabled={!!pdfFile}
-                        ></textarea>
-                        <button
-                            className="btn btn-primary generate-btn"
-                            onClick={handleGenerate}
-                            disabled={isLoading || (!text.trim() && !pdfFile)}
-                        >
-                            {isLoading ? (
-                                <span className="loading-text">
-                                    <span className="spinner"></span>
-                                    Generando con IA...
-                                </span>
-                            ) : 'Generar Contenido'}
-                        </button>
-                    </div>
-                )}
-
-                {isLoading && (
-                    <div className="generating-message">
-                        <div className="spinner-large"></div>
-                        <p>Estamos procesando tu contenido con IA. Esto puede tardar unos segundos...</p>
-                        <p className="tip">💡 Consejo: Mientras esperas, puedes preparar tu siguiente pregunta.</p>
-                    </div>
-                )}
-
-                {quizData && (
-                    <div className="result-container quiz-result">
-                        <div className="result-header">
-                            <h3><i className="fas fa-graduation-cap"></i> Tu Cuestionario de Estudio</h3>
-                            <div className="result-actions">
-                                <button 
-                                    className="btn btn-outline copy-btn"
-                                    onClick={() => {
-                                        const quizText = quizData.map((q, i) => 
-                                            `${i+1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65+j)}. ${opt}`).join('\n')}\n`
-                                        ).join('\n');
-                                        copyToClipboard(quizText);
-                                    }}
-                                >
-                                    <i className="fas fa-copy"></i> Copiar
-                                </button>
-                                <button 
-                                    className="btn btn-outline download-btn"
-                                    onClick={() => {
-                                        const quizText = quizData.map((q, i) => 
-                                            `${i+1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65+j)}. ${opt}`).join('\n')}\n`
-                                        ).join('\n');
-                                        downloadText(quizText, 'cuestionario.txt');
-                                    }}
-                                >
-                                    <i className="fas fa-download"></i> Descargar
-                                </button>
                             </div>
-                        </div>
-                        {quizData.map((q, index) => (
-                            <div key={index} className="quiz-question">
-                                <h4>{index + 1}. {q.question}</h4>
-                                <ul className="options-list">
-                                    {q.options.map((option, optIndex) => (
-                                        <li 
-                                            key={optIndex}
-                                            className={`option-item ${showAnswers && option === q.correctAnswer ? 'correct' : ''}`}
-                                        >
-                                            <span className="option-letter">{String.fromCharCode(65 + optIndex)}.</span>
-                                            {option}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                        <button 
-                            className="btn btn-secondary toggle-answers"
-                            onClick={() => setShowAnswers(!showAnswers)}
-                        >
-                            {showAnswers ? 'Ocultar Respuestas' : 'Mostrar Respuestas'}
-                        </button>
-                    </div>
-                )}
-
-                {result && tool === 'resumen' && (
-                    <div className="result-container">
-                        <div className="result-header">
-                            <h3><i className="fas fa-file-alt"></i> Resultado de la IA</h3>
-                            <div className="result-actions">
-                                <button 
-                                    className="btn btn-outline copy-btn"
-                                    onClick={() => copyToClipboard(result)}
-                                >
-                                    <i className="fas fa-copy"></i> Copiar
-                                </button>
-                                <button 
-                                    className="btn btn-outline download-btn"
-                                    onClick={() => downloadText(result, 'resumen.txt')}
-                                >
-                                    <i className="fas fa-download"></i> Descargar
-                                </button>
-                            </div>
-                        </div>
-                        <div className="result-text">
-                            {result.split('\n').map((line, index) => (
-                                <p key={index} className={line.startsWith('-') ? 'bullet-point' : ''}>
-                                    {line}
-                                </p>
+                            {quizData.map((q, index) => (
+                                <div key={index} className="quiz-question">
+                                    <h4>{index + 1}. {q.question}</h4>
+                                    <ul className="options-list">
+                                        {q.options.map((option, optIndex) => (
+                                            <li 
+                                                key={optIndex}
+                                                className={`option-item ${showAnswers && option === q.correctAnswer ? 'correct' : ''}`}
+                                            >
+                                                <span className="option-letter">{String.fromCharCode(65 + optIndex)}.</span>
+                                                {option}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             ))}
+                            <button 
+                                className="btn btn-secondary toggle-answers"
+                                onClick={() => setShowAnswers(!showAnswers)}
+                            >
+                                {showAnswers ? 'Ocultar Respuestas' : 'Mostrar Respuestas'}
+                            </button>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {result && tool === 'explicar' && (
-                    <div className="result-container">
-                        <div className="result-header">
-                            <h3><i className="fas fa-lightbulb"></i> Explicación</h3>
-                            <div className="result-actions">
-                                <button 
-                                    className="btn btn-outline copy-btn"
-                                    onClick={() => copyToClipboard(result)}
-                                >
-                                    <i className="fas fa-copy"></i> Copiar
-                                </button>
-                                <button 
-                                    className="btn btn-outline download-btn"
-                                    onClick={() => downloadText(result, 'explicacion.txt')}
-                                >
-                                    <i className="fas fa-download"></i> Descargar
-                                </button>
+                    {result && tool === 'resumen' && (
+                        <div className="result-container">
+                            <div className="result-header">
+                                <h3><i className="fas fa-file-alt"></i> Resultado de la IA</h3>
+                                <div className="result-actions">
+                                    <button 
+                                        className="btn btn-outline copy-btn"
+                                        onClick={() => copyToClipboard(result)}
+                                    >
+                                        <i className="fas fa-copy"></i> Copiar
+                                    </button>
+                                    <button 
+                                        className="btn btn-outline download-btn"
+                                        onClick={() => downloadText(result, 'resumen.txt')}
+                                    >
+                                        <i className="fas fa-download"></i> Descargar
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="result-text">
+                                {result.split('\n').map((line, index) => (
+                                    <p key={index} className={line.startsWith('-') ? 'bullet-point' : ''}>
+                                        {line}
+                                    </p>
+                                ))}
                             </div>
                         </div>
-                        <div className="result-text">
-                            {result.split('\n').map((line, index) => (
-                                <p key={index} className={line.startsWith('-') ? 'bullet-point' : ''}>
-                                    {line}
-                                </p>
-                            ))}
+                    )}
+
+                    {result && tool === 'explicar' && (
+                        <div className="result-container">
+                            <div className="result-header">
+                                <h3><i className="fas fa-lightbulb"></i> Explicación</h3>
+                                <div className="result-actions">
+                                    <button 
+                                        className="btn btn-outline copy-btn"
+                                        onClick={() => copyToClipboard(result)}
+                                    >
+                                        <i className="fas fa-copy"></i> Copiar
+                                    </button>
+                                    <button 
+                                        className="btn btn-outline download-btn"
+                                        onClick={() => downloadText(result, 'explicacion.txt')}
+                                    >
+                                        <i className="fas fa-download"></i> Descargar
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="result-text">
+                                {result.split('\n').map((line, index) => (
+                                    <p key={index} className={line.startsWith('-') ? 'bullet-point' : ''}>
+                                        {line}
+                                    </p>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
-        </section>
+                    )}
+                </div>
+            </section>
+        </>
     );
 }
 

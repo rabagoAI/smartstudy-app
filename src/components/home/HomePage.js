@@ -1,5 +1,4 @@
 // src/components/home/HomePage.js
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Hero from './Hero';
@@ -7,11 +6,19 @@ import SubjectsSection from './SubjectsSection';
 import FeaturesSection from '../common/FeaturesSection';
 import Testimonials from '../common/Testimonials';
 import AIToolsTeaser from './AIToolsTeaser';
-import './HomePage.css'; // Añadiremos estilos personalizados
+import SEO from '../common/SEO'; // ✅ Importa el componente SEO
+import './HomePage.css';
 
 function HomePage() {
   return (
     <>
+      <SEO
+        title="SmartStudy - Plataforma Educativa con IA"
+        description="Mejora tus notas con apuntes organizados, exámenes resueltos y herramientas de IA para estudiantes de ESO."
+        image="https://res.cloudinary.com/ds7shn66t/image/upload/v1758619415/Banner_Conceptual_SmartStudy_xc8zaf.jpg"
+        url="https://smartstudy.vercel.app"
+      />
+
       <Hero />
 
       {/* ✅ Nueva sección: Llamada a la acción */}
