@@ -45,13 +45,13 @@
 .flashcard-back {
   background: linear-gradient(135deg, #06d6a0, #118ab2);
   color: white;
-  transform: rotateY(180deg);
+  transform: rotateY(180deg); /* ✅ Gira el contenedor para mostrar el dorso */
   border-radius: 16px;
 }
 
-/* ✅ Aquí es clave: No rotar el contenido del dorso */
+/* ✅ Añade esto para que el texto del dorso NO se invierta */
 .flashcard-back .flashcard-content p {
-  transform: rotate(180deg);
+  transform: rotateY(180deg); /* ✅ Gira el texto 180 grados para que se lea correctamente */
   text-align: center;
   line-height: 1.5;
 }
@@ -63,7 +63,7 @@
   margin-bottom: 20px;
 }
 
-.subject-tag {
+.card-number {
   background: rgba(255, 255, 255, 0.2);
   padding: 6px 12px;
   border-radius: 20px;
@@ -95,4 +95,19 @@
   font-size: 0.85rem;
   opacity: 0.9;
   margin-top: 15px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .flashcard {
+    height: 250px;
+  }
+  
+  .flashcard-content p {
+    font-size: 1rem;
+  }
+  
+  .answer-content p {
+    font-size: 0.95rem;
+  }
 }
