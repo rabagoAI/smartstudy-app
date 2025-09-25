@@ -1,16 +1,18 @@
+// src/components/home/Hero.js
 import React from 'react';
+import './Hero.css';
 
 function Hero() {
   return (
     <section className="hero">
       <div className="container">
         <div className="hero-content">
-          <h1>La plataforma de apoyo educativo para estudiantes de ESO</h1>
-          <p>Encuentra recursos, apuntes y ayuda para todas tus asignaturas de 1º de la ESO</p>
-          <div className="search-box">
-            <input type="text" placeholder="Buscar apuntes, exámenes o temas..." />
-            <button><i className="fas fa-search"></i></button>
-          </div>
+          {/* Imagen de fondo */}
+          <img 
+            src="https://res.cloudinary.com/ds7shn66t/image/upload/v1758619415/Banner_Conceptual_SmartStudy_xc8zaf.jpg" 
+            alt="SmartStudy - Aprende de forma inteligente"
+            className="hero-image"
+          />
         </div>
       </div>
     </section>

@@ -1,0 +1,74 @@
+/* src/components/home/Hero.css */
+.hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 80px 20px;
+  text-align: center;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 600px; /* Altura mínima para contenido */
+}
+
+.hero-image {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 600px; /* Altura máxima */
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+  animation: fadeInUp 1s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero {
+    padding: 60px 15px;
+  }
+  
+  .hero-content {
+    min-height: 400px;
+  }
+  
+  .hero-image {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 40px 10px;
+  }
+  
+  .hero-content {
+    min-height: 300px;
+  }
+  
+  .hero-image {
+    max-height: 300px;
+  }
+}

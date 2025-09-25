@@ -21,8 +21,8 @@ function HomePage() {
 
       <Hero />
 
-      {/* ✅ Nueva sección: Llamada a la acción */}
-      <section className="home-cta">
+      {/* ✅ Eliminado: La sección de CTA con botones de login/register */}
+      {/* <section className="home-cta">
         <div className="container">
           <h2>¿Listo para mejorar tus notas?</h2>
           <p>Únete a miles de estudiantes que ya estudian con SmartStudy.</p>
@@ -35,7 +35,7 @@ function HomePage() {
             </Link>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <SubjectsSection />
       <FeaturesSection />
