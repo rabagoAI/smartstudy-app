@@ -1,19 +1,25 @@
-// src/components/common/Flashcard.js
+// src/components/common/FlashCard.js
 import React, { useState } from 'react';
 import './Flashcard.css';
 
-const Flashcard = ({ question, answer, index }) => {
+const FlashCard = ({ 
+  question, 
+  answer, 
+  index, 
+  isLearned = false,
+  onToggleLearned 
+}) => {
   const [isFlipped, setIsFlipped] = useState(false);
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
   };
 
-  // ✅ Formatear el texto para que se muestre correctamente
-  const formatText = (text) => {
-    if (!text) return '';
-    // Reemplazar saltos de línea por <br />
-    return text.replace(/\n/g, '<br />');
+  const handleToggleLearned = (e) => {
+    e.stopPropagation(); // Evita que se gire la tarjeta al hacer clic en el botón
+    if (onToggleLearned) {
+      onToggleLearned(index);
+    }
   };
 
   return (
@@ -23,9 +29,16 @@ const Flashcard = ({ question, answer, index }) => {
         <div className="flashcard-front">
           <div className="flashcard-header">
             <span className="card-number">Tarjeta {index + 1}</span>
+            <button 
+              className={`learned-btn ${isLearned ? 'learned' : ''}`}
+              onClick={handleToggleLearned}
+              title={isLearned ? "Ya aprendida" : "Marcar como aprendida"}
+            >
+              {isLearned ? '✅' : '🤔'}
+            </button>
           </div>
           <div className="flashcard-content">
-            <p dangerouslySetInnerHTML={{ __html: formatText(question) }} />
+            <p>{question}</p>
           </div>
           <div className="flashcard-footer">
             <span>👆 Haz clic para ver la respuesta</span>
@@ -36,9 +49,16 @@ const Flashcard = ({ question, answer, index }) => {
         <div className="flashcard-back">
           <div className="flashcard-header">
             <span className="card-number">Tarjeta {index + 1}</span>
+            <button 
+              className={`learned-btn ${isLearned ? 'learned' : ''}`}
+              onClick={handleToggleLearned}
+              title={isLearned ? "Ya aprendida" : "Marcar como aprendida"}
+            >
+              {isLearned ? '✅' : '🤔'}
+            </button>
           </div>
           <div className="flashcard-content answer-content">
-            <p dangerouslySetInnerHTML={{ __html: formatText(answer) }} />
+            <p>{answer}</p>
           </div>
           <div className="flashcard-footer">
             <span>👆 Haz clic para volver</span>
@@ -49,4 +69,4 @@ const Flashcard = ({ question, answer, index }) => {
   );
 };
 
-export default Flashcard;
+export default FlashCard;

@@ -1,46 +1,80 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+// src/components/common/FlashCard.js
+import React, { useState } from 'react';
+import './Flashcard.css';
 
-function FeaturesSection() {
+const FlashCard = ({ 
+  question, 
+  answer, 
+  index, 
+  isLearned = false,
+  onToggleLearned 
+}) => {
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [localIsLearned, setLocalIsLearned] = useState(isLearned);
+
+  const handleFlip = () => {
+    setIsFlipped(!isFlipped);
+  };
+
+  const handleToggleLearned = (e) => {
+    e.stopPropagation(); // Evita que se gire la tarjeta al hacer clic en el botón
+    
+    // Si hay función externa, la usa; si no, maneja el estado localmente
+    if (onToggleLearned) {
+      onToggleLearned(index);
+    } else {
+      setLocalIsLearned(!localIsLearned);
+    }
+  };
+
+  // Usa el estado externo si existe, si no el local
+  const currentLearnedState = onToggleLearned ? isLearned : localIsLearned;
+
   return (
-    <section className="features">
-      <div className="container">
-        <h2 className="section-title">¿Por qué usar nuestra plataforma?</h2>
-        <div className="features-grid">
-          <div className="feature">
-            <i className="fas fa-book-open"></i>
-            <h3>Apuntes Organizados</h3>
-            <p>Encuentra apuntes claros y bien estructurados para cada asignatura.</p>
+    <div className="flashcard-container" onClick={handleFlip}>
+      <div className={`flashcard ${isFlipped ? 'flipped' : ''}`}>
+        {/* Frente: Pregunta */}
+        <div className="flashcard-front">
+          <div className="flashcard-header">
+            <span className="card-number">Tarjeta {index + 1}</span>
+            <button 
+              className={`learned-btn ${currentLearnedState ? 'learned' : ''}`}
+              onClick={handleToggleLearned}
+              title={currentLearnedState ? "Ya aprendida" : "Marcar como aprendida"}
+            >
+              {currentLearnedState ? '✅' : '🤔'}
+            </button>
           </div>
-          <div className="feature">
-            <i className="fas fa-check-circle"></i>
-            <h3>Exámenes Resueltos</h3>
-            <p>Practica con exámenes de años anteriores y comprueba tus respuestas.</p>
+          <div className="flashcard-content">
+            <p>{question}</p>
           </div>
-          <div className="feature">
-            <i className="fas fa-users"></i>
-            <h3>Comunidad Activa</h3>
-            <p>Resuelve dudas con otros estudiantes y profesores de la comunidad.</p>
+          <div className="flashcard-footer">
+            <span>👆 Haz clic para ver la respuesta</span>
           </div>
-          <div className="feature">
-            <i className="fas fa-video"></i>
-            <h3>Videotutoriales</h3>
-            <p>Aprende con videos explicativos de los conceptos más difíciles.</p>
+        </div>
+
+        {/* Dorso: Respuesta */}
+        <div className="flashcard-back">
+          <div className="flashcard-header">
+            <span className="card-number">Tarjeta {index + 1}</span>
+            <button 
+              className={`learned-btn ${currentLearnedState ? 'learned' : ''}`}
+              onClick={handleToggleLearned}
+              title={currentLearnedState ? "Ya aprendida" : "Marcar como aprendida"}
+            >
+              {currentLearnedState ? '✅' : '🤔'}
+            </button>
           </div>
-          <div className="feature">
-            <i className="fas fa-mobile-alt"></i>
-            <h3>Acceso Móvil</h3>
-            <p>Estudia desde cualquier dispositivo, en cualquier momento.</p>
+          <div className="flashcard-content answer-content">
+            <p>{answer}</p>
           </div>
-          <div className="feature">
-            <i className="fas fa-graduation-cap"></i>
-            <h3>Preparación Eficaz</h3>
-            <p>Mejora tus notas con nuestros métodos de estudio probados.</p>
+          <div className="flashcard-footer">
+            <span>👆 Haz clic para volver</span>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
-}
+};
 
-export default FeaturesSection;
+export default FlashCard;
