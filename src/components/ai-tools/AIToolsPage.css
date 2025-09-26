@@ -26,8 +26,8 @@
 }
 
 .tool-card {
-  background: white;
-  border: 2px solid #e9ecef;
+  background: linear-gradient(135deg, #E3F2FD, #BBDEFB); /* Azul claro */
+  border: 2px solid #90CAF9; /* Borde azul más oscuro */
   border-radius: 16px;
   padding: 25px;
   text-align: center;
@@ -35,15 +35,14 @@
   transition: all 0.3s ease;
   width: 280px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  color: #0D47A1; /* Texto azul oscuro para contraste */
 }
-
 .tool-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
 }
-
 .tool-card.active {
-  border-color: #4361ee;
+  border-color: #1976D2;
   box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
   transform: translateY(-8px);
 }
