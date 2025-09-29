@@ -1,5 +1,4 @@
 /* src/components/common/Header.css */
-
 .main-header {
     background: linear-gradient(90deg, #4A148C 0%, #880E4F 100%);
     color: #fff;
@@ -16,6 +15,7 @@
     align-items: center;
     max-width: 1200px;
     margin: 0 auto;
+    position: relative;
 }
 
 .header-logo .logo-text {
@@ -25,7 +25,8 @@
     text-decoration: none;
 }
 
-.header-nav {
+/* Navegación desktop */
+.desktop-nav {
     flex-grow: 1;
     display: flex;
     justify-content: center;
@@ -57,7 +58,8 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.header-actions {
+/* Botones desktop */
+.desktop-actions {
     display: flex;
     gap: 1rem;
 }
@@ -93,22 +95,49 @@
     transform: scale(1.05);
 }
 
+/* Botón hamburguesa - oculto en desktop */
 .menu-toggle {
     display: none;
-    font-size: 1.5rem;
     cursor: pointer;
     padding: 0.5rem;
     border-radius: 8px;
     transition: background-color 0.2s;
+    color: white;
 }
 
 .menu-toggle:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Navegación móvil - oculta por defecto */
+.mobile-nav {
+    display: none;
+}
+
 /* Media Queries para diseño responsive */
 @media (max-width: 768px) {
-    .header-nav {
+    .header-content {
+        flex-wrap: nowrap;
+    }
+
+    /* Ocultar navegación y botones desktop en móvil */
+    .desktop-nav,
+    .desktop-actions {
+        display: none;
+    }
+
+    /* Mostrar botón hamburguesa en móvil */
+    .menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: auto;
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Estilos para el menú móvil */
+    .mobile-nav {
         display: none;
         flex-direction: column;
         width: 100%;
@@ -123,9 +152,8 @@
         z-index: 100;
     }
 
-    .header-nav.open {
+    .mobile-nav.open {
         display: flex;
-        animation: slideDown 0.3s ease-out;
     }
 
     @keyframes slideDown {
@@ -139,31 +167,38 @@
         }
     }
 
-    .nav-links {
+    .mobile-nav .nav-links {
         flex-direction: column;
         gap: 0.5rem;
+        margin-bottom: 1rem;
     }
 
-    .nav-links li {
+    .mobile-nav .nav-links li {
         margin: 0;
     }
 
-    .nav-links a {
+    .mobile-nav .nav-links a {
         display: block;
         padding: 1rem;
         margin: 0;
         border-radius: 0;
     }
 
-    .nav-links a:hover {
+    .mobile-nav .nav-links a:hover {
         background-color: rgba(255, 255, 255, 0.1);
     }
 
-    .header-actions {
-        display: none;
+    /* Botones de autenticación en menú móvil */
+    .mobile-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0 1rem;
     }
 
-    .menu-toggle {
-        display: block;
+    .mobile-actions .btn {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1rem;
     }
 }
