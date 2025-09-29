@@ -1,7 +1,7 @@
 // src/components/ai-tools/AIToolsPage.js
 import React, { useState, useEffect } from 'react';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
-import { useAuth } from '../../context/AuthContext'; // ✅ Ruta corregida
+import { useAuth } from '../../context/AuthContext';
 import { db } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
@@ -80,7 +80,7 @@ function AIToolsPage() {
                         reject('Error: El PDF no contiene texto extraíble.');
                         return;
                     }
-                    resolve(fullText);
+                    resolve(fullText.substring(0, 2000)); // Limitar a 2000 chars para evitar límites de tokens
                 } catch (error) {
                     console.error('Error detallado al procesar PDF:', error);
                     reject('Error al procesar el archivo PDF: ' + (error.message || 'Error desconocido'));
@@ -120,6 +120,13 @@ function AIToolsPage() {
             return;
         }
 
+        // Verificación de API Key (para depuración - remover después)
+        console.log('Clave API cargada:', apiKey ? 'Sí (oculta)' : 'No');
+        if (!apiKey) {
+            setResult('Error: Clave API no encontrada. Verifica .env.local.');
+            return;
+        }
+
         setIsLoading(true);
         setResult('');
         setQuizData(null);
@@ -130,6 +137,7 @@ function AIToolsPage() {
             if (pdfFile) {
                 try {
                     content = await extractTextFromPdf(pdfFile);
+                    console.log('Texto extraído del PDF (primeros 200 chars):', content.substring(0, 200) + '...');
                     if (!content || content.trim().length === 0) {
                         setResult('El archivo PDF no contiene texto extraíble.');
                         return;
@@ -140,50 +148,101 @@ function AIToolsPage() {
                 }
             }
 
-            // ✅ Prompt mejorado con instrucciones integradas (sin systemInstruction)
-            let prompt = "";
+            let systemInstruction = "";
+
             if (tool === 'resumen') {
-                prompt = `Eres un asistente de estudio especializado en español. Resume el siguiente texto de manera clara, estructurada y concisa. Usa viñetas, títulos y subtítulos cuando sea apropiado. El resumen debe ser fácil de entender para estudiantes de ESO.\n\nTexto: ${content}`;
+                systemInstruction = "Eres un asistente de estudio especializado en español. Resume el texto proporcionado de manera clara, estructurada y concisa. Usa viñetas, títulos y subtítulos cuando sea apropiado. El resumen debe ser fácil de entender para estudiantes de ESO.";
             } else if (tool === 'cuestionario') {
-                prompt = `Eres un profesor de ESO que enseña en español. Genera un cuestionario de 5 preguntas de opción múltiple en español basado en el siguiente texto. Cada pregunta debe tener 4 opciones, solo una correcta. Mezcla el orden de las opciones. Presenta el resultado como un objeto JSON con una propiedad "quiz" que es un array de objetos. Cada objeto debe tener: "question" (string), "options" (array de 4 strings), "correctAnswer" (string exacto de la opción correcta).\n\nTexto: ${content}`;
+                systemInstruction = "Eres un profesor de ESO que enseña en español. Genera un cuestionario de 5 preguntas de opción múltiple en español. Cada pregunta debe tener 4 opciones, solo una correcta. Mezcla el orden de las opciones. Devuelve SOLO un objeto JSON válido con una propiedad `quiz` que es un array de objetos. Cada objeto debe tener: `question` (string), `options` (array de 4 strings), `correctAnswer` (string exacto de la opción correcta). No incluyas texto adicional, solo el JSON.";
             } else if (tool === 'explicar') {
-                prompt = `Eres un profesor de ESO que explica conceptos en español de forma clara, sencilla y amigable. Usa ejemplos cotidianos, analogías o pasos si es necesario. La explicación debe ser fácil de entender para un estudiante de 12-14 años. No uses jerga técnica sin explicarla. Si el usuario pregunta sobre un concepto, responde con una explicación estructurada, con título, desarrollo y ejemplo práctico.\n\nConcepto: ${content}`;
+                systemInstruction = "Eres un profesor de ESO que explica conceptos en español de forma clara, sencilla y amigable. Usa ejemplos cotidianos, analogías o pasos si es necesario. La explicación debe ser fácil de entender para un estudiante de 12-14 años. No uses jerga técnica sin explicarla.";
             } else if (tool === 'tarjetas') {
-                prompt = `Eres un profesor de ESO que crea tarjetas didácticas en español. Genera 5 tarjetas en formato JSON basadas en el siguiente tema. Cada tarjeta debe tener: "question" (string) y "answer" (string). La pregunta debe ser clara y directa. La respuesta debe ser concisa y precisa. Presenta el resultado como un objeto JSON con una propiedad "cards" que es un array de objetos.\n\nTema: ${content}`;
+                systemInstruction = "Eres un profesor de ESO que crea tarjetas didácticas en español. Genera 5 tarjetas. Devuelve SOLO un objeto JSON válido con una propiedad `cards` que es un array de objetos. Cada objeto debe tener: `question` (string) y `answer` (string). No incluyas texto adicional, solo el JSON.";
             }
 
-            // ✅ Payload sin systemInstruction ni responseMimeType
+            // ✅ Instrucción + contenido combinados en un solo prompt
             const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 8192,
-                    topP: 0.95,
-                    topK: 40
-                }
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: `${systemInstruction}\n\n${content}` }
+                        ]
+                    }
+                ]
             };
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            // Log para depuración
+            console.log('Payload enviado a API:', JSON.stringify(payload, null, 2));
+
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }
+            );
 
             if (!response.ok) {
                 const errorData = await response.json();
+                console.error('❌ Error de API:', errorData);
                 throw new Error(errorData.error?.message || 'Error en la API');
             }
 
             const data = await response.json();
             const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-            if (!generatedText) {
-                setResult("No se pudo generar el resultado.");
-                return;
-            }
+if (!generatedText) {
+    setResult("No se pudo generar el resultado.");
+    return;
+}
 
-            // Guardar en historial de IA
-            if (currentUser) {
+console.log('Respuesta cruda de la API:', generatedText);
+
+let parsedData = null;
+try {
+    // ✅ Intentar parsear directamente
+    parsedData = JSON.parse(generatedText);
+} catch (parseError) {
+    console.error('Error parsing JSON directo:', parseError);
+    // ✅ Si falla, intentar extraer el JSON de la respuesta cruda
+    try {
+        // Buscar el primer '{' y el último '}'
+        const start = generatedText.indexOf('{');
+        const end = generatedText.lastIndexOf('}');
+        if (start !== -1 && end !== -1 && end > start) {
+            const jsonStr = generatedText.substring(start, end + 1);
+            parsedData = JSON.parse(jsonStr);
+            console.log('✅ JSON extraído con éxito:', parsedData);
+        } else {
+            throw new Error('No se pudo encontrar un objeto JSON en la respuesta.');
+        }
+    } catch (extractError) {
+        console.error('Error extrayendo JSON:', extractError);
+        setResult('Error: La API no devolvió un JSON válido. Respuesta cruda: ' + generatedText);
+        return;
+    }
+}
+
+// Procesar resultado según herramienta
+if (tool === 'cuestionario') {
+    if (parsedData.quiz && Array.isArray(parsedData.quiz)) {
+        setQuizData(parsedData.quiz);
+    } else {
+        setResult('Error: La API no devolvió un formato de cuestionario válido. Respuesta cruda: ' + generatedText);
+    }
+} else if (tool === 'tarjetas') {
+    if (parsedData.cards && Array.isArray(parsedData.cards)) {
+        setQuizData(parsedData.cards);
+    } else {
+        setResult('Error: La API no devolvió un formato de tarjetas válido. Respuesta cruda: ' + generatedText);
+    }
+} else {
+    setResult(generatedText);
+}
+            // Guardar historial en Firebase
+            if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === 'resumen' || tool === 'explicar')) {
                 try {
                     const promptText = pdfFile ? "📄 PDF cargado" : text.trim();
                     const title = tool === 'resumen' ? "Resumen generado" :
@@ -198,29 +257,9 @@ function AIToolsPage() {
                         timestamp: serverTimestamp(),
                         title: title
                     });
-                    console.log('✅ Historial de IA guardado');
                 } catch (saveError) {
                     console.error('❌ Error al guardar en historial:', saveError);
                 }
-            }
-
-            // Procesar resultado
-            if ((tool === 'cuestionario' || tool === 'tarjetas') && generatedText) {
-                try {
-                    const parsedData = JSON.parse(generatedText);
-                    if (tool === 'cuestionario' && Array.isArray(parsedData.quiz)) {
-                        setQuizData(parsedData.quiz);
-                    } else if (tool === 'tarjetas' && Array.isArray(parsedData.cards)) {
-                        setQuizData(parsedData.cards);
-                    } else {
-                        throw new Error('Formato inválido');
-                    }
-                } catch (parseError) {
-                    console.error('Error parsing JSON:', parseError);
-                    setResult('Error al generar el contenido. Por favor, inténtalo de nuevo.');
-                }
-            } else {
-                setResult(generatedText);
             }
 
         } catch (error) {
