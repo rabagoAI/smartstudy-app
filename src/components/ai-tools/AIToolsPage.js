@@ -1,12 +1,12 @@
 // src/components/ai-tools/AIToolsPage.js
 import React, { useState, useEffect } from 'react';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
-import { useAuth } from '../../AuthContext';
+import { useAuth } from '../../context/AuthContext'; // ✅ Ruta corregida
 import { db } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import SEO from '../common/SEO';
-import Flashcard from '../common/Flashcard'; // ✅ Importa el componente de tarjetas
+import Flashcard from '../common/Flashcard';
 import './AIToolsPage.css';
 
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
@@ -17,7 +17,7 @@ function AIToolsPage() {
     const [pdfFile, setPdfFile] = useState(null);
     const [result, setResult] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [quizData, setQuizData] = useState(null); // Reutilizado para tarjetas y cuestionarios
+    const [quizData, setQuizData] = useState(null);
     const [showAnswers, setShowAnswers] = useState(false);
 
     const { currentUser } = useAuth();
@@ -140,29 +140,27 @@ function AIToolsPage() {
                 }
             }
 
-            let systemInstruction = "";
-            let generationConfig = {};
-
+            // ✅ Prompt mejorado con instrucciones integradas (sin systemInstruction)
+            let prompt = "";
             if (tool === 'resumen') {
-                systemInstruction = "Eres un asistente de estudio especializado en español. Resume el texto proporcionado de manera clara, estructurada y concisa. Usa viñetas, títulos y subtítulos cuando sea apropiado. El resumen debe ser fácil de entender para estudiantes de ESO.";
+                prompt = `Eres un asistente de estudio especializado en español. Resume el siguiente texto de manera clara, estructurada y concisa. Usa viñetas, títulos y subtítulos cuando sea apropiado. El resumen debe ser fácil de entender para estudiantes de ESO.\n\nTexto: ${content}`;
             } else if (tool === 'cuestionario') {
-                systemInstruction = "Eres un profesor de ESO que enseña en español. Genera un cuestionario de 5 preguntas de opción múltiple en español. Cada pregunta debe tener 4 opciones, solo una correcta. Mezcla el orden de las opciones. Presenta el resultado como un objeto JSON con una propiedad `quiz` que es un array de objetos. Cada objeto debe tener: `question` (string), `options` (array de 4 strings), `correctAnswer` (string exacto de la opción correcta).";
-                generationConfig = {
-                    responseMimeType: "application/json"
-                };
+                prompt = `Eres un profesor de ESO que enseña en español. Genera un cuestionario de 5 preguntas de opción múltiple en español basado en el siguiente texto. Cada pregunta debe tener 4 opciones, solo una correcta. Mezcla el orden de las opciones. Presenta el resultado como un objeto JSON con una propiedad "quiz" que es un array de objetos. Cada objeto debe tener: "question" (string), "options" (array de 4 strings), "correctAnswer" (string exacto de la opción correcta).\n\nTexto: ${content}`;
             } else if (tool === 'explicar') {
-                systemInstruction = "Eres un profesor de ESO que explica conceptos en español de forma clara, sencilla y amigable. Usa ejemplos cotidianos, analogías o pasos si es necesario. La explicación debe ser fácil de entender para un estudiante de 12-14 años. No uses jerga técnica sin explicarla. Si el usuario pregunta sobre un concepto, responde con una explicación estructurada, con título, desarrollo y ejemplo práctico.";
+                prompt = `Eres un profesor de ESO que explica conceptos en español de forma clara, sencilla y amigable. Usa ejemplos cotidianos, analogías o pasos si es necesario. La explicación debe ser fácil de entender para un estudiante de 12-14 años. No uses jerga técnica sin explicarla. Si el usuario pregunta sobre un concepto, responde con una explicación estructurada, con título, desarrollo y ejemplo práctico.\n\nConcepto: ${content}`;
             } else if (tool === 'tarjetas') {
-                systemInstruction = "Eres un profesor de ESO que crea tarjetas didácticas en español. Genera 5 tarjetas en formato JSON. Cada tarjeta debe tener: `question` (string) y `answer` (string). La pregunta debe ser clara y directa. La respuesta debe ser concisa y precisa. Presenta el resultado como un objeto JSON con una propiedad `cards` que es un array de objetos.";
-                generationConfig = {
-                    responseMimeType: "application/json"
-                };
+                prompt = `Eres un profesor de ESO que crea tarjetas didácticas en español. Genera 5 tarjetas en formato JSON basadas en el siguiente tema. Cada tarjeta debe tener: "question" (string) y "answer" (string). La pregunta debe ser clara y directa. La respuesta debe ser concisa y precisa. Presenta el resultado como un objeto JSON con una propiedad "cards" que es un array de objetos.\n\nTema: ${content}`;
             }
 
+            // ✅ Payload sin systemInstruction ni responseMimeType
             const payload = {
-                contents: [{ parts: [{ text: content }] }],
-                systemInstruction: { parts: [{ text: systemInstruction }] },
-                generationConfig
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 8192,
+                    topP: 0.95,
+                    topK: 40
+                }
             };
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
@@ -207,29 +205,19 @@ function AIToolsPage() {
             }
 
             // Procesar resultado
-            if (tool === 'cuestionario' && generatedText) {
+            if ((tool === 'cuestionario' || tool === 'tarjetas') && generatedText) {
                 try {
                     const parsedData = JSON.parse(generatedText);
-                    if (Array.isArray(parsedData.quiz)) {
+                    if (tool === 'cuestionario' && Array.isArray(parsedData.quiz)) {
                         setQuizData(parsedData.quiz);
-                    } else {
-                        throw new Error('Formato de cuestionario inválido');
-                    }
-                } catch (parseError) {
-                    console.error('Error parsing JSON:', parseError);
-                    setResult('Error al generar el cuestionario. Por favor, inténtalo de nuevo.');
-                }
-            } else if (tool === 'tarjetas' && generatedText) {
-                try {
-                    const parsedData = JSON.parse(generatedText);
-                    if (Array.isArray(parsedData.cards)) {
+                    } else if (tool === 'tarjetas' && Array.isArray(parsedData.cards)) {
                         setQuizData(parsedData.cards);
                     } else {
-                        throw new Error('Formato de tarjetas inválido');
+                        throw new Error('Formato inválido');
                     }
                 } catch (parseError) {
                     console.error('Error parsing JSON:', parseError);
-                    setResult('Error al generar las tarjetas. Por favor, inténtalo de nuevo.');
+                    setResult('Error al generar el contenido. Por favor, inténtalo de nuevo.');
                 }
             } else {
                 setResult(generatedText);
