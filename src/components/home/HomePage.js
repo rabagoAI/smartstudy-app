@@ -13,10 +13,10 @@ function HomePage() {
   return (
     <>
       <SEO
-        title="SmartStudy - Plataforma Educativa con IA"
+        title="SmartStudIA - Plataforma Educativa con IA"
         description="Mejora tus notas con apuntes organizados, exámenes resueltos y herramientas de IA para estudiantes de ESO."
-        image="https://res.cloudinary.com/ds7shn66t/image/upload/v1758619415/Banner_Conceptual_SmartStudy_xc8zaf.jpg"
-        url="https://smartstudy.vercel.app"
+        image="https://res.cloudinary.com/ds7shn66t/image/upload/v1759232770/Banner_Producto_del_Dia_Promocion_Cafe_Azul_vi0xs4.jpg"
+        url="https://www.smartstudia.com/"
       />
 
       <Hero />

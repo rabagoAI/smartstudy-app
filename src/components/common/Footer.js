@@ -11,7 +11,7 @@ function Footer() {
         {/* Aquí irán más columnas del footer */}
       </div>
       <div className="copyright">
-        <p>&copy; 2023 StudyPal - Todos los derechos reservados</p>
+        <p>&copy; 2025 SmartStudIA - Todos los derechos reservados</p>
       </div>
     </footer>
   );

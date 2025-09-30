@@ -6,7 +6,7 @@ import './SubscriptionModal.css';
 
 const SubscriptionModal = ({ isOpen, onClose }) => {
   const handleApprove = (subscriptionID) => {
-    alert('¡Suscripción activada! Bienvenido a SmartStudy Premium.');
+    alert('¡Suscripción activada! Bienvenido a SmartStudIA Premium.');
     onClose();
   };
 
