@@ -191,7 +191,9 @@ function AIToolsPage() {
             }
 
             const data = await response.json();
-            const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          // Reemplaza la sección de procesamiento de respuesta (líneas ~175-230 aproximadamente)
+
+const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
 if (!generatedText) {
     setResult("No se pudo generar el resultado.");
@@ -200,68 +202,79 @@ if (!generatedText) {
 
 console.log('Respuesta cruda de la API:', generatedText);
 
-let parsedData = null;
-try {
-    // ✅ Intentar parsear directamente
-    parsedData = JSON.parse(generatedText);
-} catch (parseError) {
-    console.error('Error parsing JSON directo:', parseError);
-    // ✅ Si falla, intentar extraer el JSON de la respuesta cruda
+// ✅ Solo intentar parsear JSON para cuestionarios y tarjetas
+if (tool === 'cuestionario' || tool === 'tarjetas') {
+    let parsedData = null;
     try {
-        // Buscar el primer '{' y el último '}'
-        const start = generatedText.indexOf('{');
-        const end = generatedText.lastIndexOf('}');
-        if (start !== -1 && end !== -1 && end > start) {
-            const jsonStr = generatedText.substring(start, end + 1);
-            parsedData = JSON.parse(jsonStr);
-            console.log('✅ JSON extraído con éxito:', parsedData);
-        } else {
-            throw new Error('No se pudo encontrar un objeto JSON en la respuesta.');
+        // Intentar parsear directamente
+        parsedData = JSON.parse(generatedText);
+    } catch (parseError) {
+        console.log('Intentando extraer JSON de la respuesta...');
+        try {
+            // Buscar el primer '{' y el último '}'
+            const start = generatedText.indexOf('{');
+            const end = generatedText.lastIndexOf('}');
+            if (start !== -1 && end !== -1 && end > start) {
+                const jsonStr = generatedText.substring(start, end + 1);
+                parsedData = JSON.parse(jsonStr);
+                console.log('✅ JSON extraído con éxito:', parsedData);
+            } else {
+                throw new Error('No se pudo encontrar un objeto JSON en la respuesta.');
+            }
+        } catch (extractError) {
+            console.error('Error extrayendo JSON:', extractError);
+            setResult('Error: La API no devolvió un JSON válido. Intenta de nuevo.');
+            return;
         }
-    } catch (extractError) {
-        console.error('Error extrayendo JSON:', extractError);
-        setResult('Error: La API no devolvió un JSON válido. Respuesta cruda: ' + generatedText);
-        return;
     }
-}
 
-// Procesar resultado según herramienta
-if (tool === 'cuestionario') {
-    if (parsedData.quiz && Array.isArray(parsedData.quiz)) {
-        setQuizData(parsedData.quiz);
-    } else {
-        setResult('Error: La API no devolvió un formato de cuestionario válido. Respuesta cruda: ' + generatedText);
-    }
-} else if (tool === 'tarjetas') {
-    if (parsedData.cards && Array.isArray(parsedData.cards)) {
-        setQuizData(parsedData.cards);
-    } else {
-        setResult('Error: La API no devolvió un formato de tarjetas válido. Respuesta cruda: ' + generatedText);
+    // Procesar según herramienta
+    if (tool === 'cuestionario') {
+        if (parsedData.quiz && Array.isArray(parsedData.quiz)) {
+            setQuizData(parsedData.quiz);
+        } else {
+            setResult('Error: La API no devolvió un formato de cuestionario válido.');
+        }
+    } else if (tool === 'tarjetas') {
+        if (parsedData.cards && Array.isArray(parsedData.cards)) {
+            setQuizData(parsedData.cards);
+        } else {
+            setResult('Error: La API no devolvió un formato de tarjetas válido.');
+        }
     }
 } else {
+    // Para resumen y explicar, usar el texto directamente
     setResult(generatedText);
 }
-            // Guardar historial en Firebase
-            if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === 'resumen' || tool === 'explicar')) {
-                try {
-                    const promptText = pdfFile ? "📄 PDF cargado" : text.trim();
-                    const title = tool === 'resumen' ? "Resumen generado" :
-                                  tool === 'cuestionario' ? "Cuestionario generado" :
-                                  tool === 'tarjetas' ? "Tarjetas generadas" :
-                                  `Explicación: ${text.split(' ').slice(0, 5).join(' ')}...`;
 
-                    await addDoc(collection(db, 'users', currentUser.uid, 'ai_history'), {
-                        prompt: promptText,
-                        response: generatedText,
-                        tool: tool,
-                        timestamp: serverTimestamp(),
-                        title: title
-                    });
-                } catch (saveError) {
-                    console.error('❌ Error al guardar en historial:', saveError);
-                }
-            }
+// Guardar historial en Firebase
+if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === 'resumen' || tool === 'explicar')) {
+    try {
+        const promptText = pdfFile ? "📄 PDF cargado" : text.trim();
+        const title = tool === 'resumen' ? "Resumen generado" :
+                      tool === 'cuestionario' ? "Cuestionario generado" :
+                      tool === 'tarjetas' ? "Tarjetas generadas" :
+                      `Explicación: ${text.split(' ').slice(0, 5).join(' ')}...`;
 
+        // ✅ Guardar la respuesta correctamente según el tipo
+        const responseToSave = (tool === 'cuestionario' || tool === 'tarjetas') 
+            ? JSON.stringify(quizData || generatedText)
+            : generatedText;
+
+        await addDoc(collection(db, 'users', currentUser.uid, 'ai_history'), {
+            prompt: promptText,
+            response: responseToSave,
+            tool: tool,
+            timestamp: serverTimestamp(),
+            title: title
+        });
+        
+        console.log('✅ Guardado en historial correctamente');
+    } catch (saveError) {
+        console.error('❌ Error al guardar en historial:', saveError);
+        // No mostrar error al usuario, solo loguear
+    }
+}
         } catch (error) {
             console.error('Error al generar contenido:', error);
             setResult('Hubo un error al procesar tu solicitud. Por favor, inténtalo de nuevo más tarde.');
