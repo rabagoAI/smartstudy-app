@@ -23,8 +23,8 @@
 }
 
 .hero-image {
-  width: 100%;
-  max-width: 100%;
+  width: 120%;
+  max-width: 120%;
   height: auto;
   max-height: 600px; /* Altura máxima */
   object-fit: cover;

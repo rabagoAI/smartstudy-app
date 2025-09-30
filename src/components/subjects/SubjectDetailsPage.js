@@ -1,8 +1,7 @@
 // src/components/subjects/SubjectDetailsPage.js
-
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useAuth } from "../../AuthContext";
+import { useAuth } from "../../context/AuthContext"; // ✅ Ruta corregida
 import { db } from "../../firebase";
 import { collection, query, getDocs, orderBy } from "firebase/firestore";
 import SubscriptionModal from "../common/SubscriptionModal";
@@ -80,7 +79,7 @@ const SubjectDetailsPage = () => {
   // Filtrar contenido por tipo
   const pdfs = content.filter((item) => item.type === "pdf");
   const videos = content.filter((item) => item.type === "video");
-  const exams = content.filter((item) => item.type === "exam"); // Asumiendo que usas 'exam' para exámenes
+  const exams = content.filter((item) => item.type === "exam");
 
   return (
     <div className="subject-details">
@@ -101,14 +100,34 @@ const SubjectDetailsPage = () => {
                 <div key={pdf.id} className="content-card">
                   <h4>{pdf.title}</h4>
                   <p>{pdf.description}</p>
-                  <a
-                    href={pdf.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pdf-button"
-                  >
-                    Descargar PDF
-                  </a>
+                  {pdf.isPremium ? (
+                    isPremiumUser ? (
+                      <a
+                        href={pdf.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="pdf-button"
+                      >
+                        Descargar PDF
+                      </a>
+                    ) : (
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => setModalOpen(true)}
+                      >
+                        Desbloquear con Premium
+                      </button>
+                    )
+                  ) : (
+                    <a
+                      href={pdf.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="pdf-button"
+                    >
+                      Descargar PDF
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
@@ -191,14 +210,34 @@ const SubjectDetailsPage = () => {
                 <div key={exam.id} className="exam-card">
                   <h4>{exam.title}</h4>
                   <p>{exam.description}</p>
-                  <a
-                    href={exam.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="exam-button"
-                  >
-                    Ver examen resuelto
-                  </a>
+                  {exam.isPremium ? (
+                    isPremiumUser ? (
+                      <a
+                        href={exam.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="exam-button"
+                      >
+                        Ver examen resuelto
+                      </a>
+                    ) : (
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => setModalOpen(true)}
+                      >
+                        Desbloquear con Premium
+                      </button>
+                    )
+                  ) : (
+                    <a
+                      href={exam.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="exam-button"
+                    >
+                      Ver examen resuelto
+                    </a>
+                  )}
                 </div>
               ))}
             </div>

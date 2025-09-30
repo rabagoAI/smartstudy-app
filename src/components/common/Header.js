@@ -62,7 +62,7 @@ function Header() {
         <header className="main-header">
             <div className="header-content">
                 <div className="header-logo">
-                    <Link to="/" className="logo-text">SmartStudy</Link>
+                    <Link to="/" className="logo-text">SmartStudIA</Link>
                 </div>
                 
                 {/* Menú de navegación para desktop */}

@@ -6,7 +6,7 @@ import './TourGuide.css'; // Archivo CSS que crearemos
 const steps = [
   {
     selector: '.hero-content',
-    title: '¡Bienvenido a SmartStudy!',
+    title: '¡Bienvenido a SmartStudIA!',
     content: 'Aquí encontrarás todo lo que necesitas para potenciar tu aprendizaje.',
     position: 'bottom'
   },

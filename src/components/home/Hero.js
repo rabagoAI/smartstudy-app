@@ -9,7 +9,7 @@ function Hero() {
         <div className="hero-content">
           {/* Imagen de fondo */}
           <img 
-            src="https://res.cloudinary.com/ds7shn66t/image/upload/v1758619415/Banner_Conceptual_SmartStudy_xc8zaf.jpg" 
+            src="https://res.cloudinary.com/ds7shn66t/image/upload/v1759222816/Banner_SmartStudIA_Proporci%C3%B3n_Correcta_juzbkc.jpg" 
             alt="SmartStudy - Aprende de forma inteligente"
             className="hero-image"
           />
