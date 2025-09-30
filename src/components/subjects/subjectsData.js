@@ -1,6 +1,15 @@
 // src/components/subjects/subjectsData.js
 
 const subjectsData = [
+
+  {
+    name: 'Lengua Española',
+    url: 'lengua-espanola', // <-- Añade esta línea
+    icon: 'fas fa-book',
+    description: 'Gramática, literatura, ortografía y técnicas de estudio.',
+    color: 'language'
+  },
+  
   {
     name: 'Matemáticas',
     url: 'matematicas', // <-- Añade esta línea
@@ -15,13 +24,7 @@ const subjectsData = [
     description: 'Recursos para biología, geología y mucho más.',
     color: 'science'
   },
-  {
-    name: 'Lengua Española',
-    url: 'lengua-espanola', // <-- Añade esta línea
-    icon: 'fas fa-book',
-    description: 'Gramática, literatura, ortografía y técnicas de estudio.',
-    color: 'language'
-  },
+  
   {
     name: 'Geografia e Historia',
     url: 'geografia-e-historia', // <-- Añade esta línea

@@ -6,8 +6,8 @@ import './SubjectsSection.css'; // Asegúrate de crear este archivo
 
 const subjects = [
   {
-    id: 'lengua-castellana',
-    name: 'Lengua Castellana',
+    id: 'lengua-espanola',
+    name: 'Lengua Española',
     description: 'Apuntes, ejercicios y exámenes resueltos.',
     icon: 'fas fa-book',
     colorClass: 'language'
@@ -19,13 +19,7 @@ const subjects = [
     icon: 'fas fa-calculator',
     colorClass: 'maths'
   },
-  {
-    id: 'geografia-e-historia',
-    name: 'Geografía e Historia',
-    description: 'Mapas, líneas de tiempo y resúmenes.',
-    icon: 'fas fa-globe-americas',
-    colorClass: 'social'
-  },
+
   {
   id: 'biologia',
   name: 'Biología',
@@ -33,6 +27,15 @@ const subjects = [
   icon: 'fas fa-dna', // ✅ Icono más específico para biología
   colorClass: 'science'
 },
+
+  {
+    id: 'geografia-e-historia',
+    name: 'Geografía e Historia',
+    description: 'Mapas, líneas de tiempo y resúmenes.',
+    icon: 'fas fa-globe-americas',
+    colorClass: 'social'
+  },
+  
   {
     id: 'ingles',
     name: 'Inglés',
