@@ -18,7 +18,7 @@ const subjectsData = [
     color: 'maths'
   },
   {
-    name: 'Biología',
+    name: 'Biología y Geología',
     url: 'biologia', // <-- Asegúrate de que no tenga tilde
     icon: 'fas fa-flask',
     description: 'Recursos para biología, geología y mucho más.',

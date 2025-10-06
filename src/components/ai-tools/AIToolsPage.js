@@ -288,7 +288,7 @@ if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === '
             <SEO
                 title="Herramientas de IA - SmartStudy"
                 description="Resume textos, genera cuestionarios o explica conceptos con nuestra IA. Ideal para estudiantes de ESO."
-                image="https://res.cloudinary.com/ds7shn66t/image/upload/w_1200,h_630,c_fill,f_auto,q_auto/v1758618850/DeWatermark.ai_1758546785863_xbsigz.jpg"
+                image="https://res.cloudinary.com/ds7shn66t/image/upload/v1759232770/Banner_Producto_del_Dia_Promocion_Cafe_Azul_vi0xs4.jpg"
                 url="https://smartstudy.vercel.app/herramientas-ia"
             />
 

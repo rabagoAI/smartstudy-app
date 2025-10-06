@@ -16,7 +16,7 @@ const ProfilePage = () => {
       <SEO
         title="Mi Perfil - SmartStudy"
         description={`Bienvenido, ${userData.email}. Gestiona tu suscripción y revisa tu historial de IA.`}
-        image="https://res.cloudinary.com/ds7shn66t/image/upload/v1758618850/DeWatermark.ai_1758546785863_xbsigz.jpg"
+        image="https://res.cloudinary.com/ds7shn66t/image/upload/v1759232770/Banner_Producto_del_Dia_Promocion_Cafe_Azul_vi0xs4.jpg"
         url="https://www.smartstudia.com/perfil"
       />
 
