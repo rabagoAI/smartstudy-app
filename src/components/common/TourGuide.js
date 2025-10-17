@@ -1,7 +1,7 @@
 // src/components/common/TourGuide.js
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import './TourGuide.css'; // Archivo CSS que crearemos
+import './TourGuide.css';
 
 const steps = [
   {
@@ -50,23 +50,17 @@ const TourGuide = () => {
         const hasSeenTour = localStorage.getItem(`hasSeenTour_${currentUser.uid}`);
         const isNewRegistration = sessionStorage.getItem('newUserRegistration');
         
-        // Si es un registro nuevo O nunca ha visto el tour
         if (isNewRegistration || !hasSeenTour) {
-          // Limpiar la marca de nuevo registro
           sessionStorage.removeItem('newUserRegistration');
           
-          // Esperar a que todos los elementos estén renderizados
           setTimeout(() => {
-            // Verificar que los elementos existen antes de iniciar
             const firstElement = document.querySelector(steps[0].selector);
             if (firstElement) {
               setIsActive(true);
               localStorage.setItem(`hasSeenTour_${currentUser.uid}`, 'true');
             } else {
-              // Si no existe, reintentar varias veces
               let retries = 0;
               const maxRetries = 3;
-              
               const retryInterval = setInterval(() => {
                 const retryElement = document.querySelector(steps[0].selector);
                 if (retryElement || retries >= maxRetries) {
@@ -85,10 +79,8 @@ const TourGuide = () => {
       }
     };
 
-    // Ejecutar inmediatamente y también después de un delay
     checkForNewUser();
     const timeoutId = setTimeout(checkForNewUser, 500);
-    
     return () => clearTimeout(timeoutId);
   }, [currentUser, hasCheckedTour]);
 
@@ -98,22 +90,29 @@ const TourGuide = () => {
       if (element) {
         setTargetElement(element);
         
-        // Hacer scroll más inteligente
+        // ✅ Scroll corregido para dejar espacio al tooltip
         setTimeout(() => {
           const elementRect = element.getBoundingClientRect();
           const viewportHeight = window.innerHeight;
-          const elementCenter = elementRect.top + elementRect.height / 2;
           
-          // Si el elemento no está visible o está muy cerca de los bordes
-          if (elementRect.top < 100 || elementRect.bottom > viewportHeight - 100) {
-            // Scroll para centrar el elemento, dejando espacio para el tooltip
-            const offsetTop = element.offsetTop - (viewportHeight / 2) + (elementRect.height / 2);
+          // Espacio necesario para el tooltip (altura + margen)
+          const tooltipSpace = 220; // Ajustado para tooltip + botones
+          
+          // Si el elemento está fuera de la vista o muy cerca de los bordes
+          if (
+            elementRect.top < tooltipSpace || 
+            elementRect.bottom > viewportHeight - tooltipSpace
+          ) {
+            // Calcular nueva posición de scroll
+            const elementTop = element.offsetTop;
+            const scrollPosition = elementTop - (viewportHeight / 2) + (elementRect.height / 2) - (tooltipSpace / 2);
+            
             window.scrollTo({
-              top: Math.max(0, offsetTop),
+              top: Math.max(0, scrollPosition),
               behavior: 'smooth'
             });
           }
-        }, 100);
+        }, 150); // Ligero retraso para asegurar renderizado
       }
     }
   }, [currentStep, isActive]);
@@ -151,11 +150,10 @@ const TourGuide = () => {
   const getTooltipStyle = () => {
     const tooltipWidth = 320;
     const tooltipHeight = 180;
-    const margin = 15;
+    const margin = 20; // Aumentado para más espacio
     
     let top, left;
     
-    // Calcular posición inicial según step.position
     switch (step.position) {
       case 'top':
         top = rect.top - tooltipHeight - margin;
@@ -176,21 +174,18 @@ const TourGuide = () => {
         break;
     }
     
-    // Ajustes inteligentes para mantener el tooltip visible
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
     
-    // Ajuste vertical - priorizar que se vea completo
+    // ✅ Ajuste vertical mejorado
     if (top < margin) {
-      // Si está muy arriba, moverlo abajo
       top = rect.bottom + margin;
     } else if (top + tooltipHeight > viewportHeight - margin) {
-      // Si está muy abajo, intentar ponerlo arriba
       const topPosition = rect.top - tooltipHeight - margin;
       if (topPosition >= margin) {
         top = topPosition;
       } else {
-        // Si no cabe ni arriba ni abajo, centrarlo en pantalla
+        // Centrar en pantalla si no cabe
         top = Math.max(margin, (viewportHeight - tooltipHeight) / 2);
       }
     }
@@ -202,7 +197,6 @@ const TourGuide = () => {
       left = viewportWidth - tooltipWidth - margin;
     }
     
-    // Asegurar que nunca se salga de los límites
     left = Math.max(margin, Math.min(left, viewportWidth - tooltipWidth - margin));
     top = Math.max(margin, Math.min(top, viewportHeight - tooltipHeight - margin));
     
@@ -224,15 +218,11 @@ const TourGuide = () => {
       height: 180
     };
     
-    // Centro del elemento destacado
     const targetCenterX = rect.left + rect.width / 2;
     const targetCenterY = rect.top + rect.height / 2;
-    
-    // Centro del tooltip
     const tooltipCenterX = tooltipRect.left + tooltipRect.width / 2;
     const tooltipCenterY = tooltipRect.top + tooltipRect.height / 2;
     
-    // Calcular ángulo de la flecha hacia el elemento
     const angle = Math.atan2(targetCenterY - tooltipCenterY, targetCenterX - tooltipCenterX);
     const degrees = (angle * 180 / Math.PI) + 90;
     
@@ -248,9 +238,7 @@ const TourGuide = () => {
 
   return (
     <>
-      {/* Overlay oscuro */}
       <div className="tour-overlay" onClick={closeTour}>
-        {/* Spotlight en el elemento target */}
         <div 
           className="tour-spotlight"
           style={{
@@ -262,13 +250,8 @@ const TourGuide = () => {
         />
       </div>
       
-      {/* Tooltip del tour */}
       <div className="tour-tooltip" style={getTooltipStyle()}>
-        {/* Flecha indicadora */}
-        <div 
-          className="tour-arrow"
-          style={getArrowStyle()}
-        />
+        <div className="tour-arrow" style={getArrowStyle()} />
         
         <div className="tour-header">
           <h3>{step.title}</h3>

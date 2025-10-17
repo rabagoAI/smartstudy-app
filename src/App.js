@@ -18,6 +18,8 @@ import ResetPassword from './components/auth/ResetPassword';
 import UploadForm from './components/admin/UploadForm';
 import TourGuide from './components/common/TourGuide'; // ✅ Importa el tour
 import AIHistoryPage from './components/ai-tools/AIHistoryPage';
+import EducationalChat from './components/ai-tools/EducationalChat';
+
 
 import './App.css';
 
@@ -50,6 +52,7 @@ function AppContent() {
               <Route path="/herramientas-ia" element={<AIToolsPage />} />
               <Route path="/admin/upload" element={<UploadForm />} />
               <Route path="/historial-ia" element={<AIHistoryPage />} />
+              <Route path="/chat-educativo" element={<EducationalChat />} />
             </Route>
           </Routes>
         </main>
