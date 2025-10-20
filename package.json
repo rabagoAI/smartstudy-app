@@ -12,6 +12,7 @@
     "firebase": "^12.2.1",
     "i18next": "^25.5.3",
     "i18next-browser-languagedetector": "^8.2.0",
+    "lucide-react": "^0.546.0",
     "pdfjs-dist": "^3.11.174",
     "react": "^19.1.1",
     "react-document-title": "^2.0.3",

@@ -1,12 +1,12 @@
-// src/App.js
+// src/App.js - VERSIÓN ACTUALIZADA CON LANDING
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
-
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import PrivateRoute from './components/auth/PrivateRoute';
+import Landing from './components/home/Landing'; // ✅ NUEVO: Landing page
 import HomePage from './components/home/HomePage';
 import SubjectsPage from './components/subjects/SubjectsPage';
 import SubjectDetailsPage from './components/subjects/SubjectDetailsPage';
@@ -16,15 +16,13 @@ import RegisterPage from './components/auth/RegisterPage';
 import ProfilePage from './components/ProfilePage';
 import ResetPassword from './components/auth/ResetPassword';
 import UploadForm from './components/admin/UploadForm';
-import TourGuide from './components/common/TourGuide'; // ✅ Importa el tour
+import TourGuide from './components/common/TourGuide';
 import AIHistoryPage from './components/ai-tools/AIHistoryPage';
 import EducationalChat from './components/ai-tools/EducationalChat';
-
-
 import './App.css';
 
 function AppContent() {
-  const { loading } = useAuth();
+  const { loading, currentUser } = useAuth();
 
   if (loading) {
     return (
@@ -37,15 +35,23 @@ function AppContent() {
   return (
     <Router>
       <div className="App">
-        <Header />
+        {/* ✅ NUEVO: No mostrar Header/Footer en Landing */}
+        {currentUser && <Header />}
+        
         <main>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            {/* ✅ NUEVA RUTA: Landing page (ruta pública) */}
+            <Route path="/" element={<Landing />} />
+            
+            {/* Rutas de autenticación (públicas) */}
             <Route path="/iniciar-sesion" element={<LoginPage />} />
             <Route path="/registrarse" element={<RegisterPage />} />
             <Route path="/restablecer-contrasena" element={<ResetPassword />} />
 
+            {/* Rutas privadas (solo usuarios logueados) */}
             <Route element={<PrivateRoute />}>
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/dashboard" element={<HomePage />} />
               <Route path="/perfil" element={<ProfilePage />} />
               <Route path="/asignaturas" element={<SubjectsPage />} />
               <Route path="/asignaturas/:subjectName" element={<SubjectDetailsPage />} />
@@ -56,8 +62,10 @@ function AppContent() {
             </Route>
           </Routes>
         </main>
-        <Footer />
-        <TourGuide /> {/* ✅ Añade el tour aquí */}
+
+        {/* ✅ NUEVO: No mostrar Footer en Landing */}
+        {currentUser && <Footer />}
+        <TourGuide />
       </div>
     </Router>
   );
