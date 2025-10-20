@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from './firebase'; 
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore'; // Importa las funciones de Firestore
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -14,14 +14,13 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState(null); // Nuevo estado para los datos del usuario
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, user => {
       setCurrentUser(user);
       setLoading(false);
 
-      // Si hay un usuario conectado, escucha su documento en Firestore
       if (user) {
         const docRef = doc(db, "users", user.uid);
         const unsubscribeFirestore = onSnapshot(docRef, docSnap => {
@@ -32,20 +31,57 @@ export const AuthProvider = ({ children }) => {
             setUserData(null);
           }
         });
-        // Devuelve la función de limpieza de Firestore
         return () => unsubscribeFirestore();
       } else {
-        setUserData(null); // Limpia los datos si el usuario cierra sesión
+        setUserData(null);
       }
     });
 
-    // Devuelve la función de limpieza de Authentication
     return () => unsubscribeAuth();
   }, []);
 
+  const signup = async (email, password, name) => {
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const user = result.user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        email: email,
+        name: name,
+        createdAt: new Date(),
+      });
+
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const login = async (email, password) => {
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      return result.user;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await auth.signOut();
+      setCurrentUser(null);
+      setUserData(null);
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const value = {
     currentUser,
-    userData, // Expone los datos del usuario
+    userData,
+    signup,
+    login,
+    logout,
   };
 
   return (
