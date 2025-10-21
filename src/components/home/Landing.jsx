@@ -97,22 +97,7 @@ export default function Landing() {
             </div>
             <p className="hero-notes">✓ Sin tarjeta requerida • ✓ Acceso inmediato</p>
           </div>
-          <div className="hero-visual">
-            <div className="hero-card">
-              <div className="hero-card-item">
-                <p className="hero-card-label">Tema: Fotosíntesis</p>
-                <p className="hero-card-title">Resumen + Vídeo + Examen</p>
-              </div>
-              <div className="hero-card-item">
-                <p className="hero-card-label">Herramientas IA</p>
-                <p className="hero-card-title">Genera tarjetas y exámenes</p>
-              </div>
-              <div className="hero-card-item">
-                <p className="hero-card-label">Aprende a tu ritmo</p>
-                <p className="hero-card-title">Acceso 24/7</p>
-              </div>
-            </div>
-          </div>
+          
         </div>
       </section>
 

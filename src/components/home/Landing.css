@@ -9,6 +9,8 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  /* CAMBIO: Fondo gris suave para un look moderno */
+  background-color: #f7f9fc;
 }
 
 /* Header */
@@ -37,7 +39,8 @@
 .logo-icon {
   width: 2rem;
   height: 2rem;
-  color: #2563eb;
+  /* CAMBIO: Nuevo color de marca (Cian) */
+  color: #00bcd4;
 }
 
 .logo-text {
@@ -47,7 +50,8 @@
 }
 
 .btn-header {
-  background: #2563eb;
+  /* CAMBIO: Nuevo color de CTA (Cian) */
+  background: #00bcd4;
   color: white;
   padding: 0.5rem 1.5rem;
   border-radius: 0.5rem;
@@ -58,14 +62,16 @@
 }
 
 .btn-header:hover {
-  background: #1d4ed8;
+  /* CAMBIO: Hover más oscuro */
+  background: #008ba3;
 }
 
 /* Hero Section */
 .hero {
   padding-top: 100px;
   padding-bottom: 5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* CAMBIO: Gradiente actualizado con nuevo color de marca */
+  background: linear-gradient(135deg, #00bcd4 0%, #667eea 100%);
   margin-top: 60px;
   color: white;
 }
@@ -86,12 +92,14 @@
 }
 
 .highlight {
-  color: #ffd700;
+  /* CAMBIO: Highlight con nuevo color de marca */
+  color: #00bcd4;
 }
 
 .hero-subtitle {
   font-size: 1.25rem;
-  color: #111827;
+  /* Se mantiene oscuro para el contraste sobre el fondo claro del Hero */
+  color: #e0f7fa; 
   margin-bottom: 2rem;
   line-height: 1.6;
 }
@@ -115,23 +123,26 @@
 }
 
 .btn-primary {
-  background: #2563eb;
+  /* CAMBIO: Nuevo color de CTA primario */
+  background: #00bcd4;
   color: white;
 }
 
 .btn-primary:hover {
-  background: #1d4ed8;
+  background: #008ba3;
   transform: translateY(-2px);
 }
 
 .btn-secondary {
   background: white;
-  color: #2563eb;
-  border: 2px solid #2563eb;
+  /* CAMBIO: Nuevo color de CTA secundario */
+  color: #00bcd4;
+  border: 2px solid #00bcd4;
 }
 
 .btn-secondary:hover {
-  background: #eff6ff;
+  /* CAMBIO: Nuevo hover secundario */
+  background: #e0f7fa;
 }
 
 .btn-icon {
@@ -141,7 +152,7 @@
 
 .hero-notes {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #cfd8dc; /* Color más claro sobre el fondo oscuro del Hero */
 }
 
 .hero-visual {
@@ -149,7 +160,8 @@
 }
 
 .hero-card {
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  /* CAMBIO: Gradiente actualizado */
+  background: linear-gradient(135deg, #00bcd4 0%, #4f46e5 100%);
   border-radius: 1rem;
   padding: 2rem;
   color: white;
@@ -266,7 +278,8 @@
 /* Features */
 .features {
   padding: 5rem 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* El hero ya usa el gradiente principal, aquí usamos el secundario o un color */
+  background: #1a237e; /* Azul oscuro para un buen contraste */
 }
 
 .features-grid {
@@ -278,20 +291,23 @@
 .feature-card {
   background: white;
   padding: 2rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* CAMBIO: Esquinas más suaves */
+  border-radius: 1rem;
+  /* CAMBIO CLAVE: Sombra más sutil y prominente */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
 }
 
 .feature-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); /* Sombra más fuerte al pasar el ratón */
 }
 
 .feature-icon {
   width: 3rem;
   height: 3rem;
-  color: #667eea;
+  /* CAMBIO: Nuevo color de marca */
+  color: #00bcd4;
   margin-bottom: 1rem;
 }
 
@@ -321,7 +337,8 @@
 }
 
 .subject-badge {
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  /* CAMBIO: Gradiente actualizado */
+  background: linear-gradient(135deg, #00bcd4 0%, #2563eb 100%);
   color: white;
   padding: 2rem 1rem;
   border-radius: 0.75rem;
@@ -363,7 +380,8 @@
 }
 
 .pricing-card.premium {
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  /* CAMBIO: Gradiente actualizado */
+  background: linear-gradient(135deg, #00bcd4 0%, #2563eb 100%);
   color: white;
   border-color: transparent;
 }
@@ -384,7 +402,8 @@
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 2rem;
-  color: #2563eb;
+  /* CAMBIO: Nuevo color de precio */
+  color: #00bcd4;
 }
 
 .pricing-card.premium .pricing-price {
@@ -415,41 +434,48 @@
   color: #86efac;
 }
 
-/* CTA Final */
+/* CTA Final - REEMPLAZAR */
 .cta-final {
   padding: 5rem 0;
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
-  color: white;
+  /* CAMBIO: Gradiente con más profundidad (Azul oscuro a Cian) */
+  background: linear-gradient(135deg, #1a237e 0%, #00bcd4 100%);
+  color: #00bcd4;
   text-align: center;
+  /* Sombra superior sutil para separarlo de la sección de arriba */
+  box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.05); 
 }
 
 .cta-title {
-  font-size: 2.25rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
+  font-size: 2.5rem; /* Aumento ligero del tamaño */
+  font-weight: 800; /* Más peso */
+  margin-bottom: 1.5rem; /* Más espacio */
+  color: #00bcd4;
 }
 
 .cta-subtitle {
-  font-size: 1.125rem;
-  margin-bottom: 2rem;
-  opacity: 0.9;
+  font-size: 1.25rem; /* Más legible */
+  margin-bottom: 2.5rem; /* Más espacio */
+  opacity: 0.95;
 }
 
 .btn-cta {
   background: white;
-  color: #2563eb;
-  font-size: 1.125rem;
+  color: #00bcd4;
+  font-size: 1.2rem; /* Más grande */
+  font-weight: 700;
+  padding: 1rem 3rem;
+  border-radius: 30px; /* Estilo píldora */
+  /* Nuevo: Sombra para que el botón destaque */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); 
 }
 
 .btn-cta:hover {
+  /* Nuevo: Hover más dinámico */
   background: #f0f9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
-
-.cta-notes {
-  font-size: 0.875rem;
-  margin-top: 1rem;
-  opacity: 0.9;
-}
+/* Fin de CTA Final */
 
 /* Footer */
 .landing-footer {
@@ -458,6 +484,7 @@
   padding: 3rem 0;
   text-align: center;
 }
+
 
 .footer-text {
   margin-bottom: 0.5rem;
@@ -469,9 +496,11 @@
 
 /* Modal */
 .modal-overlay {
+  /* ... (se mantiene igual) ... */
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  /* El color del overlay debe ser oscuro para contrastar con el contenido */
+  background: rgba(0, 0, 0, 0.7); /* Hacemos el fondo más oscuro para el contraste */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -480,11 +509,19 @@
 }
 
 .modal-content {
-  background: white;
+  /* CAMBIO CLAVE: Reemplazar el fondo blanco por el gradiente azul/cian */
+  background: linear-gradient(135deg, #00bcd4 0%, #2563eb 100%); 
+  
   border-radius: 1rem;
   padding: 2rem;
   max-width: 420px;
   width: 100%;
+  
+  /* Añadimos una sombra más fuerte al modal */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  
+  /* Todo el texto dentro del modal será blanco para asegurar la legibilidad */
+  color: white; 
 }
 
 .modal-header {
@@ -497,7 +534,8 @@
 .modal-header h3 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  /* El color del título debe ser blanco */
+  color: white; 
   margin: 0;
 }
 
@@ -511,35 +549,73 @@
 .btn-close .icon {
   width: 1.5rem;
   height: 1.5rem;
-  color: #6b7280;
+  /* Hacemos el ícono blanco */
+  color: white; 
 }
 
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
+/* Modificaciones en el formulario para asegurar el contraste */
 .form-input {
   width: 100%;
   padding: 0.75rem;
+  /* Fondo blanco y texto oscuro dentro del input */
+  background-color: white; 
+  color: #111827; 
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   font-size: 1rem;
   transition: border-color 0.3s ease;
 }
 
-.form-input:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+.form-input::placeholder {
+    color: #9ca3af; /* Placeholder en gris suave */
 }
 
+.form-input:focus {
+  outline: none;
+  /* El foco mantiene el color de la marca (cian) */
+  border-color: #00bcd4;
+  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.3); 
+}
+
+/* El botón ya es blanco sobre el azul, lo cual está bien: */
+/* El .btn.btn-primary.btn-full es el que se usa, y su estilo ya es: background: #00bcd4; color: white; */
+
+/* Asegurar el texto del toggle */
+.toggle-text {
+  /* El texto debe ser blanco o muy claro sobre el fondo azul */
+  color: #e0f7fa; 
+  margin: 0;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  /* El botón del toggle se mantiene en cian o un color contrastante */
+  color: #80deea; 
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 0.25rem;
+  padding: 0;
+}
+
+.toggle-btn:hover {
+  text-decoration: underline;
+}
+
+.modal-terms {
+  font-size: 0.75rem;
+  /* El texto de términos debe ser un gris claro */
+  color: #cfd8dc;
+  text-align: center;
+  margin: 0;
+}
+
+/* El mensaje de error debe seguir destacando */
 .error-message {
   color: #dc2626;
   font-size: 0.875rem;
-  background: #fee2e2;
+  /* Fondo claro para asegurar el contraste con el texto rojo */
+  background: white; 
   padding: 0.75rem;
   border-radius: 0.5rem;
   margin: 0;
@@ -562,7 +638,8 @@
 .toggle-btn {
   background: none;
   border: none;
-  color: #2563eb;
+  /* CAMBIO: Toggle con nuevo color de marca */
+  color: #00bcd4;
   font-weight: 600;
   cursor: pointer;
   margin-left: 0.25rem;
