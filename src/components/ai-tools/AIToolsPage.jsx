@@ -9,7 +9,7 @@ import SEO from '../common/SEO';
 import Flashcard from '../common/Flashcard';
 import './AIToolsPage.css';
 
-const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+const apiKey = import.meta.env.VITE_APP_GEMINI_API_KEY;
 
 function AIToolsPage() {
     const [tool, setTool] = useState(null);

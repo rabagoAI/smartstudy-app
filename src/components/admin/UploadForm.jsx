@@ -71,7 +71,7 @@ const UploadForm = () => {
 
       // ✅ Corregido: Eliminados espacios extra en la URL
       const cloudinaryResponse = await axios.post(
-        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
+        `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_APP_CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
         formData
       );
 

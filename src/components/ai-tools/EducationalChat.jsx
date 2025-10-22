@@ -9,7 +9,7 @@ const EducationalChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const { currentUser } = useAuth();
-  const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_APP_GEMINI_API_KEY;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
