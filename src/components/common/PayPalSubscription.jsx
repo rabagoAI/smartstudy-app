@@ -7,13 +7,13 @@ import { doc, updateDoc } from 'firebase/firestore';
 
 const PayPalSubscription = ({ onApprove, onCancel, onError }) => {
   // ✅ Usa el plan_id desde las variables de entorno
-  const planId = process.env.REACT_APP_PAYPAL_PLAN_ID;
-  const clientId = process.env.REACT_APP_PAYPAL_CLIENT_ID;
+  const planId = import.meta.env.VITE_APP_PAYPAL_PLAN_ID;
+  const clientId = import.meta.env.VITE_APP_PAYPAL_CLIENT_ID;
 
   // 🔍 Debug temporal - ELIMINAR EN PRODUCCIÓN
   console.log('🔍 Plan ID:', planId);
   console.log('🔍 Client ID:', clientId);
-  console.log('🔍 Node ENV:', process.env.NODE_ENV);
+  console.log('🔍 Node ENV:', import.meta.env.NODE_ENV);
 
   // ✅ Verifica que las variables estén definidas
   if (!planId || !clientId) {
