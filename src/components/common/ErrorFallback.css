@@ -1,0 +1,180 @@
+/* src/components/common/ErrorFallback.css */
+
+.error-fallback {
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.error-fallback--fullpage {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.error-fallback__container {
+  background: white;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.error-fallback__icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+.error-fallback__title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.error-fallback__description {
+  font-size: 1.1rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.error-fallback__details {
+  text-align: left;
+  margin: 2rem 0;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.error-fallback__details summary {
+  cursor: pointer;
+  font-weight: bold;
+  color: #666;
+  padding: 0.5rem;
+  user-select: none;
+}
+
+.error-fallback__details summary:hover {
+  color: #333;
+}
+
+.error-fallback__error-info {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.error-fallback__error-info p {
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+}
+
+.error-fallback__stack {
+  background: #2d2d2d;
+  color: #f8f8f2;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-top: 0.5rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.error-fallback__actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.error-fallback__button {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+}
+
+.error-fallback__button--primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.error-fallback__button--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.error-fallback__button--secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.error-fallback__button--secondary:hover {
+  background: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+.error-fallback__button:active {
+  transform: translateY(0);
+}
+
+.error-fallback__help {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.error-fallback__help a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.error-fallback__help a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .error-fallback {
+    padding: 1rem;
+  }
+
+  .error-fallback__container {
+    padding: 2rem 1.5rem;
+  }
+
+  .error-fallback__title {
+    font-size: 1.5rem;
+  }
+
+  .error-fallback__description {
+    font-size: 1rem;
+  }
+
+  .error-fallback__actions {
+    flex-direction: column;
+  }
+
+  .error-fallback__button {
+    width: 100%;
+  }
+}

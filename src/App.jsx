@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './AuthContext';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import PrivateRoute from './components/auth/PrivateRoute';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import Landing from './components/home/Landing'; // ✅ NUEVO: Landing page
 import HomePage from './components/home/HomePage';
 import SubjectsPage from './components/subjects/SubjectsPage';
@@ -33,41 +34,57 @@ function AppContent() {
   }
 
   return (
-    <Router>
-      <div className="App">
-        {/* ✅ NUEVO: No mostrar Header/Footer en Landing */}
-        {currentUser && <Header />}
-        
-        <main>
-          <Routes>
-            {/* ✅ NUEVA RUTA: Landing page (ruta pública) */}
-            <Route path="/" element={<Landing />} />
-            
-            {/* Rutas de autenticación (públicas) */}
-            <Route path="/iniciar-sesion" element={<LoginPage />} />
-            <Route path="/registrarse" element={<RegisterPage />} />
-            <Route path="/restablecer-contrasena" element={<ResetPassword />} />
+    <ErrorBoundary>
+      <Router>
+        <div className="App">
+          {/* ✅ NUEVO: No mostrar Header/Footer en Landing */}
+          {currentUser && <Header />}
 
-            {/* Rutas privadas (solo usuarios logueados) */}
-            <Route element={<PrivateRoute />}>
-              <Route path="/home" element={<HomePage />} />
-              <Route path="/dashboard" element={<HomePage />} />
-              <Route path="/perfil" element={<ProfilePage />} />
-              <Route path="/asignaturas" element={<SubjectsPage />} />
-              <Route path="/asignaturas/:subjectName" element={<SubjectDetailsPage />} />
-              <Route path="/herramientas-ia" element={<AIToolsPage />} />
-              <Route path="/admin/upload" element={<UploadForm />} />
-              <Route path="/historial-ia" element={<AIHistoryPage />} />
-              <Route path="/chat-educativo" element={<EducationalChat />} />
-            </Route>
-          </Routes>
-        </main>
+          <main>
+            <Routes>
+              {/* ✅ NUEVA RUTA: Landing page (ruta pública) */}
+              <Route path="/" element={<Landing />} />
 
-        {/* ✅ NUEVO: No mostrar Footer en Landing */}
-        {currentUser && <Footer />}
-        <TourGuide />
-      </div>
-    </Router>
+              {/* Rutas de autenticación (públicas) */}
+              <Route path="/iniciar-sesion" element={<LoginPage />} />
+              <Route path="/registrarse" element={<RegisterPage />} />
+              <Route path="/restablecer-contrasena" element={<ResetPassword />} />
+
+              {/* Rutas privadas (solo usuarios logueados) */}
+              <Route element={<PrivateRoute />}>
+                <Route path="/home" element={<HomePage />} />
+                <Route path="/dashboard" element={<HomePage />} />
+                <Route path="/perfil" element={<ProfilePage />} />
+                <Route path="/asignaturas" element={<SubjectsPage />} />
+                <Route path="/asignaturas/:subjectName" element={<SubjectDetailsPage />} />
+                <Route
+                  path="/herramientas-ia"
+                  element={
+                    <ErrorBoundary fullPage={false}>
+                      <AIToolsPage />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route path="/admin/upload" element={<UploadForm />} />
+                <Route path="/historial-ia" element={<AIHistoryPage />} />
+                <Route
+                  path="/chat-educativo"
+                  element={
+                    <ErrorBoundary fullPage={false}>
+                      <EducationalChat />
+                    </ErrorBoundary>
+                  }
+                />
+              </Route>
+            </Routes>
+          </main>
+
+          {/* ✅ NUEVO: No mostrar Footer en Landing */}
+          {currentUser && <Footer />}
+          <TourGuide />
+        </div>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
