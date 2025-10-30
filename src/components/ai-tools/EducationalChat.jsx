@@ -1,6 +1,8 @@
 // src/components/ai-tools/EducationalChat.js
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import useRateLimit from '../../hooks/useRateLimit';
+import RateLimitIndicator from '../common/RateLimitIndicator';
 import './EducationalChat.css';
 
 const EducationalChat = () => {
@@ -10,6 +12,9 @@ const EducationalChat = () => {
   const messagesEndRef = useRef(null);
   const { currentUser } = useAuth();
   const apiKey = import.meta.env.VITE_APP_GEMINI_API_KEY;
+
+  // Rate limiting hook
+  const rateLimit = useRateLimit(currentUser, false); // false = usuario free
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -21,6 +26,16 @@ const EducationalChat = () => {
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
+
+    // ✅ Verificar rate limiting antes de hacer la llamada
+    const rateLimitCheck = rateLimit.canMakeCall();
+    if (!rateLimitCheck.allowed) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `⏱️ ${rateLimitCheck.reason}`
+      }]);
+      return;
+    }
 
     // Verificar que tenemos la API key
     if (!apiKey) {
@@ -86,6 +101,9 @@ const EducationalChat = () => {
       }
 
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+
+      // ✅ Registrar la llamada exitosa en el rate limiter
+      await rateLimit.recordCall();
     } catch (error) {
       console.error('Error en el chat educativo:', error);
       setMessages(prev => [...prev, { 
@@ -103,7 +121,22 @@ const EducationalChat = () => {
         <h2>📚 Asistente Educativo</h2>
         <p>¡Pregunta cualquier duda de cualquier asignatura!</p>
       </div>
-      
+
+      {/* Rate Limit Indicator */}
+      {currentUser && !rateLimit.isLoading && (
+        <div style={{ padding: '0 1rem' }}>
+          <RateLimitIndicator
+            remainingCallsMinute={rateLimit.remainingCallsMinute}
+            remainingCallsHour={rateLimit.remainingCallsHour}
+            limits={rateLimit.limits}
+            nextResetMinute={rateLimit.nextResetMinute}
+            nextResetHour={rateLimit.nextResetHour}
+            isPremium={rateLimit.isPremium}
+            compact={true}
+          />
+        </div>
+      )}
+
       <div className="chat-messages">
         {messages.map((msg, i) => (
           <div key={i} className={`message ${msg.role}`}>

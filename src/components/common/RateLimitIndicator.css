@@ -1,0 +1,241 @@
+/* src/components/common/RateLimitIndicator.css */
+
+.rate-limit-indicator {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.rate-limit-indicator--premium {
+  border: 2px solid #ffd700;
+  background: linear-gradient(135deg, #fffdf7 0%, #fff9e6 100%);
+}
+
+.rate-limit-indicator--compact {
+  padding: 0.5rem;
+  margin-bottom: 0.75rem;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.rate-limit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.rate-limit-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.premium-badge {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #333;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rate-limit-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rate-limit-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rate-limit-stat__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rate-limit-stat__label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.rate-limit-stat__value {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.rate-limit-stat__value--success {
+  color: #28a745;
+}
+
+.rate-limit-stat__value--warning {
+  color: #ffc107;
+}
+
+.rate-limit-stat__value--danger {
+  color: #dc3545;
+}
+
+/* Progress Bar */
+.rate-limit-progress {
+  width: 100%;
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rate-limit-progress__bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.rate-limit-progress__bar--success {
+  background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+}
+
+.rate-limit-progress__bar--warning {
+  background: linear-gradient(90deg, #ffc107 0%, #ffb300 100%);
+}
+
+.rate-limit-progress__bar--danger {
+  background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+}
+
+/* Reset timer */
+.rate-limit-reset {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
+}
+
+/* Upgrade section */
+.rate-limit-upgrade {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  text-align: center;
+  color: white;
+}
+
+.rate-limit-upgrade p {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.rate-limit-upgrade__link {
+  display: inline-block;
+  background: white;
+  color: #667eea;
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rate-limit-upgrade__link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Warning messages */
+.rate-limit-warning {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Compact mode */
+.rate-limit-badge {
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.badge--success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.badge--warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.badge--danger {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rate-limit-indicator {
+    padding: 1rem;
+  }
+
+  .rate-limit-header h4 {
+    font-size: 1rem;
+  }
+
+  .premium-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .rate-limit-upgrade {
+    padding: 0.75rem;
+  }
+
+  .rate-limit-upgrade p {
+    font-size: 0.9rem;
+  }
+}
+
+/* Animation for when limits reset */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.rate-limit-progress__bar {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.rate-limit-progress__bar--success {
+  animation: none;
+}

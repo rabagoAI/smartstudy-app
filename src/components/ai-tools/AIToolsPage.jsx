@@ -7,6 +7,8 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import SEO from '../common/SEO';
 import Flashcard from '../common/Flashcard';
+import useRateLimit from '../../hooks/useRateLimit';
+import RateLimitIndicator from '../common/RateLimitIndicator';
 import './AIToolsPage.css';
 
 const apiKey = import.meta.env.VITE_APP_GEMINI_API_KEY;
@@ -21,6 +23,9 @@ function AIToolsPage() {
     const [showAnswers, setShowAnswers] = useState(false);
 
     const { currentUser } = useAuth();
+
+    // Rate limiting hook
+    const rateLimit = useRateLimit(currentUser, false); // false = usuario free (cambiar según suscripción)
 
     useEffect(() => {
         GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -117,6 +122,13 @@ function AIToolsPage() {
         let inputText = text.trim();
         if (!inputText && !pdfFile) {
             setResult('Por favor, introduce texto o sube un archivo PDF.');
+            return;
+        }
+
+        // ✅ Verificar rate limiting antes de hacer la llamada
+        const rateLimitCheck = rateLimit.canMakeCall();
+        if (!rateLimitCheck.allowed) {
+            setResult(`⏱️ ${rateLimitCheck.reason}`);
             return;
         }
 
@@ -247,6 +259,9 @@ if (tool === 'cuestionario' || tool === 'tarjetas') {
     setResult(generatedText);
 }
 
+// ✅ Registrar la llamada exitosa en el rate limiter
+await rateLimit.recordCall();
+
 // Guardar historial en Firebase
 if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === 'resumen' || tool === 'explicar')) {
     try {
@@ -303,6 +318,18 @@ if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === '
                                 📚 Ver mi historial de IA
                             </Link>
                         </div>
+                    )}
+
+                    {/* Rate Limit Indicator */}
+                    {currentUser && !rateLimit.isLoading && (
+                        <RateLimitIndicator
+                            remainingCallsMinute={rateLimit.remainingCallsMinute}
+                            remainingCallsHour={rateLimit.remainingCallsHour}
+                            limits={rateLimit.limits}
+                            nextResetMinute={rateLimit.nextResetMinute}
+                            nextResetHour={rateLimit.nextResetHour}
+                            isPremium={rateLimit.isPremium}
+                        />
                     )}
 
                     <div className="tool-selection">
