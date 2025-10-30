@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
 import './Header.css';
+import { trackEvent } from '../../analytics';
 
 function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -37,7 +38,9 @@ function Header() {
     const handleLogout = async () => {
         try {
             await signOut(auth);
+            trackEvent('auth', 'logout_success', currentUser?.email);
         } catch (error) {
+            trackEvent('auth', 'logout_error', error.message);
             console.error("Error al cerrar sesión:", error);
         }
     };

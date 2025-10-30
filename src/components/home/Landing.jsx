@@ -1,10 +1,12 @@
-// src/components/home/Landing.jsx
+// src/components/home/Landing.jsx - VERSIÓN MEJORADA
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Brain, MessageSquare, BarChart3, Play, Zap, ArrowRight, Check, X } from 'lucide-react';
-import { useAuth } from '../../AuthContext';
+import { useAuth } from '../../context/AuthContext'; // ✅ Import correcto
+import { getAuthErrorMessage } from '../../utils/errorHandler'; // ✅ Error handling mejorado
 import './Landing.css';
+import { trackEvent } from '../../analytics';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -16,7 +18,7 @@ export default function Landing() {
   const [loading, setLoading] = useState(false);
 
   // Si ya está logueado, redirigir a dashboard
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentUser) {
       navigate('/home');
     }
@@ -33,19 +35,35 @@ export default function Landing() {
     setLoading(true);
 
     try {
-       if (isLogin) {
-    await login(formData.email, formData.password);
-  } else {
-    await signup(formData.email, formData.password, formData.name);
-  }
+      if (isLogin) {
+        await login(formData.email, formData.password);
+      } else {
+        await signup(formData.email, formData.password, formData.name);
+      }
       // Si funciona, AuthContext redirige automáticamente
-      navigate('/dashboard');
+      navigate('/home');
       setShowForm(false);
     } catch (err) {
-      setError(err.message || 'Error en la autenticación');
+      trackEvent('auth', 'error', err.code);
+      // Usa el error handler mejorado
+      const errorMessage = getAuthErrorMessage(err.code);
+      setError(errorMessage);
+      console.error('Auth error:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const openAuthModal = (isLoginMode = false) => {
+    trackEvent(
+      'landing',
+      'click_cta',
+      isLoginMode ? 'login_button' : 'signup_button'
+    );
+    setShowForm(true);
+    setIsLogin(isLoginMode);
+    setFormData({ email: '', password: '', name: '' });
+    setError('');
   };
 
   return (
@@ -58,11 +76,7 @@ export default function Landing() {
             <span className="logo-text">SmartStudia</span>
           </div>
           <button 
-            onClick={() => {
-              setShowForm(true);
-              setIsLogin(true);
-              setFormData({ email: '', password: '', name: '' });
-            }}
+            onClick={() => openAuthModal(true)}
             className="btn-header"
           >
             Acceder
@@ -82,11 +96,7 @@ export default function Landing() {
             </p>
             <div className="hero-buttons">
               <button 
-                onClick={() => {
-                  setShowForm(true);
-                  setIsLogin(false);
-                  setFormData({ email: '', password: '', name: '' });
-                }}
+                onClick={() => openAuthModal(false)}
                 className="btn btn-primary"
               >
                 Empezar Gratis <ArrowRight className="btn-icon" />
@@ -97,7 +107,6 @@ export default function Landing() {
             </div>
             <p className="hero-notes">✓ Sin tarjeta requerida • ✓ Acceso inmediato</p>
           </div>
-          
         </div>
       </section>
 
@@ -219,7 +228,7 @@ export default function Landing() {
           <h2 className="section-title">Acceso sin sorpresas</h2>
           <div className="pricing-grid">
             <div className="pricing-card free">
-              <p className="pricing-icon">🎁</p>
+              <p className="pricing-icon">🎓</p>
               <p className="pricing-label">Herramientas IA</p>
               <p className="pricing-price">Gratis</p>
               <ul className="pricing-features">
@@ -238,7 +247,7 @@ export default function Landing() {
               </ul>
             </div>
             <div className="pricing-card premium">
-              <p className="pricing-icon">📚</p>
+              <p className="pricing-icon">📖</p>
               <p className="pricing-label">Contenidos Premium</p>
               <p className="pricing-price">4,99€/mes</p>
               <ul className="pricing-features">
@@ -266,11 +275,7 @@ export default function Landing() {
           <h2 className="cta-title">¿Listo para estudiar de forma inteligente?</h2>
           <p className="cta-subtitle">Únete a estudiantes que ya están mejorando sus calificaciones</p>
           <button 
-            onClick={() => {
-              setShowForm(true);
-              setIsLogin(false);
-              setFormData({ email: '', password: '', name: '' });
-            }}
+            onClick={() => openAuthModal(false)}
             className="btn btn-cta"
           >
             Registrarse Ahora <ArrowRight className="btn-icon" />
@@ -293,7 +298,7 @@ export default function Landing() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{isLogin ? 'Inicia sesión' : 'Crea tu cuenta'}</h3>
-              <button onClick={() => setShowForm(false)} className="btn-close">
+              <button onClick={() => setShowForm(false)} className="btn-close" aria-label="Cerrar modal">
                 <X className="icon" />
               </button>
             </div>
@@ -327,9 +332,14 @@ export default function Landing() {
                 onChange={handleInputChange}
                 className="form-input"
                 required
+                minLength="6"
               />
 
-              {error && <p className="error-message">{error}</p>}
+              {error && (
+                <div className="error-message">
+                  <p>{error}</p>
+                </div>
+              )}
 
               <button type="submit" disabled={loading} className="btn btn-primary btn-full">
                 {loading ? 'Procesando...' : (isLogin ? 'Inicia sesión' : 'Registrarse')}
@@ -343,8 +353,10 @@ export default function Landing() {
                   onClick={() => {
                     setIsLogin(!isLogin);
                     setError('');
+                    setFormData({ email: '', password: '', name: '' });
                   }}
                   className="toggle-btn"
+                  type="button"
                 >
                   {isLogin ? 'Regístrate' : 'Inicia sesión'}
                 </button>

@@ -1,12 +1,13 @@
-// src/App.js - VERSIÓN ACTUALIZADA CON LANDING
+// src/App.js - VERSIÓN CORRECTA
 
-import React from 'react';
+import React, { useEffect, Suspense } from 'react'; // ✅ Importa useEffect y Suspense
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider, useAuth } from './AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+// import { initGA } from './analytics'; // ← COMENTADO: No lo usamos con el método de public/index.html
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import PrivateRoute from './components/auth/PrivateRoute';
-import Landing from './components/home/Landing'; // ✅ NUEVO: Landing page
+import Landing from './components/home/Landing';
 import HomePage from './components/home/HomePage';
 import SubjectsPage from './components/subjects/SubjectsPage';
 import SubjectDetailsPage from './components/subjects/SubjectDetailsPage';
@@ -21,49 +22,65 @@ import AIHistoryPage from './components/ai-tools/AIHistoryPage';
 import EducationalChat from './components/ai-tools/EducationalChat';
 import './App.css';
 
+// Loading component para Suspense
+function LoadingSpinner() {
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      fontSize: '24px',
+    }}>
+      Cargando...
+    </div>
+  );
+}
+
 function AppContent() {
   const { loading, currentUser } = useAuth();
 
+  // Trackear page views cuando cambia la ruta
+  useEffect(() => {
+    console.log('📄 Página actual:', window.location.pathname);
+  }, []);
+
   if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '24px' }}>
-        Cargando...
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
     <Router>
       <div className="App">
-        {/* ✅ NUEVO: No mostrar Header/Footer en Landing */}
         {currentUser && <Header />}
         
         <main>
-          <Routes>
-            {/* ✅ NUEVA RUTA: Landing page (ruta pública) */}
-            <Route path="/" element={<Landing />} />
-            
-            {/* Rutas de autenticación (públicas) */}
-            <Route path="/iniciar-sesion" element={<LoginPage />} />
-            <Route path="/registrarse" element={<RegisterPage />} />
-            <Route path="/restablecer-contrasena" element={<ResetPassword />} />
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              {/* Landing page - pública */}
+              <Route path="/" element={<Landing />} />
+              
+              {/* Rutas de autenticación - públicas */}
+              <Route path="/iniciar-sesion" element={<LoginPage />} />
+              <Route path="/registrarse" element={<RegisterPage />} />
+              <Route path="/restablecer-contrasena" element={<ResetPassword />} />
 
-            {/* Rutas privadas (solo usuarios logueados) */}
-            <Route element={<PrivateRoute />}>
-              <Route path="/home" element={<HomePage />} />
-              <Route path="/dashboard" element={<HomePage />} />
-              <Route path="/perfil" element={<ProfilePage />} />
-              <Route path="/asignaturas" element={<SubjectsPage />} />
-              <Route path="/asignaturas/:subjectName" element={<SubjectDetailsPage />} />
-              <Route path="/herramientas-ia" element={<AIToolsPage />} />
-              <Route path="/admin/upload" element={<UploadForm />} />
-              <Route path="/historial-ia" element={<AIHistoryPage />} />
-              <Route path="/chat-educativo" element={<EducationalChat />} />
-            </Route>
-          </Routes>
+              {/* Rutas privadas - solo usuarios logueados */}
+              <Route element={<PrivateRoute />}>
+                <Route path="/home" element={<HomePage />} />
+                <Route path="/dashboard" element={<HomePage />} />
+                <Route path="/perfil" element={<ProfilePage />} />
+                <Route path="/asignaturas" element={<SubjectsPage />} />
+                <Route path="/asignaturas/:subjectName" element={<SubjectDetailsPage />} />
+                <Route path="/herramientas-ia" element={<AIToolsPage />} />
+                <Route path="/admin/upload" element={<UploadForm />} />
+                <Route path="/historial-ia" element={<AIHistoryPage />} />
+                <Route path="/chat-educativo" element={<EducationalChat />} />
+              </Route>
+            </Routes>
+          </Suspense>
         </main>
 
-        {/* ✅ NUEVO: No mostrar Footer en Landing */}
         {currentUser && <Footer />}
         <TourGuide />
       </div>

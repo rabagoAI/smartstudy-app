@@ -1,6 +1,6 @@
 // src/components/ai-tools/AIHistoryPage.js
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../../AuthContext';
+import { useAuth } from '..//../context/AuthContext';
 import { db } from '../../firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import './AIHistoryPage.css';

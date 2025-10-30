@@ -1,6 +1,6 @@
 // src/components/ProfilePage.js
 import React from 'react';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../context/AuthContext';
 import SEO from './common/SEO'; // ✅ Añade esta línea
 
 const ProfilePage = () => {
