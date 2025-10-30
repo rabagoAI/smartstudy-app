@@ -1,9 +1,8 @@
-// src/App.js - VERSIÓN CORRECTA
+// src/App.jsx - VERSIÓN LIMPIA SIN CONFLICTOS
 
-import React, { useEffect, Suspense } from 'react'; // ✅ Importa useEffect y Suspense
+import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-// import { initGA } from './analytics'; // ← COMENTADO: No lo usamos con el método de public/index.html
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import PrivateRoute from './components/auth/PrivateRoute';
