@@ -6,7 +6,6 @@ import { db } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import SEO from '../common/SEO';
-import Flashcard from '../common/Flashcard';
 import useRateLimit from '../../hooks/useRateLimit';
 import RateLimitIndicator from '../common/RateLimitIndicator';
 import './AIToolsPage.css';
@@ -21,11 +20,14 @@ function AIToolsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [quizData, setQuizData] = useState(null);
     const [showAnswers, setShowAnswers] = useState(false);
+    const [userAnswers, setUserAnswers] = useState({});
+    const [score, setScore] = useState(null);
+    const [flippedCards, setFlippedCards] = useState({});
 
     const { currentUser } = useAuth();
 
     // Rate limiting hook
-    const rateLimit = useRateLimit(currentUser, false); // false = usuario free (cambiar según suscripción)
+    const rateLimit = useRateLimit(currentUser, false);
 
     useEffect(() => {
         GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -37,6 +39,9 @@ function AIToolsPage() {
         setResult('');
         setQuizData(null);
         setShowAnswers(false);
+        setUserAnswers({});
+        setScore(null);
+        setFlippedCards({});
     };
 
     const clearFile = () => {
@@ -46,6 +51,9 @@ function AIToolsPage() {
         setResult('');
         setQuizData(null);
         setShowAnswers(false);
+        setUserAnswers({});
+        setScore(null);
+        setFlippedCards({});
     };
 
     const handleFileChange = (e) => {
@@ -56,6 +64,9 @@ function AIToolsPage() {
             setResult('');
             setQuizData(null);
             setShowAnswers(false);
+            setUserAnswers({});
+            setScore(null);
+            setFlippedCards({});
         } else {
             setPdfFile(null);
             e.target.value = null;
@@ -85,7 +96,7 @@ function AIToolsPage() {
                         reject('Error: El PDF no contiene texto extraíble.');
                         return;
                     }
-                    resolve(fullText.substring(0, 2000)); // Limitar a 2000 chars para evitar límites de tokens
+                    resolve(fullText.substring(0, 2000));
                 } catch (error) {
                     console.error('Error detallado al procesar PDF:', error);
                     reject('Error al procesar el archivo PDF: ' + (error.message || 'Error desconocido'));
@@ -118,6 +129,49 @@ function AIToolsPage() {
         document.body.removeChild(element);
     };
 
+    // Función para manejar la selección de respuesta
+    const handleAnswerSelect = (questionIndex, selectedOption) => {
+        if (!showAnswers) {
+            setUserAnswers(prev => ({
+                ...prev,
+                [questionIndex]: selectedOption
+            }));
+        }
+    };
+
+    // Función para calcular el puntaje
+    const calculateScore = () => {
+        if (!quizData) return 0;
+        
+        let correctCount = 0;
+        quizData.forEach((question, index) => {
+            if (userAnswers[index] === question.correctAnswer) {
+                correctCount++;
+            }
+        });
+        
+        return {
+            correct: correctCount,
+            total: quizData.length,
+            percentage: Math.round((correctCount / quizData.length) * 100)
+        };
+    };
+
+    // Función para reiniciar el cuestionario
+    const resetQuiz = () => {
+        setUserAnswers({});
+        setScore(null);
+        setShowAnswers(false);
+    };
+
+    // Función para manejar el flip de tarjetas
+    const handleCardFlip = (index) => {
+        setFlippedCards(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }));
+    };
+
     const handleGenerate = async () => {
         let inputText = text.trim();
         if (!inputText && !pdfFile) {
@@ -125,14 +179,12 @@ function AIToolsPage() {
             return;
         }
 
-        // ✅ Verificar rate limiting antes de hacer la llamada
         const rateLimitCheck = rateLimit.canMakeCall();
         if (!rateLimitCheck.allowed) {
             setResult(`⏱️ ${rateLimitCheck.reason}`);
             return;
         }
 
-        // Verificación de API Key (para depuración - remover después)
         console.log('Clave API cargada:', apiKey ? 'Sí (oculta)' : 'No');
         if (!apiKey) {
             setResult('Error: Clave API no encontrada. Verifica .env.local.');
@@ -143,6 +195,9 @@ function AIToolsPage() {
         setResult('');
         setQuizData(null);
         setShowAnswers(false);
+        setUserAnswers({});
+        setScore(null);
+        setFlippedCards({});
 
         try {
             let content = inputText;
@@ -172,7 +227,6 @@ function AIToolsPage() {
                 systemInstruction = "Eres un profesor de ESO que crea tarjetas didácticas en español. Genera 5 tarjetas. Devuelve SOLO un objeto JSON válido con una propiedad `cards` que es un array de objetos. Cada objeto debe tener: `question` (string) y `answer` (string). No incluyas texto adicional, solo el JSON.";
             }
 
-            // ✅ Instrucción + contenido combinados en un solo prompt
             const payload = {
                 contents: [
                     {
@@ -184,7 +238,6 @@ function AIToolsPage() {
                 ]
             };
 
-            // Log para depuración
             console.log('Payload enviado a API:', JSON.stringify(payload, null, 2));
 
             const response = await fetch(
@@ -203,93 +256,82 @@ function AIToolsPage() {
             }
 
             const data = await response.json();
-          // Reemplaza la sección de procesamiento de respuesta (líneas ~175-230 aproximadamente)
+            const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-if (!generatedText) {
-    setResult("No se pudo generar el resultado.");
-    return;
-}
-
-console.log('Respuesta cruda de la API:', generatedText);
-
-// ✅ Solo intentar parsear JSON para cuestionarios y tarjetas
-if (tool === 'cuestionario' || tool === 'tarjetas') {
-    let parsedData = null;
-    try {
-        // Intentar parsear directamente
-        parsedData = JSON.parse(generatedText);
-    } catch (parseError) {
-        console.log('Intentando extraer JSON de la respuesta...');
-        try {
-            // Buscar el primer '{' y el último '}'
-            const start = generatedText.indexOf('{');
-            const end = generatedText.lastIndexOf('}');
-            if (start !== -1 && end !== -1 && end > start) {
-                const jsonStr = generatedText.substring(start, end + 1);
-                parsedData = JSON.parse(jsonStr);
-                console.log('✅ JSON extraído con éxito:', parsedData);
-            } else {
-                throw new Error('No se pudo encontrar un objeto JSON en la respuesta.');
+            if (!generatedText) {
+                setResult("No se pudo generar el resultado.");
+                return;
             }
-        } catch (extractError) {
-            console.error('Error extrayendo JSON:', extractError);
-            setResult('Error: La API no devolvió un JSON válido. Intenta de nuevo.');
-            return;
-        }
-    }
 
-    // Procesar según herramienta
-    if (tool === 'cuestionario') {
-        if (parsedData.quiz && Array.isArray(parsedData.quiz)) {
-            setQuizData(parsedData.quiz);
-        } else {
-            setResult('Error: La API no devolvió un formato de cuestionario válido.');
-        }
-    } else if (tool === 'tarjetas') {
-        if (parsedData.cards && Array.isArray(parsedData.cards)) {
-            setQuizData(parsedData.cards);
-        } else {
-            setResult('Error: La API no devolvió un formato de tarjetas válido.');
-        }
-    }
-} else {
-    // Para resumen y explicar, usar el texto directamente
-    setResult(generatedText);
-}
+            console.log('Respuesta cruda de la API:', generatedText);
 
-// ✅ Registrar la llamada exitosa en el rate limiter
-await rateLimit.recordCall();
+            if (tool === 'cuestionario' || tool === 'tarjetas') {
+                let parsedData = null;
+                try {
+                    parsedData = JSON.parse(generatedText);
+                } catch (parseError) {
+                    console.log('Intentando extraer JSON de la respuesta...');
+                    try {
+                        const start = generatedText.indexOf('{');
+                        const end = generatedText.lastIndexOf('}');
+                        if (start !== -1 && end !== -1 && end > start) {
+                            const jsonStr = generatedText.substring(start, end + 1);
+                            parsedData = JSON.parse(jsonStr);
+                            console.log('✅ JSON extraído con éxito:', parsedData);
+                        } else {
+                            throw new Error('No se pudo encontrar un objeto JSON en la respuesta.');
+                        }
+                    } catch (extractError) {
+                        console.error('Error extrayendo JSON:', extractError);
+                        setResult('Error: La API no devolvió un JSON válido. Intenta de nuevo.');
+                        return;
+                    }
+                }
 
-// Guardar historial en Firebase
-if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === 'resumen' || tool === 'explicar')) {
-    try {
-        const promptText = pdfFile ? "📄 PDF cargado" : text.trim();
-        const title = tool === 'resumen' ? "Resumen generado" :
-                      tool === 'cuestionario' ? "Cuestionario generado" :
-                      tool === 'tarjetas' ? "Tarjetas generadas" :
-                      `Explicación: ${text.split(' ').slice(0, 5).join(' ')}...`;
+                if (tool === 'cuestionario') {
+                    if (parsedData.quiz && Array.isArray(parsedData.quiz)) {
+                        setQuizData(parsedData.quiz);
+                    } else {
+                        setResult('Error: La API no devolvió un formato de cuestionario válido.');
+                    }
+                } else if (tool === 'tarjetas') {
+                    if (parsedData.cards && Array.isArray(parsedData.cards)) {
+                        setQuizData(parsedData.cards);
+                    } else {
+                        setResult('Error: La API no devolvió un formato de tarjetas válido.');
+                    }
+                }
+            } else {
+                setResult(generatedText);
+            }
 
-        // ✅ Guardar la respuesta correctamente según el tipo
-        const responseToSave = (tool === 'cuestionario' || tool === 'tarjetas') 
-            ? JSON.stringify(quizData || generatedText)
-            : generatedText;
+            await rateLimit.recordCall();
 
-        await addDoc(collection(db, 'users', currentUser.uid, 'ai_history'), {
-            prompt: promptText,
-            response: responseToSave,
-            tool: tool,
-            timestamp: serverTimestamp(),
-            title: title
-        });
-        
-        console.log('✅ Guardado en historial correctamente');
-    } catch (saveError) {
-        console.error('❌ Error al guardar en historial:', saveError);
-        // No mostrar error al usuario, solo loguear
-    }
-}
+            if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === 'resumen' || tool === 'explicar')) {
+                try {
+                    const promptText = pdfFile ? "📄 PDF cargado" : text.trim();
+                    const title = tool === 'resumen' ? "Resumen generado" :
+                                  tool === 'cuestionario' ? "Cuestionario generado" :
+                                  tool === 'tarjetas' ? "Tarjetas generadas" :
+                                  `Explicación: ${text.split(' ').slice(0, 5).join(' ')}...`;
+
+                    const responseToSave = (tool === 'cuestionario' || tool === 'tarjetas') 
+                        ? JSON.stringify(quizData || generatedText)
+                        : generatedText;
+
+                    await addDoc(collection(db, 'users', currentUser.uid, 'ai_history'), {
+                        prompt: promptText,
+                        response: responseToSave,
+                        tool: tool,
+                        timestamp: serverTimestamp(),
+                        title: title
+                    });
+                    
+                    console.log('✅ Guardado en historial correctamente');
+                } catch (saveError) {
+                    console.error('❌ Error al guardar en historial:', saveError);
+                }
+            }
         } catch (error) {
             console.error('Error al generar contenido:', error);
             setResult('Hubo un error al procesar tu solicitud. Por favor, inténtalo de nuevo más tarde.');
@@ -320,7 +362,6 @@ if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === '
                         </div>
                     )}
 
-                    {/* Rate Limit Indicator */}
                     {currentUser && !rateLimit.isLoading && (
                         <RateLimitIndicator
                             remainingCallsMinute={rateLimit.remainingCallsMinute}
@@ -457,28 +498,113 @@ if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === '
                                     </button>
                                 </div>
                             </div>
-                            {quizData.map((q, index) => (
-                                <div key={index} className="quiz-question">
-                                    <h4>{index + 1}. {q.question}</h4>
-                                    <ul className="options-list">
-                                        {q.options.map((option, optIndex) => (
-                                            <li 
-                                                key={optIndex}
-                                                className={`option-item ${showAnswers && option === q.correctAnswer ? 'correct' : ''}`}
-                                            >
-                                                <span className="option-letter">{String.fromCharCode(65 + optIndex)}.</span>
-                                                {option}
-                                            </li>
-                                        ))}
-                                    </ul>
+
+                            {score && (
+                                <div className="quiz-score-display">
+                                    <h4>Tu Resultado: {score.correct}/{score.total} ({score.percentage}%)</h4>
+                                    <div className="score-bar">
+                                        <div 
+                                            className="score-progress" 
+                                            style={{ width: `${score.percentage}%` }}
+                                        ></div>
+                                    </div>
                                 </div>
-                            ))}
-                            <button 
-                                className="btn btn-secondary toggle-answers"
-                                onClick={() => setShowAnswers(!showAnswers)}
-                            >
-                                {showAnswers ? 'Ocultar Respuestas' : 'Mostrar Respuestas'}
-                            </button>
+                            )}
+
+                            {quizData.map((q, index) => {
+                                const userAnswer = userAnswers[index];
+                                const isCorrect = userAnswer === q.correctAnswer;
+                                
+                                return (
+                                    <div key={index} className="quiz-question">
+                                        <h4>{index + 1}. {q.question}</h4>
+                                        <ul className="options-list">
+                                            {q.options.map((option, optIndex) => {
+                                                const isSelected = userAnswer === option;
+                                                const isActuallyCorrect = option === q.correctAnswer;
+                                                const letter = String.fromCharCode(65 + optIndex);
+                                                
+                                                let optionClass = 'option-item';
+                                                
+                                                if (showAnswers) {
+                                                    if (isActuallyCorrect) {
+                                                        optionClass += ' correct';
+                                                    } else if (isSelected && !isActuallyCorrect) {
+                                                        optionClass += ' incorrect';
+                                                    }
+                                                } else if (isSelected) {
+                                                    optionClass += ' selected';
+                                                }
+                                                
+                                                return (
+                                                    <li 
+                                                        key={optIndex}
+                                                        className={optionClass}
+                                                        onClick={() => handleAnswerSelect(index, option)}
+                                                    >
+                                                        <span className="option-letter">{letter}.</span>
+                                                        {option}
+                                                        {showAnswers && isSelected && (
+                                                            <span className="answer-feedback">
+                                                                {isCorrect ? ' ✓ Correcta' : ' ✗ Incorrecta'}
+                                                            </span>
+                                                        )}
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                        
+                                        {showAnswers && userAnswer && (
+                                            <div className="question-feedback">
+                                                <p>
+                                                    <strong>Tu respuesta:</strong> {userAnswer} 
+                                                    {isCorrect ? (
+                                                        <span className="feedback-correct"> ✓ Correcto</span>
+                                                    ) : (
+                                                        <span className="feedback-incorrect"> ✗ Incorrecto</span>
+                                                    )}
+                                                </p>
+                                                {!isCorrect && (
+                                                    <p className="correct-answer-text">
+                                                        <strong>Respuesta correcta:</strong> {q.correctAnswer}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                            
+                            <div className="quiz-actions">
+                                <button 
+                                    className="btn btn-outline reset-btn"
+                                    onClick={resetQuiz}
+                                >
+                                    <i className="fas fa-redo"></i> Reiniciar Cuestionario
+                                </button>
+                                
+                                <button 
+                                    className="btn btn-secondary toggle-answers"
+                                    onClick={() => {
+                                        if (showAnswers) {
+                                            resetQuiz();
+                                        } else {
+                                            setShowAnswers(true);
+                                            setScore(calculateScore());
+                                        }
+                                    }}
+                                >
+                                    {showAnswers ? (
+                                        <>
+                                            <i className="fas fa-redo"></i> Reiniciar Cuestionario
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-check-circle"></i> Mostrar Respuestas y Calificar
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     )}
 
@@ -487,6 +613,17 @@ if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === '
                             <div className="result-header">
                                 <h3><i className="fas fa-clipboard-list"></i> Tus Tarjetas Didácticas</h3>
                                 <div className="result-actions">
+                                    <button 
+                                        className="btn btn-outline copy-btn"
+                                        onClick={() => {
+                                            const cardsText = quizData.map((card, i) => 
+                                                `Tarjeta ${i+1}\nPregunta: ${card.question}\nRespuesta: ${card.answer}\n\n`
+                                            ).join('');
+                                            copyToClipboard(cardsText);
+                                        }}
+                                    >
+                                        <i className="fas fa-copy"></i> Copiar
+                                    </button>
                                     <button 
                                         className="btn btn-outline download-btn"
                                         onClick={() => {
@@ -500,15 +637,41 @@ if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === '
                                     </button>
                                 </div>
                             </div>
-                            <div className="flashcards-grid">
-                                {quizData.map((card, index) => (
-                                    <Flashcard 
-                                        key={index}
-                                        question={card.question}
-                                        answer={card.answer}
-                                        index={index}
-                                    />
-                                ))}
+                            <div className="flashcards-container">
+                                <div className="flashcards-grid">
+                                    {quizData.map((card, index) => (
+                                        <div key={index} className="flashcard-item">
+                                            <div 
+                                                className={`flashcard ${flippedCards[index] ? 'flipped' : ''}`}
+                                                onClick={() => handleCardFlip(index)}
+                                            >
+                                                <div className="flashcard-front">
+                                                    <div className="flashcard-header">
+                                                        <span className="flashcard-number">Tarjeta {index + 1}</span>
+                                                        <span className="flashcard-indicator">👆 Haz clic para ver la respuesta</span>
+                                                    </div>
+                                                    <div className="flashcard-content">
+                                                        <h4>Pregunta:</h4>
+                                                        <p>{card.question}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flashcard-back">
+                                                    <div className="flashcard-header">
+                                                        <span className="flashcard-number">Tarjeta {index + 1}</span>
+                                                        <span className="flashcard-indicator">👆 Haz clic para ver la pregunta</span>
+                                                    </div>
+                                                    <div className="flashcard-content">
+                                                        <h4>Respuesta:</h4>
+                                                        <p>{card.answer}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flashcards-instruction">
+                                    <p>💡 <strong>Instrucción:</strong> Haz clic en cualquier tarjeta para girarla y ver la respuesta.</p>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -516,7 +679,7 @@ if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === '
                     {result && tool === 'resumen' && (
                         <div className="result-container">
                             <div className="result-header">
-                                <h3><i className="fas fa-file-alt"></i> Resultado de la IA</h3>
+                                <h3><i className="fas fa-file-alt"></i> Resumen Generado</h3>
                                 <div className="result-actions">
                                     <button 
                                         className="btn btn-outline copy-btn"
@@ -532,12 +695,58 @@ if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === '
                                     </button>
                                 </div>
                             </div>
-                            <div className="result-text">
-                                {result.split('\n').map((line, index) => (
-                                    <p key={index} className={line.startsWith('-') ? 'bullet-point' : ''}>
-                                        {line}
-                                    </p>
-                                ))}
+                            <div className="summary-content">
+                                {result.split('\n').map((line, index) => {
+                                    if (line.trim() === '') return <br key={index} />;
+                                    
+                                    if (line.match(/^[A-Z][A-Z\s]+:$/) || 
+                                        line.match(/^[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑ\s]+:$/) ||
+                                        line.includes('RESUMEN') ||
+                                        line.includes('CONCLUSIÓN') ||
+                                        line.includes('INTRODUCCIÓN')) {
+                                        return <h2 key={index} className="summary-main-title">{line.replace(':', '')}</h2>;
+                                    }
+                                    else if (line.match(/^[A-Z][a-z]+:/) || 
+                                            (line.length < 60 && line.endsWith(':')) ||
+                                            line.includes('•') && line.length < 80) {
+                                        return <h3 key={index} className="summary-subtitle">{line.replace('•', '').trim()}</h3>;
+                                    }
+                                    else if (line.startsWith('- ') || line.startsWith('• ') || line.startsWith('* ')) {
+                                        return (
+                                            <div key={index} className="summary-bullet-point">
+                                                <div className="bullet-icon">•</div>
+                                                <span>{line.replace(/^[-•*]\s+/, '')}</span>
+                                            </div>
+                                        );
+                                    }
+                                    else if (line.match(/^\d+\.\s/)) {
+                                        return (
+                                            <div key={index} className="summary-numbered-point">
+                                                <div className="number-badge">{line.match(/^\d+/)[0]}</div>
+                                                <span>{line.replace(/^\d+\.\s+/, '')}</span>
+                                            </div>
+                                        );
+                                    }
+                                    else if (line.includes('**') || line.match(/^[A-Z][^.]{0,100}:$/)) {
+                                        const cleanLine = line.replace(/\*\*/g, '');
+                                        return <p key={index} className="summary-highlight">{cleanLine}</p>;
+                                    }
+                                    else {
+                                        return <p key={index} className="summary-paragraph">{line}</p>;
+                                    }
+                                })}
+                            </div>
+                            <div className="summary-footer">
+                                <div className="summary-stats">
+                                    <span className="stat-item">
+                                        <i className="fas fa-text-height"></i>
+                                        {result.split(' ').length} palabras
+                                    </span>
+                                    <span className="stat-item">
+                                        <i className="fas fa-paragraph"></i>
+                                        {result.split('\n').filter(line => line.trim().length > 0).length} párrafos
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -561,12 +770,37 @@ if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === '
                                     </button>
                                 </div>
                             </div>
-                            <div className="result-text">
-                                {result.split('\n').map((line, index) => (
-                                    <p key={index} className={line.startsWith('-') ? 'bullet-point' : ''}>
-                                        {line}
-                                    </p>
-                                ))}
+                            <div className="explanation-content">
+                                {result.split('\n').map((line, index) => {
+                                    if (line.trim() === '') return <br key={index} />;
+                                    
+                                    if (line.startsWith('### ')) {
+                                        return <h4 key={index} className="explanation-subtitle">{line.replace('### ', '')}</h4>;
+                                    } else if (line.startsWith('## ')) {
+                                        return <h3 key={index} className="explanation-subtitle">{line.replace('## ', '')}</h3>;
+                                    } else if (line.startsWith('# ')) {
+                                        return <h2 key={index} className="explanation-title">{line.replace('# ', '')}</h2>;
+                                    } else if (line.startsWith('**') && line.endsWith('**')) {
+                                        return <p key={index} className="explanation-bold">{line.replace(/\*\*/g, '')}</p>;
+                                    } else if (line.match(/^\d+\.\s/)) {
+                                        return <p key={index} className="explanation-numbered-item">{line}</p>;
+                                    } else if (line.startsWith('- ') || line.startsWith('* ')) {
+                                        return <p key={index} className="explanation-bullet-item">{line}</p>;
+                                    } else if (line.includes('**')) {
+                                        const parts = line.split('**');
+                                        return (
+                                            <p key={index} className="explanation-text">
+                                                {parts.map((part, i) => 
+                                                    i % 2 === 1 ? 
+                                                    <strong key={i}>{part}</strong> : 
+                                                    part
+                                                )}
+                                            </p>
+                                        );
+                                    } else {
+                                        return <p key={index} className="explanation-text">{line}</p>;
+                                    }
+                                })}
                             </div>
                         </div>
                     )}
