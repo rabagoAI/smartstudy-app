@@ -1,4 +1,4 @@
-// src/App.jsx - VERSIÓN LIMPIA SIN CONFLICTOS
+// src/App.jsx - CON MAPAS MENTALES AGREGADO
 
 import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -11,6 +11,7 @@ import HomePage from './components/home/HomePage';
 import SubjectsPage from './components/subjects/SubjectsPage';
 import SubjectDetailsPage from './components/subjects/SubjectDetailsPage';
 import AIToolsPage from './components/ai-tools/AIToolsPage';
+import MindMapGenerator from './components/ai-tools/MindMapGenerator';
 import LoginPage from './components/auth/LoginPage';
 import RegisterPage from './components/auth/RegisterPage';
 import ProfilePage from './components/ProfilePage';
@@ -72,6 +73,7 @@ function AppContent() {
                 <Route path="/asignaturas" element={<SubjectsPage />} />
                 <Route path="/asignaturas/:subjectName" element={<SubjectDetailsPage />} />
                 <Route path="/herramientas-ia" element={<AIToolsPage />} />
+                <Route path="/mapas-mentales" element={<MindMapGenerator />} />
                 <Route path="/admin/upload" element={<UploadForm />} />
                 <Route path="/historial-ia" element={<AIHistoryPage />} />
                 <Route path="/chat-educativo" element={<EducationalChat />} />

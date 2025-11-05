@@ -5,7 +5,7 @@
   text-align: center;
   color: white;
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* CAMBIO: De hidden a visible */
 }
 
 .hero .container {
@@ -19,18 +19,19 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 600px; /* Altura mínima para contenido */
+  min-height: auto; /* CAMBIO: De 600px a auto */
+  width: 100%;
 }
 
 .hero-image {
-  width: 120%;
-  max-width: 120%;
-  height: auto;
-  max-height: 600px; /* Altura máxima */
-  object-fit: cover;
+  width: 100%; /* CAMBIO: De 120% a 100% */
+  max-width: 100%;
+  height: auto; /* CAMBIO: De max-height 600px a auto - permite que crezca */
+  object-fit: contain; /* CAMBIO: De cover a contain */
   border-radius: 16px;
   box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
   animation: fadeInUp 1s ease-out;
+  display: block; /* Asegurar que se renderiza correctamente */
 }
 
 @keyframes fadeInUp {
@@ -45,17 +46,27 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .hero {
-    padding: 60px 15px;
-  }
-  
-  .hero-content {
-    min-height: 400px;
+    padding: 60px 20px;
   }
   
   .hero-image {
-    max-height: 400px;
+    max-width: 95%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 50px 15px;
+  }
+  
+  .hero-content {
+    min-height: auto;
+  }
+  
+  .hero-image {
+    max-width: 100%;
   }
 }
 
@@ -65,10 +76,15 @@
   }
   
   .hero-content {
-    min-height: 300px;
+    min-height: auto;
   }
   
   .hero-image {
-    max-height: 300px;
+    max-width: 100%;
   }
+}
+
+/* Asegurar que el contenedor respeta el tamaño de la imagen */
+.hero-image {
+  margin: 0 auto;
 }

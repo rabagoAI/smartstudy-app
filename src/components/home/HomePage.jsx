@@ -38,7 +38,7 @@ function HomePage() {
       </section> */}
 
       <SubjectsSection />
-      <FeaturesSection />
+      {/* <FeaturesSection /> */}
       <AIToolsTeaser />
       <Testimonials />
     </>
