@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async'; // ✅ NUEVO: Helmet para SEO
-import { BookOpen, Brain, MessageSquare, BarChart3, Play, Zap, ArrowRight, Check, X, ChevronDown } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { BookOpen, Brain, MessageSquare, BarChart3, Play, Zap, ArrowRight, Check, X, ChevronDown, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getAuthErrorMessage } from '../../utils/errorHandler';
 import { trackEvent } from '../../analytics';
+import { fetchSignInMethodsForEmail } from 'firebase/auth';
+import { auth } from '../../firebase';
 import './Landing.css';
 
 export default function Landing() {
@@ -17,7 +19,11 @@ export default function Landing() {
   const [isLogin, setIsLogin] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [expandedFaq, setExpandedFaq] = useState(null); // ✅ NUEVO: Para FAQ colapsable
+  const [expandedFaq, setExpandedFaq] = useState(null);
+
+  // Estados para validación de email
+  const [emailStatus, setEmailStatus] = useState('idle'); // idle, checking, available, taken, invalid
+  const [emailMessage, setEmailMessage] = useState('');
 
   useEffect(() => {
     if (currentUser) {
@@ -25,9 +31,44 @@ export default function Landing() {
     }
   }, [currentUser, navigate]);
 
+  // Debounce para chequear email
+  useEffect(() => {
+    const checkEmail = async () => {
+      // Solo chequear si NO estamos en modo login (en login da igual si existe) y si hay email válido
+      if (isLogin || !formData.email.includes('@') || formData.email.length < 5) {
+        setEmailStatus('idle');
+        return;
+      }
+
+      setEmailStatus('checking');
+      try {
+        const methods = await fetchSignInMethodsForEmail(auth, formData.email);
+        if (methods.length > 0) {
+          setEmailStatus('taken');
+          setEmailMessage('Este email ya está registrado. ¿Quieres iniciar sesión?');
+        } else {
+          setEmailStatus('available');
+          setEmailMessage('Email disponible.');
+        }
+      } catch (err) {
+        console.error("Error validando email", err);
+        // Si hay error (ej: protección de enumeración), asumimos válido para no bloquear
+        setEmailStatus('idle');
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      if (formData.email) checkEmail();
+    }, 600); // 600ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.email, isLogin]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Si corrigen el email, reseteamos status visualmente hasta el debounce
+    if (name === 'email') setEmailStatus('idle');
   };
 
   const handleSubmit = async (e) => {
@@ -108,18 +149,18 @@ export default function Landing() {
         <title>SmartStudia - Estudia Inteligente con IA | Resúmenes, Exámenes, Vídeos</title>
         <meta name="description" content="Plataforma educativa con IA. Resúmenes claros, vídeos explicativos, exámenes resueltos y herramientas IA gratis. Aprende más inteligente, no más duro." />
         <meta name="keywords" content="educación, IA, estudio inteligente, exámenes, resúmenes, vídeos educativos, plataforma educativa" />
-        
+
         <meta property="og:title" content="SmartStudia - Aprende Inteligente con IA" />
         <meta property="og:description" content="Todo para dominar cada tema: resúmenes, exámenes, vídeos y herramientas IA. Gratis." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.smartstudia.com/" />
-        
+
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="SmartStudia - Estudia Inteligente" />
         <meta name="twitter:description" content="Resúmenes, exámenes y IA para aprender mejor" />
-        
+
         <link rel="canonical" href="https://www.smartstudia.com/" />
-        
+
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#6B7FFF" />
 
@@ -144,7 +185,7 @@ export default function Landing() {
               <Brain className="logo-icon" />
               <span className="logo-text">SmartStudia</span>
             </div>
-            <button 
+            <button
               onClick={() => openAuthModal(true)}
               className="btn-header"
             >
@@ -164,7 +205,7 @@ export default function Landing() {
                 Todo lo que necesitas para dominar cada tema: resúmenes, exámenes, vídeos y herramientas IA. Todo en un solo lugar.
               </p>
               <div className="hero-buttons">
-                <button 
+                <button
                   onClick={() => openAuthModal(false)}
                   className="btn btn-primary"
                 >
@@ -350,7 +391,7 @@ export default function Landing() {
                     onClick={() => setExpandedFaq(expandedFaq === item.id ? null : item.id)}
                   >
                     <span className="faq-question">{item.question}</span>
-                    <ChevronDown 
+                    <ChevronDown
                       className={`faq-chevron ${expandedFaq === item.id ? 'open' : ''}`}
                       size={20}
                     />
@@ -369,7 +410,7 @@ export default function Landing() {
           <div className="landing-container">
             <h2 className="cta-title">¿Listo para estudiar de forma inteligente?</h2>
             <p className="cta-subtitle">Únete a estudiantes que ya están mejorando sus calificaciones</p>
-            <button 
+            <button
               onClick={() => openAuthModal(false)}
               className="btn btn-cta"
             >
@@ -400,8 +441,8 @@ export default function Landing() {
 
               <form onSubmit={handleSubmit} className="modal-form">
                 {!isLogin && (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     name="name"
                     placeholder="Tu nombre"
                     value={formData.name}
@@ -410,8 +451,8 @@ export default function Landing() {
                     required
                   />
                 )}
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   name="email"
                   placeholder="Tu email"
                   value={formData.email}
@@ -419,8 +460,8 @@ export default function Landing() {
                   className="form-input"
                   required
                 />
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   name="password"
                   placeholder="Contraseña"
                   value={formData.password}
@@ -444,7 +485,7 @@ export default function Landing() {
               <div className="modal-toggle">
                 <p className="toggle-text">
                   {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
-                  <button 
+                  <button
                     onClick={() => {
                       setIsLogin(!isLogin);
                       setError('');

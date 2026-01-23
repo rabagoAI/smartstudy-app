@@ -41,22 +41,103 @@
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
-.subject-icon {
-  height: 140px;
+/* CSS optimizado para Imágenes Lazy Loading */
+.subject-image-wrapper {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.lazy-image-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.lazy-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(20px);
+  transform: scale(1.1);
+  /* Evita bordes blancos por el blur */
+  transition: opacity 0.5s ease-out;
+  z-index: 1;
+}
+
+.lazy-image-real {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.5s ease-in, transform 0.5s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.lazy-image-real.loaded {
+  opacity: 1;
+}
+
+.subject-card:hover .lazy-image-real {
+  transform: scale(1.05);
+}
+
+.subject-icon-overlay {
+  position: absolute;
+  bottom: -20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 3.5rem;
+  font-size: 1.5rem;
   color: white;
-  transition: transform 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+  transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.subject-card:hover .subject-icon {
-  transform: scale(1.1);
+.subject-card:hover .subject-icon-overlay {
+  bottom: 20px;
+}
+
+/* Colores de iconos (reutilizados) */
+.subject-icon-overlay.language {
+  background: #E91E63;
+}
+
+.subject-icon-overlay.maths {
+  background: #2196F3;
+}
+
+.subject-icon-overlay.science {
+  background: #4CAF50;
+}
+
+.subject-icon-overlay.social {
+  background: #FF9800;
+}
+
+.subject-icon-overlay.english {
+  background: #9C27B0;
+}
+
+.subject-icon-overlay.tech {
+  background: #607D8B;
 }
 
 .subject-content {
   padding: 25px;
+  padding-top: 35px;
+  /* Espacio para el icono flotante */
   flex-grow: 1;
   display: flex;
   flex-direction: column;

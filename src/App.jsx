@@ -6,20 +6,22 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import PrivateRoute from './components/auth/PrivateRoute';
-import Landing from './components/home/Landing';
-import HomePage from './components/home/HomePage';
-import SubjectsPage from './components/subjects/SubjectsPage';
-import SubjectDetailsPage from './components/subjects/SubjectDetailsPage';
-import AIToolsPage from './components/ai-tools/AIToolsPage';
-import MindMapGenerator from './components/ai-tools/MindMapGenerator';
-import LoginPage from './components/auth/LoginPage';
-import RegisterPage from './components/auth/RegisterPage';
-import ProfilePage from './components/ProfilePage';
-import ResetPassword from './components/auth/ResetPassword';
-import UploadForm from './components/admin/UploadForm';
+import Landing from './components/home/Landing'; // Landing estática para carga rápida
 import TourGuide from './components/common/TourGuide';
-import AIHistoryPage from './components/ai-tools/AIHistoryPage';
-import EducationalChat from './components/ai-tools/EducationalChat';
+
+// Lazy Loading de rutas para optimizar bundle inicial
+const HomePage = React.lazy(() => import('./components/home/HomePage'));
+const SubjectsPage = React.lazy(() => import('./components/subjects/SubjectsPage'));
+const SubjectDetailsPage = React.lazy(() => import('./components/subjects/SubjectDetailsPage'));
+const AIToolsPage = React.lazy(() => import('./components/ai-tools/AIToolsPage'));
+const MindMapGenerator = React.lazy(() => import('./components/ai-tools/MindMapGenerator'));
+const LoginPage = React.lazy(() => import('./components/auth/LoginPage'));
+const RegisterPage = React.lazy(() => import('./components/auth/RegisterPage'));
+const ProfilePage = React.lazy(() => import('./components/ProfilePage'));
+const ResetPassword = React.lazy(() => import('./components/auth/ResetPassword'));
+const UploadForm = React.lazy(() => import('./components/admin/UploadForm'));
+const AIHistoryPage = React.lazy(() => import('./components/ai-tools/AIHistoryPage'));
+const EducationalChat = React.lazy(() => import('./components/ai-tools/EducationalChat'));
 import './App.css';
 
 // Loading component para Suspense
@@ -53,13 +55,13 @@ function AppContent() {
     <Router>
       <div className="App">
         {currentUser && <Header />}
-        
+
         <main>
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               {/* Landing page - pública */}
               <Route path="/" element={<Landing />} />
-              
+
               {/* Rutas de autenticación - públicas */}
               <Route path="/iniciar-sesion" element={<LoginPage />} />
               <Route path="/registrarse" element={<RegisterPage />} />

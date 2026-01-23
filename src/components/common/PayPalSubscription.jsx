@@ -3,107 +3,107 @@
 import React from 'react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { auth, db } from '../../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
+import { trackEvent } from '../../analytics';
 
 const PayPalSubscription = ({ onApprove, onCancel, onError }) => {
-  // ✅ Usa el plan_id desde las variables de entorno
   const planId = import.meta.env.VITE_APP_PAYPAL_PLAN_ID;
   const clientId = import.meta.env.VITE_APP_PAYPAL_CLIENT_ID;
 
-  // 🔍 Debug temporal - ELIMINAR EN PRODUCCIÓN
-  console.log('🔍 Plan ID:', planId);
-  console.log('🔍 Client ID:', clientId);
-  console.log('🔍 Node ENV:', import.meta.env.NODE_ENV);
-
-  // ✅ Verifica que las variables estén definidas
   if (!planId || !clientId) {
-    console.error('Error: Variables de entorno de PayPal no están definidas');
-    console.error('Plan ID:', planId);
-    console.error('Client ID:', clientId);
-    return (
-      <div style={{color: 'red', padding: '10px', border: '1px solid red'}}>
-        Error: Configuración de PayPal incompleta. Revisa las variables de entorno.
-      </div>
-    );
+    console.error('CRITICAL: PayPal Env vars missing');
+    return <div className="text-red-500">Error de configuración de pagos.</div>;
   }
 
-  // ✅ Configuración correcta de PayPal
   const initialOptions = {
     'client-id': clientId,
     'enable-funding': 'venmo',
-    'disable-funding': '',
-    'data-sdk-integration-source': 'integrationbuilder_sc',
     intent: 'subscription',
     vault: true
   };
 
+  const logError = async (context, errorDetails) => {
+    console.error(`❌ PayPal Error [${context}]:`, errorDetails);
+
+    // 1. Google Analytics
+    trackEvent('payment', 'error', `${context}: ${errorDetails.message || errorDetails}`);
+
+    // 2. Firestore Logging (Monitoring Dashboard)
+    try {
+      const user = auth.currentUser;
+      await addDoc(collection(db, 'transaction_logs'), {
+        type: 'ERROR',
+        context: context,
+        planId: planId,
+        uid: user ? user.uid : 'anonymous',
+        email: user ? user.email : 'unknown',
+        error: typeof errorDetails === 'object' ? JSON.stringify(errorDetails, Object.getOwnPropertyNames(errorDetails)) : errorDetails,
+        timestamp: new Date()
+      });
+    } catch (logErr) {
+      console.error('Failed to log payment error to Firestore:', logErr);
+    }
+  };
+
   const createSubscription = (data, actions) => {
-    console.log('🚀 Creando suscripción con Plan ID:', planId);
-    
     return actions.subscription.create({
       'plan_id': planId
     });
   };
 
   const onSubscriptionApprove = async (data, actions) => {
-    console.log('✅ Suscripción aprobada:', data);
-    
     try {
       const user = auth.currentUser;
       if (user) {
+        // Log transaction start
+        trackEvent('payment', 'subscription_approved_start', data.subscriptionID);
+
         await updateDoc(doc(db, "users", user.uid), {
           subscriptionStatus: 'premium',
           subscriptionID: data.subscriptionID,
           subscriptionStartDate: new Date(),
         });
-        
-        console.log('✅ Usuario actualizado con suscripción premium');
-        
-        if (onApprove) {
-          onApprove(data.subscriptionID);
-        }
+
+        // Log Success
+        await addDoc(collection(db, 'transaction_logs'), {
+          type: 'SUCCESS',
+          uid: user.uid,
+          subscriptionId: data.subscriptionID,
+          timestamp: new Date()
+        });
+
+        if (onApprove) onApprove(data.subscriptionID);
       } else {
-        throw new Error('Usuario no autenticado');
+        throw new Error('User not authenticated during payment approval');
       }
     } catch (error) {
-      console.error('❌ Error al actualizar la suscripción:', error);
-      if (onError) {
-        onError(error);
-      } else {
-        alert('Hubo un error al procesar tu suscripción. Por favor, inténtalo de nuevo.');
-      }
+      logError('Approval_Update', error);
+      if (onError) onError(error);
+      else alert('Tu pago se procesó, pero hubo un error actualizando tu perfil. Contacta a soporte.');
     }
   };
 
-  const handleCancel = (data, actions) => {
-    console.log('❌ Pago cancelado:', data);
-    if (onCancel) {
-      onCancel(data);
-    } else {
-      alert('Has cancelado el proceso de suscripción.');
-    }
+  const handleCancel = (data) => {
+    trackEvent('payment', 'cancelled', data.orderID);
+    if (onCancel) onCancel(data);
   };
 
   const handleError = (error) => {
-    console.error('❌ Error en PayPal:', error);
-    if (onError) {
-      onError(error);
-    } else {
-      alert('Hubo un error con PayPal. Por favor, inténtalo de nuevo más tarde.');
-    }
+    logError('Button_Error', error);
+    if (onError) onError(error);
+    else alert('Error de conexión con PayPal. Por favor, recarga y reintenta.');
   };
 
   return (
     <div className="paypal-container">
       <PayPalScriptProvider options={initialOptions}>
         <PayPalButtons
-          style={{ 
-            layout: 'vertical', 
-            shape: 'rect', 
+          style={{
+            layout: 'vertical',
+            shape: 'rect',
             label: 'subscribe',
             color: 'blue',
-            height: 48,
-            tagline: false
+            height: 48
           }}
           createSubscription={createSubscription}
           onApprove={onSubscriptionApprove}

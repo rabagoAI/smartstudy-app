@@ -1,16 +1,27 @@
 /* src/components/home/Landing.css */
 
+:root {
+  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+  /* Indigo a Púrpura */
+  --secondary-gradient: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  /* Azul a Indigo */
+  --text-on-dark: #ffffff;
+  --text-on-light: #1f2937;
+  --bg-white: #ffffff;
+  --section-padding: 6rem 0;
+}
+
 .landing {
   width: 100%;
   overflow-x: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .landing-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
-  /* CAMBIO: Fondo gris suave para un look moderno */
-  background-color: #f7f9fc;
+  background-color: transparent;
 }
 
 /* Header */
@@ -18,10 +29,502 @@
   position: fixed;
   top: 0;
   width: 100%;
-  background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 50;
   padding: 1rem 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  z-index: 50;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-icon {
+  width: 2rem;
+  height: 2rem;
+  color: #7c3aed;
+  /* Púrpura principal */
+}
+
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #7c3aed;
+}
+
+.btn-header {
+  background: var(--primary-gradient);
+  color: white;
+  padding: 0.6rem 1.8rem;
+  border-radius: 9999px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+}
+
+.btn-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(124, 58, 237, 0.4);
+}
+
+/* Hero Section - GRADIANT / PURPLE */
+.hero {
+  padding-top: 140px;
+  padding-bottom: 8rem;
+  background: var(--primary-gradient);
+  color: white;
+  position: relative;
+  clip-path: polygon(0 0, 100% 0, 100% 95%, 0 100%);
+  /* Leve inclinación */
+}
+
+.hero-content {
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 1.5rem;
+  line-height: 1.1;
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.highlight {
+  color: #60a5fa;
+  /* Azul claro brillante */
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.btn {
+  padding: 1rem 2.5rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1.1rem;
+}
+
+.btn-primary {
+  background: white;
+  color: #7c3aed;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  background: #fdfdfd;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(4px);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: white;
+}
+
+.hero-notes {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.5px;
+}
+
+/* Problem & Solution - WHITE */
+.problem-solution {
+  padding: var(--section-padding);
+  background: white;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-align: center;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  text-align: center;
+  color: #6b7280;
+  max-width: 700px;
+  margin: 0 auto 4rem auto;
+  font-size: 1.1rem;
+}
+
+.problems-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem;
+  margin-bottom: 5rem;
+}
+
+.problem-card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 1px solid #f3f4f6;
+}
+
+.problem-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  border-color: transparent;
+}
+
+.problem-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  display: inline-block;
+  background: #f3f4f6;
+  width: 80px;
+  height: 80px;
+  line-height: 80px;
+  border-radius: 50%;
+}
+
+.problem-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.problem-desc {
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.solution-box {
+  background: white;
+  /* Limpio */
+  border-radius: 2rem;
+  padding: 0;
+  margin-top: 3rem;
+}
+
+.solution-title {
+  font-size: 2rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 3rem;
+  color: #7c3aed;
+}
+
+.solution-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3rem;
+}
+
+.solution-item {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+.solution-item-title {
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.check-icon {
+  color: #7c3aed;
+  width: 24px;
+  height: 24px;
+}
+
+/* Features - WHITE BACKGROUND / PURPLE TEXT */
+.features {
+  padding: var(--section-padding);
+  background: white;
+  color: #1f2937;
+  position: relative;
+}
+
+/* Título morado destacado */
+.features .section-title {
+  color: #7c3aed;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-top: 4rem;
+}
+
+.feature-card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #1f2937;
+  /* Texto oscuro en tarjeta blanca */
+}
+
+.feature-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+}
+
+.feature-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  color: #7c3aed;
+  margin-bottom: 1.5rem;
+  background: #f3f4f6;
+  padding: 0.75rem;
+  border-radius: 1rem;
+}
+
+.feature-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.feature-desc {
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+/* Subjects - WHITE */
+.subjects {
+  padding: var(--section-padding);
+  background: white;
+}
+
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
+  margin-bottom: 2rem;
+}
+
+.subject-badge {
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #4b5563;
+  padding: 1.5rem 1rem;
+  border-radius: 1rem;
+  text-align: center;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.subject-badge:hover {
+  border-color: #7c3aed;
+  color: #7c3aed;
+  background: #f5f3ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+}
+
+/* Pricing Section - GRADIENT (Secondary) */
+.pricing {
+  padding: var(--section-padding);
+  background: #f8fafc;
+  /* Opcional: Dejarlo claro para contraste de tarjetas, o gradiente */
+  position: relative;
+}
+
+/* Siguiendo el patron "Cards on Gradient" (tarjetas en gradiente) de la imagen,
+   podríamos poner gradiente de fondo, pero pricing suele necesitar limpieza.
+   Vamos a usar blanco limpio con tarjetas destacadas para match "Trust Elements" estilo. 
+*/
+
+.pricing-card {
+  background: white;
+  padding: 3rem;
+  border-radius: 2rem;
+  border: 1px solid #e5e7eb;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.pricing-card.free {
+  border-top: 5px solid #9ca3af;
+}
+
+.pricing-card.premium {
+  border: 2px solid #7c3aed;
+  box-shadow: 0 20px 40px rgba(124, 58, 237, 0.15);
+  transform: scale(1.05);
+  /* Destacar */
+  z-index: 10;
+}
+
+.pricing-card.premium::before {
+  content: 'RECOMENDADO';
+  position: absolute;
+  top: 12px;
+  right: -30px;
+  background: #7c3aed;
+  color: white;
+  padding: 5px 30px;
+  transform: rotate(45deg);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.pricing-price {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 1.5rem 0;
+}
+
+.pricing-card.premium .pricing-price {
+  color: #7c3aed;
+}
+
+/* FAQ */
+.faq {
+  padding: var(--section-padding);
+  background: white;
+}
+
+/* Reutiliza estilos FAQ, solo ajustando colores si es necesario */
+.faq-question-btn:focus {
+  outline: 2px solid #7c3aed;
+}
+
+.faq-chevron {
+  color: #7c3aed;
+}
+
+.faq-answer strong {
+  color: #7c3aed;
+}
+
+/* CTA Final - GRADIENT / DARK */
+.cta-final {
+  padding: 8rem 0;
+  background: var(--primary-gradient);
+  color: white;
+  text-align: center;
+  position: relative;
+}
+
+.cta-title {
+  color: white;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.cta-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.btn-cta {
+  background: white;
+  color: #7c3aed;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.btn-cta:hover {
+  background: #fdfdfd;
+  color: #6d28d9;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+}
+
+/* Footer */
+.landing-footer {
+  background: #0f172a;
+  /* Slate 900 */
+  color: #94a3b8;
+  padding: 4rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .solution-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-card.premium {
+    transform: scale(1);
+  }
+
+  .hero {
+    clip-path: none;
+  }
+}
+
+/* Header */
+.landing-header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  padding: 1rem 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+z-index: 50;
+padding: 1rem 0;
 }
 
 .header-content {
@@ -40,7 +543,8 @@
   width: 2rem;
   height: 2rem;
   /* CAMBIO: Nuevo color de marca (Cian) */
-  color: #00bcd4;
+  /* CAMBIO: Nuevo color de marca (Cian Vibrante) */
+  color: #06b6d4;
 }
 
 .logo-text {
@@ -54,9 +558,9 @@
   background: #00bcd4;
   color: white;
   padding: 0.5rem 1.5rem;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   border: none;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.3s ease;
 }
@@ -71,7 +575,10 @@
   padding-top: 100px;
   padding-bottom: 5rem;
   /* CAMBIO: Gradiente actualizado con nuevo color de marca */
-  background: linear-gradient(135deg, #00bcd4 0%, #667eea 100%);
+  /* CAMBIO: Gradiente actualizado Estilo "Mesh Gradient" */
+  background: radial-gradient(circle at 10% 20%, rgb(0, 188, 212) 0%, rgb(79, 70, 229) 90.2%);
+  margin-top: 60px;
+  color: white;
   margin-top: 60px;
   color: white;
 }
@@ -99,7 +606,7 @@
 .hero-subtitle {
   font-size: 1.25rem;
   /* Se mantiene oscuro para el contraste sobre el fondo claro del Hero */
-  color: #e0f7fa; 
+  color: #e0f7fa;
   margin-bottom: 2rem;
   line-height: 1.6;
 }
@@ -152,7 +659,8 @@
 
 .hero-notes {
   font-size: 0.875rem;
-  color: #cfd8dc; /* Color más claro sobre el fondo oscuro del Hero */
+  color: #cfd8dc;
+  /* Color más claro sobre el fondo oscuro del Hero */
 }
 
 .hero-visual {
@@ -208,10 +716,17 @@
 }
 
 .problem-card {
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-  padding: 2rem;
-  border-radius: 0.75rem;
+  background: white;
+  border: 1px solid #f3f4f6;
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.problem-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .problem-icon {
@@ -279,7 +794,8 @@
 .features {
   padding: 5rem 0;
   /* El hero ya usa el gradiente principal, aquí usamos el secundario o un color */
-  background: #1a237e; /* Azul oscuro para un buen contraste */
+  background: #1a237e;
+  /* Azul oscuro para un buen contraste */
 }
 
 .features-grid {
@@ -300,7 +816,8 @@
 
 .feature-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); /* Sombra más fuerte al pasar el ratón */
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  /* Sombra más fuerte al pasar el ratón */
 }
 
 .feature-icon {
@@ -434,47 +951,64 @@
   color: #86efac;
 }
 
-/* CTA Final - REEMPLAZAR */
+/* CTA Final - REDISEÑO LIMPIO */
 .cta-final {
-  padding: 5rem 0;
-  /* CAMBIO: Gradiente con más profundidad (Azul oscuro a Cian) */
+  padding: 6rem 0;
+  /* Fondo gradiente azul (como solicitado) */
   background: linear-gradient(135deg, #1a237e 0%, #00bcd4 100%);
-  color: #00bcd4;
+  color: white;
+  /* Texto blanco global para la sección */
   text-align: center;
-  /* Sombra superior sutil para separarlo de la sección de arriba */
-  box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.05); 
+  position: relative;
+  overflow: hidden;
 }
 
 .cta-title {
-  font-size: 2.5rem; /* Aumento ligero del tamaño */
-  font-weight: 800; /* Más peso */
-  margin-bottom: 1.5rem; /* Más espacio */
-  color: #00bcd4;
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  color: white;
+  /* Forzamos blanco puro */
+  letter-spacing: -0.02em;
 }
 
 .cta-subtitle {
-  font-size: 1.25rem; /* Más legible */
-  margin-bottom: 2.5rem; /* Más espacio */
-  opacity: 0.95;
+  font-size: 1.25rem;
+  margin-bottom: 3rem;
+  color: rgba(255, 255, 255, 0.9);
+  /* Blanco con ligera opacidad */
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
 }
 
 .btn-cta {
   background: white;
-  color: #00bcd4;
-  font-size: 1.2rem; /* Más grande */
+  color: #1e40af;
+  /* Azul oscuro para texto del botón */
+  font-size: 1.125rem;
   font-weight: 700;
-  padding: 1rem 3rem;
-  border-radius: 30px; /* Estilo píldora */
-  /* Nuevo: Sombra para que el botón destaque */
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); 
+  padding: 1.25rem 3.5rem;
+  border-radius: 9999px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+  border: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-cta:hover {
-  /* Nuevo: Hover más dinámico */
-  background: #f0f9ff;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.3);
+  background: #f8fafc;
 }
+
+.cta-notes {
+  margin-top: 2rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
 /* Fin de CTA Final */
 
 /* Footer */
@@ -500,7 +1034,8 @@
   position: fixed;
   inset: 0;
   /* El color del overlay debe ser oscuro para contrastar con el contenido */
-  background: rgba(0, 0, 0, 0.7); /* Hacemos el fondo más oscuro para el contraste */
+  background: rgba(0, 0, 0, 0.7);
+  /* Hacemos el fondo más oscuro para el contraste */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -510,18 +1045,18 @@
 
 .modal-content {
   /* CAMBIO CLAVE: Reemplazar el fondo blanco por el gradiente azul/cian */
-  background: linear-gradient(135deg, #00bcd4 0%, #2563eb 100%); 
-  
+  background: linear-gradient(135deg, #00bcd4 0%, #2563eb 100%);
+
   border-radius: 1rem;
   padding: 2rem;
   max-width: 420px;
   width: 100%;
-  
+
   /* Añadimos una sombra más fuerte al modal */
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  
+
   /* Todo el texto dentro del modal será blanco para asegurar la legibilidad */
-  color: white; 
+  color: white;
 }
 
 .modal-header {
@@ -535,7 +1070,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   /* El color del título debe ser blanco */
-  color: white; 
+  color: white;
   margin: 0;
 }
 
@@ -550,7 +1085,7 @@
   width: 1.5rem;
   height: 1.5rem;
   /* Hacemos el ícono blanco */
-  color: white; 
+  color: white;
 }
 
 /* Modificaciones en el formulario para asegurar el contraste */
@@ -558,8 +1093,8 @@
   width: 100%;
   padding: 0.75rem;
   /* Fondo blanco y texto oscuro dentro del input */
-  background-color: white; 
-  color: #111827; 
+  background-color: white;
+  color: #111827;
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   font-size: 1rem;
@@ -567,14 +1102,15 @@
 }
 
 .form-input::placeholder {
-    color: #9ca3af; /* Placeholder en gris suave */
+  color: #9ca3af;
+  /* Placeholder en gris suave */
 }
 
 .form-input:focus {
   outline: none;
   /* El foco mantiene el color de la marca (cian) */
   border-color: #00bcd4;
-  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.3); 
+  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.3);
 }
 
 /* El botón ya es blanco sobre el azul, lo cual está bien: */
@@ -583,7 +1119,7 @@
 /* Asegurar el texto del toggle */
 .toggle-text {
   /* El texto debe ser blanco o muy claro sobre el fondo azul */
-  color: #e0f7fa; 
+  color: #e0f7fa;
   margin: 0;
 }
 
@@ -591,7 +1127,7 @@
   background: none;
   border: none;
   /* El botón del toggle se mantiene en cian o un color contrastante */
-  color: #80deea; 
+  color: #80deea;
   font-weight: 600;
   cursor: pointer;
   margin-left: 0.25rem;
@@ -615,7 +1151,7 @@
   color: #dc2626;
   font-size: 0.875rem;
   /* Fondo claro para asegurar el contraste con el texto rojo */
-  background: white; 
+  background: white;
   padding: 0.75rem;
   border-radius: 0.5rem;
   margin: 0;
@@ -797,6 +1333,130 @@
   animation: slideDown 0.3s ease;
 }
 
+/* =========================================
+   ANIMACIONES ESTILO FIGMA
+   ========================================= */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Aplicar animaciones */
+.hero-content,
+.problem-card,
+.solution-box,
+.feature-card,
+.pricing-card {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Stagger delay para tarjetas */
+.feature-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.feature-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.feature-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.feature-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* =========================================
+   ESTILOS DE VALIDACIÓN FORMULARIO
+   ========================================= */
+
+.input-group {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+}
+
+.input-icon.spin {
+  animation: spin 1s linear infinite;
+  color: #6b7280;
+}
+
+.input-icon.error {
+  color: #ef4444;
+}
+
+.input-icon.success {
+  color: #10b981;
+}
+
+.validation-msg {
+  font-size: 0.75rem;
+  margin-top: 4px;
+  margin-left: 4px;
+}
+
+.validation-msg.taken {
+  color: #ef4444;
+}
+
+.validation-msg.available {
+  color: #10b981;
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+
+.input-success {
+  border-color: #10b981 !important;
+  background-color: #f0fdf4 !important;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .faq-answer strong {
   color: #6B7FFF;
   font-weight: 600;
@@ -808,6 +1468,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

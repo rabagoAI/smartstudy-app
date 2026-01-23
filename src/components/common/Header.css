@@ -163,8 +163,10 @@
     }
 
     /* Estilos para el menú móvil */
+    /* Estilos para el menú móvil */
     .mobile-nav {
-        display: none;
+        display: flex;
+        /* Siempre flex, pero oculto visualmente */
         flex-direction: column;
         width: 100%;
         text-align: center;
@@ -174,23 +176,19 @@
         background: #4A148C;
         padding: 1rem 0;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        animation: slideDown 0.3s ease-out;
         z-index: 100;
+
+        /* Transiciones suaves */
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-20px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .mobile-nav.open {
-        display: flex;
-    }
-
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
     }
 
     .mobile-nav .nav-links {
@@ -250,23 +248,23 @@
 }
 
 .language-selector {
-  display: flex;
-  gap: 8px;
-  margin-left: 1rem;
+    display: flex;
+    gap: 8px;
+    margin-left: 1rem;
 }
 
 .language-selector button {
-  background: none;
-  border: 2px solid transparent;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.2s;
+    background: none;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .language-selector button.active {
-  border-color: #fff;
-  background: rgba(255, 255, 255, 0.2);
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.2);
 }

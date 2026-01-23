@@ -1,6 +1,6 @@
 // src/components/common/Header.js
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
@@ -10,19 +10,36 @@ import { trackEvent } from '../../analytics';
 function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef(null);
+    const toggleRef = useRef(null);
     const { currentUser } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate();
 
-    // Cierra el menú al hacer clic fuera
+    // Cierra el menú al hacer clic fuera o presionar Escape
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (menuRef.current && !menuRef.current.contains(event.target)) {
+            if (
+                menuRef.current &&
+                !menuRef.current.contains(event.target) &&
+                toggleRef.current &&
+                !toggleRef.current.contains(event.target)
+            ) {
                 setIsMenuOpen(false);
             }
         };
+
+        const handleEscape = (event) => {
+            if (event.key === 'Escape') {
+                setIsMenuOpen(false);
+            }
+        };
+
         document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleEscape);
+
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscape);
         };
     }, []);
 
@@ -32,13 +49,15 @@ function Header() {
     }, [location]);
 
     const toggleMenu = () => {
-        setIsMenuOpen(!isMenuOpen);
+        setIsMenuOpen(prev => !prev);
     };
 
     const handleLogout = async () => {
         try {
             await signOut(auth);
             trackEvent('auth', 'logout_success', currentUser?.email);
+            setIsMenuOpen(false); // Asegurar cierre en móvil
+            navigate('/');
         } catch (error) {
             trackEvent('auth', 'logout_error', error.message);
             console.error("Error al cerrar sesión:", error);
@@ -67,7 +86,7 @@ function Header() {
                 <div className="header-logo">
                     <Link to="/" className="logo-text">SmartStudIA</Link>
                 </div>
-                
+
                 {/* Menú de navegación para desktop */}
                 <nav className="header-nav desktop-nav">
                     <ul className="nav-links">
@@ -75,14 +94,14 @@ function Header() {
                         <li><Link to="/asignaturas">Asignaturas</Link></li>
                         <li><Link to="/herramientas-ia">Herramientas IA</Link></li>
                         <li><Link to="/mapas-mentales">🧠 Mapas Mentales</Link></li>
-                        <li><Link to="/chat-educativo">Chat Educativo</Link></li> 
+                        <li><Link to="/chat-educativo">Chat Educativo</Link></li>
                     </ul>
                 </nav>
-                
+
                 {/* Botones de autenticación para desktop */}
                 <div className="header-actions desktop-actions">
                     {currentUser ? (
-                        <button 
+                        <button
                             className="btn login-btn"
                             onClick={handleLogout}
                         >
@@ -101,7 +120,13 @@ function Header() {
                 </div>
 
                 {/* Botón de menú hamburguesa para móvil */}
-                <div className="menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">
+                {/* Botón de menú hamburguesa para móvil */}
+                <div
+                    className="menu-toggle"
+                    onClick={toggleMenu}
+                    aria-label="Toggle menu"
+                    ref={toggleRef}
+                >
                     {isMenuOpen ? <CloseIcon /> : <MenuIcon />}
                 </div>
 
@@ -114,11 +139,11 @@ function Header() {
                         <li><Link to="/mapas-mentales" onClick={() => setIsMenuOpen(false)}>🧠 Mapas Mentales</Link></li>
                         <li><Link to="/chat-educativo" onClick={() => setIsMenuOpen(false)}>Chat Educativo</Link></li>
                     </ul>
-                    
+
                     {/* Botones de autenticación en menú móvil */}
                     <div className="mobile-actions">
                         {currentUser ? (
-                            <button 
+                            <button
                                 className="btn login-btn"
                                 onClick={() => {
                                     handleLogout();

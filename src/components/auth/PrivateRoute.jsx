@@ -10,7 +10,7 @@ const PrivateRoute = () => {
     return <div>Cargando...</div>;
   }
 
-  return currentUser ? <Outlet /> : <Navigate to="/iniciar-sesion" />;
+  return currentUser ? <Outlet /> : <Navigate to="/" />;
 };
 
 export default PrivateRoute;
