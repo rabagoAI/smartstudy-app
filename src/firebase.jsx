@@ -22,4 +22,14 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// Habilitar persistencia offline
+import { enableIndexedDbPersistence } from "firebase/firestore";
+enableIndexedDbPersistence(db).catch((err) => {
+  if (err.code === 'failed-precondition') {
+    console.warn('Persistencia fallida: Múltiples pestañas abiertas.');
+  } else if (err.code === 'unimplemented') {
+    console.warn('Persistencia no soportada por el navegador.');
+  }
+});
+
 export { auth, db, storage };

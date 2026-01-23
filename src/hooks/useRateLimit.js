@@ -1,220 +1,119 @@
-// src/hooks/useRateLimit.js
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '../firebase';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
-/**
- * Hook personalizado para implementar rate limiting en llamadas a la API de Gemini
- *
- * Límites implementados:
- * - Free users: 3 llamadas/minuto, 20 llamadas/hora
- * - Premium users: 10 llamadas/minuto, 100 llamadas/hora
- *
- * @param {Object} user - Usuario actual de Firebase Auth
- * @param {boolean} isPremium - Si el usuario tiene suscripción premium
- * @returns {Object} Estado del rate limiting y funciones
- */
-export const useRateLimit = (user, isPremium = false) => {
-  const [callsThisMinute, setCallsThisMinute] = useState(0);
-  const [callsThisHour, setCallsThisHour] = useState(0);
-  const [nextResetMinute, setNextResetMinute] = useState(null);
-  const [nextResetHour, setNextResetHour] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+const DEFAULT_LIMITS = {
+  free: { perMinute: 5, perHour: 20 },
+  premium: { perMinute: 20, perHour: 100 }
+};
 
-  // Límites configurables según tipo de usuario
-  const LIMITS = {
-    free: {
-      perMinute: 3,
-      perHour: 20
-    },
-    premium: {
-      perMinute: 10,
-      perHour: 100
-    }
-  };
+const useRateLimit = (currentUser, isPremium = false) => {
+  const [limits, setLimits] = useState(isPremium ? DEFAULT_LIMITS.premium : DEFAULT_LIMITS.free);
 
-  const limits = isPremium ? LIMITS.premium : LIMITS.free;
+  // Contadores en memoria (inicializados desde localStorage si es posible)
+  const [callsMinute, setCallsMinute] = useState(0);
+  const [callsHour, setCallsHour] = useState(0);
 
-  /**
-   * Inicializar contadores desde Firestore o localStorage
-   */
+  // Timestamps para reseteo
+  const [resetMinute, setResetMinute] = useState(Date.now() + 60000);
+  const [resetHour, setResetHour] = useState(Date.now() + 3600000);
+
+  // Cargar estado desde localStorage al montar
   useEffect(() => {
-    const initializeRateLimit = async () => {
-      if (!user) {
-        setIsLoading(false);
-        return;
+    if (!currentUser) return;
+
+    const loadLocalState = () => {
+      const storedMinute = localStorage.getItem(`rate_limit_minute_${currentUser.uid}`);
+      const storedHour = localStorage.getItem(`rate_limit_hour_${currentUser.uid}`);
+      const storedResetMinute = localStorage.getItem(`rate_limit_reset_minute_${currentUser.uid}`);
+      const storedResetHour = localStorage.getItem(`rate_limit_reset_hour_${currentUser.uid}`);
+
+      const now = Date.now();
+
+      if (storedResetMinute && parseInt(storedResetMinute) > now) {
+        setCallsMinute(parseInt(storedMinute || '0'));
+        setResetMinute(parseInt(storedResetMinute));
+      } else {
+        setCallsMinute(0);
+        setResetMinute(now + 60000);
       }
 
-      try {
-        const rateLimitRef = doc(db, 'rateLimits', user.uid);
-        const rateLimitDoc = await getDoc(rateLimitRef);
-
-        const now = new Date();
-        const currentMinute = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
-        const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
-
-        if (rateLimitDoc.exists()) {
-          const data = rateLimitDoc.data();
-          const lastMinute = data.lastMinuteReset?.toDate() || new Date(0);
-          const lastHour = data.lastHourReset?.toDate() || new Date(0);
-
-          // Resetear si es un minuto diferente
-          if (lastMinute < currentMinute) {
-            setCallsThisMinute(0);
-            setNextResetMinute(new Date(currentMinute.getTime() + 60000));
-          } else {
-            setCallsThisMinute(data.callsThisMinute || 0);
-            setNextResetMinute(new Date(lastMinute.getTime() + 60000));
-          }
-
-          // Resetear si es una hora diferente
-          if (lastHour < currentHour) {
-            setCallsThisHour(0);
-            setNextResetHour(new Date(currentHour.getTime() + 3600000));
-          } else {
-            setCallsThisHour(data.callsThisHour || 0);
-            setNextResetHour(new Date(lastHour.getTime() + 3600000));
-          }
-        } else {
-          // Primera vez: crear documento
-          await setDoc(rateLimitRef, {
-            callsThisMinute: 0,
-            callsThisHour: 0,
-            lastMinuteReset: serverTimestamp(),
-            lastHourReset: serverTimestamp(),
-            userId: user.uid
-          });
-          setCallsThisMinute(0);
-          setCallsThisHour(0);
-          setNextResetMinute(new Date(currentMinute.getTime() + 60000));
-          setNextResetHour(new Date(currentHour.getTime() + 3600000));
-        }
-      } catch (error) {
-        console.error('Error al inicializar rate limit desde Firestore:', error);
-        // Fallback a localStorage
-        const localData = JSON.parse(localStorage.getItem(`rateLimit_${user.uid}`) || '{}');
-        const now = Date.now();
-
-        if (localData.lastMinuteReset && now - localData.lastMinuteReset < 60000) {
-          setCallsThisMinute(localData.callsThisMinute || 0);
-        }
-        if (localData.lastHourReset && now - localData.lastHourReset < 3600000) {
-          setCallsThisHour(localData.callsThisHour || 0);
-        }
-      } finally {
-        setIsLoading(false);
+      if (storedResetHour && parseInt(storedResetHour) > now) {
+        setCallsHour(parseInt(storedHour || '0'));
+        setResetHour(parseInt(storedResetHour));
+      } else {
+        setCallsHour(0);
+        setResetHour(now + 3600000);
       }
     };
 
-    initializeRateLimit();
-  }, [user]);
+    loadLocalState();
+  }, [currentUser]);
 
-  /**
-   * Verificar si se puede hacer una llamada
-   */
-  const canMakeCall = useCallback(() => {
-    if (!user) return { allowed: false, reason: 'Usuario no autenticado' };
+  // Actualizar localStorage cuando cambia el estado
+  useEffect(() => {
+    if (!currentUser) return;
 
-    if (callsThisMinute >= limits.perMinute) {
-      const secondsLeft = Math.ceil((nextResetMinute - new Date()) / 1000);
-      return {
-        allowed: false,
-        reason: `Has alcanzado el límite de ${limits.perMinute} llamadas por minuto. Espera ${secondsLeft} segundos.`,
-        limitType: 'minute',
-        resetIn: secondsLeft
-      };
+    localStorage.setItem(`rate_limit_minute_${currentUser.uid}`, callsMinute.toString());
+    localStorage.setItem(`rate_limit_hour_${currentUser.uid}`, callsHour.toString());
+    localStorage.setItem(`rate_limit_reset_minute_${currentUser.uid}`, resetMinute.toString());
+    localStorage.setItem(`rate_limit_reset_hour_${currentUser.uid}`, resetHour.toString());
+  }, [callsMinute, callsHour, resetMinute, resetHour, currentUser]);
+
+  // Verificar si se puede realizar una llamada
+  const checkLimit = useCallback(async () => {
+    if (!currentUser) return false;
+
+    const now = Date.now();
+
+    // Reseteos automáticos si ha pasado el tiempo
+    if (now > resetMinute) {
+      setCallsMinute(0);
+      setResetMinute(now + 60000);
+    }
+    if (now > resetHour) {
+      setCallsHour(0);
+      setResetHour(now + 3600000);
     }
 
-    if (callsThisHour >= limits.perHour) {
-      const minutesLeft = Math.ceil((nextResetHour - new Date()) / 60000);
-      return {
-        allowed: false,
-        reason: `Has alcanzado el límite de ${limits.perHour} llamadas por hora. Espera ${minutesLeft} minutos.`,
-        limitType: 'hour',
-        resetIn: minutesLeft
-      };
+    if (callsMinute >= limits.perMinute) {
+      return { allowed: false, error: 'Has excedido el límite por minuto. Espera un momento.' };
+    }
+    if (callsHour >= limits.perHour) {
+      return { allowed: false, error: 'Has excedido el límite por hora. Vuelve más tarde.' };
     }
 
     return { allowed: true };
-  }, [user, callsThisMinute, callsThisHour, limits, nextResetMinute, nextResetHour]);
+  }, [callsMinute, callsHour, limits, resetMinute, resetHour, currentUser]);
 
-  /**
-   * Registrar una llamada realizada
-   */
-  const recordCall = useCallback(async () => {
-    if (!user) return;
+  // Incrementar contador
+  const incrementCount = useCallback(async () => {
+    if (!currentUser) return;
 
-    const newCallsMinute = callsThisMinute + 1;
-    const newCallsHour = callsThisHour + 1;
+    setCallsMinute(prev => prev + 1);
+    setCallsHour(prev => prev + 1);
 
-    setCallsThisMinute(newCallsMinute);
-    setCallsThisHour(newCallsHour);
-
+    // Intentar sincronizar con Firestore (opcional, para auditoría)
     try {
-      const rateLimitRef = doc(db, 'rateLimits', user.uid);
-      const now = new Date();
-      const currentMinute = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
-      const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
-
-      await updateDoc(rateLimitRef, {
-        callsThisMinute: newCallsMinute,
-        callsThisHour: newCallsHour,
-        lastMinuteReset: currentMinute,
-        lastHourReset: currentHour,
-        lastCallTimestamp: serverTimestamp()
-      });
+      const usageRef = doc(db, 'user_usage', currentUser.uid);
+      await setDoc(usageRef, {
+        lastUsed: serverTimestamp(),
+        callsMinute: callsMinute + 1,
+        callsHour: callsHour + 1
+      }, { merge: true });
     } catch (error) {
-      console.error('Error al actualizar rate limit en Firestore:', error);
-      // Fallback a localStorage
-      localStorage.setItem(`rateLimit_${user.uid}`, JSON.stringify({
-        callsThisMinute: newCallsMinute,
-        callsThisHour: newCallsHour,
-        lastMinuteReset: Date.now(),
-        lastHourReset: Date.now()
-      }));
+      console.warn('Error syncing usage to Firestore:', error);
+      // No bloqueamos la UI si falla la sincronización remota
     }
-  }, [user, callsThisMinute, callsThisHour]);
-
-  /**
-   * Resetear contadores manualmente (útil para testing)
-   */
-  const resetLimits = useCallback(async () => {
-    if (!user) return;
-
-    setCallsThisMinute(0);
-    setCallsThisHour(0);
-
-    try {
-      const rateLimitRef = doc(db, 'rateLimits', user.uid);
-      await updateDoc(rateLimitRef, {
-        callsThisMinute: 0,
-        callsThisHour: 0,
-        lastMinuteReset: serverTimestamp(),
-        lastHourReset: serverTimestamp()
-      });
-    } catch (error) {
-      console.error('Error al resetear limits:', error);
-    }
-  }, [user]);
+  }, [callsMinute, callsHour, currentUser]);
 
   return {
-    // Estado
-    callsThisMinute,
-    callsThisHour,
-    remainingCallsMinute: Math.max(0, limits.perMinute - callsThisMinute),
-    remainingCallsHour: Math.max(0, limits.perHour - callsThisHour),
+    remainingCallsMinute: Math.max(0, limits.perMinute - callsMinute),
+    remainingCallsHour: Math.max(0, limits.perHour - callsHour),
     limits,
-    isLoading,
-    nextResetMinute,
-    nextResetHour,
-
-    // Funciones
-    canMakeCall,
-    recordCall,
-    resetLimits,
-
-    // Info
-    isPremium
+    nextResetMinute: new Date(resetMinute),
+    checkLimit,
+    incrementCount
   };
 };
 

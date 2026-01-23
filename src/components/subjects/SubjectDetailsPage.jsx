@@ -1,10 +1,11 @@
 // src/components/subjects/SubjectDetailsPage.js
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext"; // ✅ Ruta corregida
+import { useAuth } from "../../context/AuthContext";
 import { db } from "../../firebase";
-import { collection, query, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, getDocs, orderBy, limit, startAfter } from "firebase/firestore";
 import SubscriptionModal from "../common/SubscriptionModal";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import "../../App.css";
 
 // Función para limpiar el nombre de la asignatura
@@ -16,46 +17,64 @@ const formatSubjectName = (name) => {
     .replace(/ /g, "-");
 };
 
+// Función para evitar autoplay en videos
+const getSafeVideoUrl = (url) => {
+  if (!url) return "";
+  try {
+    const urlObj = new URL(url);
+    // Eliminar autoplay si existe
+    if (urlObj.searchParams.has("autoplay")) {
+      urlObj.searchParams.set("autoplay", "0");
+    }
+    // Si es YouTube, asegurar mute y autoplay off si fuera necesario, 
+    // pero principal objetivo es quitar autoplay=1
+    return urlObj.toString();
+  } catch (e) {
+    // Si no es una URL válida, devolver tal cual pero intentando string replacement básico
+    return url.replace("autoplay=1", "autoplay=0");
+  }
+};
+
 const SubjectDetailsPage = () => {
   const { subjectName } = useParams();
   const { userData } = useAuth();
-  const [content, setContent] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchContent = async () => {
-      try {
-        setLoading(true);
-        const formattedSubjectName = formatSubjectName(subjectName);
+  const fetchContent = async ({ pageParam = null }) => {
+    const formattedSubjectName = formatSubjectName(subjectName);
+    let q = query(
+      collection(db, "subjects", formattedSubjectName, "content"),
+      orderBy("createdAt", "asc"),
+      limit(20)
+    );
 
-        const q = query(
-          collection(db, "subjects", formattedSubjectName, "content"),
-          orderBy("createdAt", "asc")
-        );
+    if (pageParam) {
+      q = query(q, startAfter(pageParam));
+    }
 
-        const querySnapshot = await getDocs(q);
-        const contentList = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+    const snapshot = await getDocs(q);
+    const lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
-        setContent(contentList);
-      } catch (err) {
-        console.error("Error al obtener el contenido de la asignatura:", err);
-        setError(
-          "No se pudo cargar el contenido. Por favor, inténtalo de nuevo más tarde."
-        );
-      } finally {
-        setLoading(false);
-      }
+    return {
+      data: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+      nextPage: lastVisible || undefined,
     };
+  };
 
-    fetchContent();
-  }, [subjectName]);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+    error
+  } = useInfiniteQuery({
+    queryKey: ['subjectContent', subjectName],
+    queryFn: fetchContent,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
 
-  if (loading) {
+  if (status === 'pending') {
     return (
       <div className="subject-details">
         <div className="container">Cargando contenido...</div>
@@ -63,13 +82,15 @@ const SubjectDetailsPage = () => {
     );
   }
 
-  if (error) {
+  if (status === 'error') {
     return (
       <div className="subject-details">
-        <div className="container">Error: {error}</div>
+        <div className="container">Error: {error.message}</div>
       </div>
     );
   }
+
+  const content = data?.pages.flatMap(page => page.data) || [];
 
   const displaySubjectName =
     subjectName.charAt(0).toUpperCase() +
@@ -151,17 +172,15 @@ const SubjectDetailsPage = () => {
                   <p>{video.description}</p>
                   {video.isPremium ? (
                     isPremiumUser ? (
-                      <div className="video-container">
-                        <iframe
-                          width="100%"
-                          height="315"
-                          src={video.url}
-                          title={video.title}
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        ></iframe>
-                      </div>
+                      <iframe
+                        width="100%"
+                        height="315"
+                        src={getSafeVideoUrl(video.url)}
+                        title={video.title}
+                        frameBorder="0"
+                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
                     ) : (
                       <div className="premium-gate">
                         <h4>Contenido Premium 🌟</h4>
@@ -181,10 +200,10 @@ const SubjectDetailsPage = () => {
                       <iframe
                         width="100%"
                         height="315"
-                        src={video.url}
+                        src={getSafeVideoUrl(video.url)}
                         title={video.title}
                         frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
                       ></iframe>
                     </div>
@@ -249,6 +268,20 @@ const SubjectDetailsPage = () => {
             No hay contenido disponible para esta asignatura todavía.
           </p>
         )}
+
+        {/* Load More Button */}
+        {hasNextPage && (
+          <div className="load-more-container" style={{ textAlign: 'center', margin: '20px 0' }}>
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="btn btn-secondary"
+            >
+              {isFetchingNextPage ? 'Cargando más...' : 'Cargar más contenido'}
+            </button>
+          </div>
+        )}
+
       </div>
 
       <SubscriptionModal

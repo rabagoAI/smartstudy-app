@@ -1,6 +1,7 @@
 // src/components/common/TourGuide.js
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { usePopper } from 'react-popper';
 import './TourGuide.css';
 
 const steps = [
@@ -43,16 +44,42 @@ const TourGuide = () => {
   const [targetElement, setTargetElement] = useState(null);
   const [hasCheckedTour, setHasCheckedTour] = useState(false);
 
+  // Popper state
+  const [popperElement, setPopperElement] = useState(null);
+  const [arrowElement, setArrowElement] = useState(null);
+
+  const step = steps[currentStep];
+
+  const { styles, attributes } = usePopper(targetElement, popperElement, {
+    placement: step?.position || 'bottom',
+    modifiers: [
+      { name: 'arrow', options: { element: arrowElement } },
+      { name: 'offset', options: { offset: [0, 15] } },
+      {
+        name: 'preventOverflow',
+        options: {
+          padding: 10,
+        },
+      },
+      {
+        name: 'flip',
+        options: {
+          fallbackPlacements: ['top', 'bottom', 'right', 'left'],
+        },
+      },
+    ],
+  });
+
   // Detectar si es usuario nuevo (recién registrado)
   useEffect(() => {
     const checkForNewUser = () => {
       if (currentUser && !hasCheckedTour) {
         const hasSeenTour = localStorage.getItem(`hasSeenTour_${currentUser.uid}`);
         const isNewRegistration = sessionStorage.getItem('newUserRegistration');
-        
+
         if (isNewRegistration || !hasSeenTour) {
           sessionStorage.removeItem('newUserRegistration');
-          
+
           setTimeout(() => {
             const firstElement = document.querySelector(steps[0].selector);
             if (firstElement) {
@@ -89,30 +116,9 @@ const TourGuide = () => {
       const element = document.querySelector(steps[currentStep].selector);
       if (element) {
         setTargetElement(element);
-        
-        // ✅ Scroll corregido para dejar espacio al tooltip
-        setTimeout(() => {
-          const elementRect = element.getBoundingClientRect();
-          const viewportHeight = window.innerHeight;
-          
-          // Espacio necesario para el tooltip (altura + margen)
-          const tooltipSpace = 220; // Ajustado para tooltip + botones
-          
-          // Si el elemento está fuera de la vista o muy cerca de los bordes
-          if (
-            elementRect.top < tooltipSpace || 
-            elementRect.bottom > viewportHeight - tooltipSpace
-          ) {
-            // Calcular nueva posición de scroll
-            const elementTop = element.offsetTop;
-            const scrollPosition = elementTop - (viewportHeight / 2) + (elementRect.height / 2) - (tooltipSpace / 2);
-            
-            window.scrollTo({
-              top: Math.max(0, scrollPosition),
-              behavior: 'smooth'
-            });
-          }
-        }, 150); // Ligero retraso para asegurar renderizado
+
+        // Scroll to element
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
   }, [currentStep, isActive]);
@@ -143,136 +149,59 @@ const TourGuide = () => {
 
   if (!isActive || !steps[currentStep] || !targetElement) return null;
 
-  const step = steps[currentStep];
-  const rect = targetElement.getBoundingClientRect();
-  
-  // Calcular posición del tooltip
-  const getTooltipStyle = () => {
-    const tooltipWidth = 320;
-    const tooltipHeight = 180;
-    const margin = 20; // Aumentado para más espacio
-    
-    let top, left;
-    
-    switch (step.position) {
-      case 'top':
-        top = rect.top - tooltipHeight - margin;
-        left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-        break;
-      case 'bottom':
-        top = rect.bottom + margin;
-        left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-        break;
-      case 'left':
-        top = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-        left = rect.left - tooltipWidth - margin;
-        break;
-      case 'right':
-      default:
-        top = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-        left = rect.right + margin;
-        break;
-    }
-    
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
-    
-    // ✅ Ajuste vertical mejorado
-    if (top < margin) {
-      top = rect.bottom + margin;
-    } else if (top + tooltipHeight > viewportHeight - margin) {
-      const topPosition = rect.top - tooltipHeight - margin;
-      if (topPosition >= margin) {
-        top = topPosition;
-      } else {
-        // Centrar en pantalla si no cabe
-        top = Math.max(margin, (viewportHeight - tooltipHeight) / 2);
-      }
-    }
-    
-    // Ajuste horizontal
-    if (left < margin) {
-      left = margin;
-    } else if (left + tooltipWidth > viewportWidth - margin) {
-      left = viewportWidth - tooltipWidth - margin;
-    }
-    
-    left = Math.max(margin, Math.min(left, viewportWidth - tooltipWidth - margin));
-    top = Math.max(margin, Math.min(top, viewportHeight - tooltipHeight - margin));
-    
-    return {
-      position: 'fixed',
-      top,
-      left,
-      zIndex: 10001,
-    };
-  };
-
-  // Calcular posición de la flecha
-  const getArrowStyle = () => {
-    const tooltipStyle = getTooltipStyle();
-    const tooltipRect = {
-      top: tooltipStyle.top,
-      left: tooltipStyle.left,
-      width: 320,
-      height: 180
-    };
-    
-    const targetCenterX = rect.left + rect.width / 2;
-    const targetCenterY = rect.top + rect.height / 2;
-    const tooltipCenterX = tooltipRect.left + tooltipRect.width / 2;
-    const tooltipCenterY = tooltipRect.top + tooltipRect.height / 2;
-    
-    const angle = Math.atan2(targetCenterY - tooltipCenterY, targetCenterX - tooltipCenterX);
-    const degrees = (angle * 180 / Math.PI) + 90;
-    
-    return {
-      position: 'absolute',
-      top: '10px',
-      right: '15px',
-      transform: `rotate(${degrees}deg)`,
-      fontSize: '20px',
-      color: '#4361ee',
-    };
-  };
-
   return (
     <>
       <div className="tour-overlay" onClick={closeTour}>
-        <div 
-          className="tour-spotlight"
-          style={{
-            top: rect.top - 4,
-            left: rect.left - 4,
-            width: rect.width + 8,
-            height: rect.height + 8,
-          }}
-        />
+        {/* Spotlight effect can be improved or kept simple */}
+        {targetElement && (() => {
+          const rect = targetElement.getBoundingClientRect();
+          return (
+            <div
+              className="tour-spotlight"
+              style={{
+                top: rect.top + window.scrollY - 4,
+                left: rect.left + window.scrollX - 4,
+                width: rect.width + 8,
+                height: rect.height + 8,
+                position: 'absolute'
+              }}
+            />
+          );
+        })()}
       </div>
-      
-      <div className="tour-tooltip" style={getTooltipStyle()}>
-        <div className="tour-arrow" style={getArrowStyle()} />
-        
+
+      <div
+        className="tour-tooltip"
+        ref={setPopperElement}
+        style={styles.popper}
+        {...attributes.popper}
+      >
+        <div
+          className="tour-arrow"
+          ref={setArrowElement}
+          style={styles.arrow}
+        />
+
         <div className="tour-header">
           <h3>{step.title}</h3>
           <button className="tour-close" onClick={closeTour}>×</button>
         </div>
-        
+
         <div className="tour-content">
           <p>{step.content}</p>
         </div>
-        
+
         <div className="tour-footer">
           <div className="tour-progress">
             <span>{currentStep + 1} de {steps.length}</span>
             <div className="tour-progress-bar">
-              <div 
+              <div
                 className="tour-progress-fill"
                 style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
               />
             </div>
           </div>
-          
+
           <div className="tour-buttons">
             <button onClick={skipTour} className="tour-skip">
               Saltar tour

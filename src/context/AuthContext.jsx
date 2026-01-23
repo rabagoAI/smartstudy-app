@@ -1,6 +1,4 @@
-// src/context/AuthContext.js
-// ✅ VERSIÓN UNIFICADA - Combina lo mejor de ambas versiones
-
+// src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '../firebase';
 import {
@@ -9,7 +7,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -27,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Listener de cambios en autenticación
+  // Listener de cambios en autenticación (Persistencia automática por Firebase SDK)
   useEffect(() => {
     let unsubscribeFirestore = null;
 
@@ -131,6 +129,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✅ Función explícita para forzar refresh del token
+  const refreshToken = async () => {
+    if (currentUser) {
+      try {
+        const token = await currentUser.getIdToken(true); // true fuerza el refresh
+        return token;
+      } catch (err) {
+        console.error("Error refreshing token:", err);
+        setError("Error refrescando sesión.");
+        throw err;
+      }
+    }
+    return null;
+  };
+
   const value = {
     currentUser,
     userData,
@@ -140,6 +153,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     updateProfile,
+    refreshToken, // Exportado para uso manual si es necesario
     isAdmin: userData?.admin === true,
     isSubscribed: userData?.subscription === 'premium',
   };
@@ -150,3 +164,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export default AuthContext;

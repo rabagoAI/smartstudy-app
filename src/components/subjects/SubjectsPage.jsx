@@ -22,9 +22,7 @@ function SubjectsPage() {
           <h2 className="section-title">Asignaturas de 1º de la ESO</h2>
           <div className="subjects-grid">
             {subjectsData.map((subject, index) => (
-              <Link key={index} to={`/asignaturas/${subject.url}`}>
-                <SubjectCard subject={subject} />
-              </Link>
+              <SubjectCard key={index} subject={subject} />
             ))}
           </div>
         </div>

@@ -1,6 +1,5 @@
-// src/components/ai-tools/AIToolsPage.js
 import React, { useState, useEffect } from 'react';
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+// pdfjs-dist import removed as it is handled in worker
 import { useAuth } from '../../context/AuthContext';
 import { db } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -24,13 +23,21 @@ function AIToolsPage() {
     const [score, setScore] = useState(null);
     const [flippedCards, setFlippedCards] = useState({});
 
+    const [processingProgress, setProcessingProgress] = useState(0);
+    const workerRef = React.useRef(null);
+
     const { currentUser } = useAuth();
 
     // Rate limiting hook
     const rateLimit = useRateLimit(currentUser, false);
 
+    // Limpieza del worker al desmontar
     useEffect(() => {
-        GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        return () => {
+            if (workerRef.current) {
+                workerRef.current.terminate();
+            }
+        };
     }, []);
 
     const handleSelectTool = (selectedTool) => {
@@ -74,37 +81,77 @@ function AIToolsPage() {
         }
     };
 
+    const handleCancelProcessing = () => {
+        if (workerRef.current) {
+            workerRef.current.terminate();
+            workerRef.current = null;
+        }
+        setProcessingProgress(0);
+        setPdfFile(null);
+        document.getElementById('pdf-upload').value = null;
+        setResult('Procesamiento cancelado por el usuario.');
+    };
+
+    // Configurar worker de PDF.js (una sola vez)
+    useEffect(() => {
+        // Cargar script de PDF.js dinámicamente si no existe
+        if (!window.pdfjsLib) {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+            script.async = true;
+            script.onload = () => {
+                if (window.pdfjsLib) {
+                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                    console.log('PDF.js cargado correctamente');
+                }
+            };
+            document.body.appendChild(script);
+        } else if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    }, []);
+
     const extractTextFromPdf = async (file) => {
+        if (!window.pdfjsLib) {
+            throw new Error("Librería PDF.js no cargada aún. Espera un momento.");
+        }
+
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = async (event) => {
                 try {
                     const arrayBuffer = event.target.result;
-                    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-                        reject('Error: El archivo PDF está vacío o corrupto.');
-                        return;
-                    }
-                    const pdf = await getDocument({ data: arrayBuffer }).promise;
+                    setProcessingProgress(10);
+
+                    const loadingTask = window.pdfjsLib.getDocument({ data: arrayBuffer });
+
+                    loadingTask.onProgress = (progressData) => {
+                        if (progressData.total > 0) {
+                            const percent = Math.round((progressData.loaded / progressData.total) * 50);
+                            setProcessingProgress(percent);
+                        }
+                    };
+
+                    const pdf = await loadingTask.promise;
+                    const totalPages = pdf.numPages;
                     let fullText = '';
-                    for (let i = 1; i <= pdf.numPages; i++) {
+
+                    for (let i = 1; i <= totalPages; i++) {
+                        setProcessingProgress(50 + Math.round((i / totalPages) * 50));
                         const page = await pdf.getPage(i);
                         const textContent = await page.getTextContent();
                         const pageText = textContent.items.map(item => item.str).join(' ');
                         fullText += pageText + '\n';
                     }
-                    if (!fullText.trim()) {
-                        reject('Error: El PDF no contiene texto extraíble.');
-                        return;
-                    }
-                    resolve(fullText.substring(0, 2000));
+
+                    setProcessingProgress(0);
+                    resolve(fullText);
                 } catch (error) {
-                    console.error('Error detallado al procesar PDF:', error);
-                    reject('Error al procesar el archivo PDF: ' + (error.message || 'Error desconocido'));
+                    setProcessingProgress(0);
+                    reject('Error al procesar PDF: ' + error.message);
                 }
             };
-            reader.onerror = () => {
-                reject('Error al leer el archivo: ' + reader.error);
-            };
+            reader.onerror = () => reject('Error al leer archivo');
             reader.readAsArrayBuffer(file);
         });
     };
@@ -142,14 +189,14 @@ function AIToolsPage() {
     // Función para calcular el puntaje
     const calculateScore = () => {
         if (!quizData) return 0;
-        
+
         let correctCount = 0;
         quizData.forEach((question, index) => {
             if (userAnswers[index] === question.correctAnswer) {
                 correctCount++;
             }
         });
-        
+
         return {
             correct: correctCount,
             total: quizData.length,
@@ -179,9 +226,9 @@ function AIToolsPage() {
             return;
         }
 
-        const rateLimitCheck = rateLimit.canMakeCall();
+        const rateLimitCheck = await rateLimit.checkLimit();
         if (!rateLimitCheck.allowed) {
-            setResult(`⏱️ ${rateLimitCheck.reason}`);
+            setResult(`⏱️ ${rateLimitCheck.error}`);
             return;
         }
 
@@ -305,17 +352,17 @@ function AIToolsPage() {
                 setResult(generatedText);
             }
 
-            await rateLimit.recordCall();
+            await rateLimit.incrementCount();
 
             if (currentUser && (tool === 'cuestionario' || tool === 'tarjetas' || tool === 'resumen' || tool === 'explicar')) {
                 try {
                     const promptText = pdfFile ? "📄 PDF cargado" : text.trim();
                     const title = tool === 'resumen' ? "Resumen generado" :
-                                  tool === 'cuestionario' ? "Cuestionario generado" :
-                                  tool === 'tarjetas' ? "Tarjetas generadas" :
-                                  `Explicación: ${text.split(' ').slice(0, 5).join(' ')}...`;
+                        tool === 'cuestionario' ? "Cuestionario generado" :
+                            tool === 'tarjetas' ? "Tarjetas generadas" :
+                                `Explicación: ${text.split(' ').slice(0, 5).join(' ')}...`;
 
-                    const responseToSave = (tool === 'cuestionario' || tool === 'tarjetas') 
+                    const responseToSave = (tool === 'cuestionario' || tool === 'tarjetas')
                         ? JSON.stringify(quizData || generatedText)
                         : generatedText;
 
@@ -326,7 +373,7 @@ function AIToolsPage() {
                         timestamp: serverTimestamp(),
                         title: title
                     });
-                    
+
                     console.log('✅ Guardado en historial correctamente');
                 } catch (saveError) {
                     console.error('❌ Error al guardar en historial:', saveError);
@@ -411,8 +458,8 @@ function AIToolsPage() {
                                     <div className="file-info">
                                         <i className="fas fa-file-pdf"></i>
                                         <span>{pdfFile.name}</span>
-                                        <button 
-                                            className="remove-file" 
+                                        <button
+                                            className="remove-file"
                                             onClick={clearFile}
                                         >
                                             ✕
@@ -421,16 +468,38 @@ function AIToolsPage() {
                                 )}
                             </div>
                             <div className="file-input-container">
-                                <label htmlFor="pdf-upload" className="file-label">
-                                    {pdfFile ? 'Cambiar archivo PDF' : 'Sube un archivo PDF'}
-                                </label>
-                                <input
-                                    id="pdf-upload"
-                                    type="file"
-                                    accept="application/pdf"
-                                    onChange={handleFileChange}
-                                    className="hidden-input"
-                                />
+                                {processingProgress > 0 ? (
+                                    <div className="pdf-progress-container">
+                                        <div className="pdf-progress-bar">
+                                            <div
+                                                className="pdf-progress-fill"
+                                                style={{ width: `${processingProgress}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="pdf-progress-info">
+                                            <span>Procesando PDF... {processingProgress}%</span>
+                                            <button
+                                                className="btn-text-danger"
+                                                onClick={handleCancelProcessing}
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <label htmlFor="pdf-upload" className="file-label">
+                                            {pdfFile ? 'Cambiar archivo PDF' : 'Sube un archivo PDF'}
+                                        </label>
+                                        <input
+                                            id="pdf-upload"
+                                            type="file"
+                                            accept="application/pdf"
+                                            onChange={handleFileChange}
+                                            className="hidden-input"
+                                        />
+                                    </>
+                                )}
                             </div>
                             <p className="or-text">o escribe tu pregunta/concepto:</p>
                             <textarea
@@ -447,6 +516,7 @@ function AIToolsPage() {
                                 disabled={!!pdfFile}
                             ></textarea>
                             <button
+                                type="button"
                                 className="btn btn-primary generate-btn"
                                 onClick={handleGenerate}
                                 disabled={isLoading || (!text.trim() && !pdfFile)}
@@ -474,22 +544,22 @@ function AIToolsPage() {
                             <div className="result-header">
                                 <h3><i className="fas fa-graduation-cap"></i> Tu Cuestionario de Estudio</h3>
                                 <div className="result-actions">
-                                    <button 
+                                    <button
                                         className="btn btn-outline copy-btn"
                                         onClick={() => {
-                                            const quizText = quizData.map((q, i) => 
-                                                `${i+1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65+j)}. ${opt}`).join('\n')}\n`
+                                            const quizText = quizData.map((q, i) =>
+                                                `${i + 1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65 + j)}. ${opt}`).join('\n')}\n`
                                             ).join('\n');
                                             copyToClipboard(quizText);
                                         }}
                                     >
                                         <i className="fas fa-copy"></i> Copiar
                                     </button>
-                                    <button 
+                                    <button
                                         className="btn btn-outline download-btn"
                                         onClick={() => {
-                                            const quizText = quizData.map((q, i) => 
-                                                `${i+1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65+j)}. ${opt}`).join('\n')}\n`
+                                            const quizText = quizData.map((q, i) =>
+                                                `${i + 1}. ${q.question}\n${q.options.map((opt, j) => `   ${String.fromCharCode(65 + j)}. ${opt}`).join('\n')}\n`
                                             ).join('\n');
                                             downloadText(quizText, 'cuestionario.txt');
                                         }}
@@ -503,8 +573,8 @@ function AIToolsPage() {
                                 <div className="quiz-score-display">
                                     <h4>Tu Resultado: {score.correct}/{score.total} ({score.percentage}%)</h4>
                                     <div className="score-bar">
-                                        <div 
-                                            className="score-progress" 
+                                        <div
+                                            className="score-progress"
                                             style={{ width: `${score.percentage}%` }}
                                         ></div>
                                     </div>
@@ -514,7 +584,7 @@ function AIToolsPage() {
                             {quizData.map((q, index) => {
                                 const userAnswer = userAnswers[index];
                                 const isCorrect = userAnswer === q.correctAnswer;
-                                
+
                                 return (
                                     <div key={index} className="quiz-question">
                                         <h4>{index + 1}. {q.question}</h4>
@@ -523,9 +593,9 @@ function AIToolsPage() {
                                                 const isSelected = userAnswer === option;
                                                 const isActuallyCorrect = option === q.correctAnswer;
                                                 const letter = String.fromCharCode(65 + optIndex);
-                                                
+
                                                 let optionClass = 'option-item';
-                                                
+
                                                 if (showAnswers) {
                                                     if (isActuallyCorrect) {
                                                         optionClass += ' correct';
@@ -535,9 +605,9 @@ function AIToolsPage() {
                                                 } else if (isSelected) {
                                                     optionClass += ' selected';
                                                 }
-                                                
+
                                                 return (
-                                                    <li 
+                                                    <li
                                                         key={optIndex}
                                                         className={optionClass}
                                                         onClick={() => handleAnswerSelect(index, option)}
@@ -553,11 +623,11 @@ function AIToolsPage() {
                                                 );
                                             })}
                                         </ul>
-                                        
+
                                         {showAnswers && userAnswer && (
                                             <div className="question-feedback">
                                                 <p>
-                                                    <strong>Tu respuesta:</strong> {userAnswer} 
+                                                    <strong>Tu respuesta:</strong> {userAnswer}
                                                     {isCorrect ? (
                                                         <span className="feedback-correct"> ✓ Correcto</span>
                                                     ) : (
@@ -574,16 +644,16 @@ function AIToolsPage() {
                                     </div>
                                 );
                             })}
-                            
+
                             <div className="quiz-actions">
-                                <button 
+                                <button
                                     className="btn btn-outline reset-btn"
                                     onClick={resetQuiz}
                                 >
                                     <i className="fas fa-redo"></i> Reiniciar Cuestionario
                                 </button>
-                                
-                                <button 
+
+                                <button
                                     className="btn btn-secondary toggle-answers"
                                     onClick={() => {
                                         if (showAnswers) {
@@ -613,22 +683,22 @@ function AIToolsPage() {
                             <div className="result-header">
                                 <h3><i className="fas fa-clipboard-list"></i> Tus Tarjetas Didácticas</h3>
                                 <div className="result-actions">
-                                    <button 
+                                    <button
                                         className="btn btn-outline copy-btn"
                                         onClick={() => {
-                                            const cardsText = quizData.map((card, i) => 
-                                                `Tarjeta ${i+1}\nPregunta: ${card.question}\nRespuesta: ${card.answer}\n\n`
+                                            const cardsText = quizData.map((card, i) =>
+                                                `Tarjeta ${i + 1}\nPregunta: ${card.question}\nRespuesta: ${card.answer}\n\n`
                                             ).join('');
                                             copyToClipboard(cardsText);
                                         }}
                                     >
                                         <i className="fas fa-copy"></i> Copiar
                                     </button>
-                                    <button 
+                                    <button
                                         className="btn btn-outline download-btn"
                                         onClick={() => {
-                                            const cardsText = quizData.map((card, i) => 
-                                                `Tarjeta ${i+1}\nPregunta: ${card.question}\nRespuesta: ${card.answer}\n\n`
+                                            const cardsText = quizData.map((card, i) =>
+                                                `Tarjeta ${i + 1}\nPregunta: ${card.question}\nRespuesta: ${card.answer}\n\n`
                                             ).join('');
                                             downloadText(cardsText, 'tarjetas.txt');
                                         }}
@@ -641,7 +711,7 @@ function AIToolsPage() {
                                 <div className="flashcards-grid">
                                     {quizData.map((card, index) => (
                                         <div key={index} className="flashcard-item">
-                                            <div 
+                                            <div
                                                 className={`flashcard ${flippedCards[index] ? 'flipped' : ''}`}
                                                 onClick={() => handleCardFlip(index)}
                                             >
@@ -681,13 +751,13 @@ function AIToolsPage() {
                             <div className="result-header">
                                 <h3><i className="fas fa-file-alt"></i> Resumen Generado</h3>
                                 <div className="result-actions">
-                                    <button 
+                                    <button
                                         className="btn btn-outline copy-btn"
                                         onClick={() => copyToClipboard(result)}
                                     >
                                         <i className="fas fa-copy"></i> Copiar
                                     </button>
-                                    <button 
+                                    <button
                                         className="btn btn-outline download-btn"
                                         onClick={() => downloadText(result, 'resumen.txt')}
                                     >
@@ -698,17 +768,17 @@ function AIToolsPage() {
                             <div className="summary-content">
                                 {result.split('\n').map((line, index) => {
                                     if (line.trim() === '') return <br key={index} />;
-                                    
-                                    if (line.match(/^[A-Z][A-Z\s]+:$/) || 
+
+                                    if (line.match(/^[A-Z][A-Z\s]+:$/) ||
                                         line.match(/^[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑ\s]+:$/) ||
                                         line.includes('RESUMEN') ||
                                         line.includes('CONCLUSIÓN') ||
                                         line.includes('INTRODUCCIÓN')) {
                                         return <h2 key={index} className="summary-main-title">{line.replace(':', '')}</h2>;
                                     }
-                                    else if (line.match(/^[A-Z][a-z]+:/) || 
-                                            (line.length < 60 && line.endsWith(':')) ||
-                                            line.includes('•') && line.length < 80) {
+                                    else if (line.match(/^[A-Z][a-z]+:/) ||
+                                        (line.length < 60 && line.endsWith(':')) ||
+                                        line.includes('•') && line.length < 80) {
                                         return <h3 key={index} className="summary-subtitle">{line.replace('•', '').trim()}</h3>;
                                     }
                                     else if (line.startsWith('- ') || line.startsWith('• ') || line.startsWith('* ')) {
@@ -756,13 +826,13 @@ function AIToolsPage() {
                             <div className="result-header">
                                 <h3><i className="fas fa-lightbulb"></i> Explicación</h3>
                                 <div className="result-actions">
-                                    <button 
+                                    <button
                                         className="btn btn-outline copy-btn"
                                         onClick={() => copyToClipboard(result)}
                                     >
                                         <i className="fas fa-copy"></i> Copiar
                                     </button>
-                                    <button 
+                                    <button
                                         className="btn btn-outline download-btn"
                                         onClick={() => downloadText(result, 'explicacion.txt')}
                                     >
@@ -773,7 +843,7 @@ function AIToolsPage() {
                             <div className="explanation-content">
                                 {result.split('\n').map((line, index) => {
                                     if (line.trim() === '') return <br key={index} />;
-                                    
+
                                     if (line.startsWith('### ')) {
                                         return <h4 key={index} className="explanation-subtitle">{line.replace('### ', '')}</h4>;
                                     } else if (line.startsWith('## ')) {
@@ -790,10 +860,10 @@ function AIToolsPage() {
                                         const parts = line.split('**');
                                         return (
                                             <p key={index} className="explanation-text">
-                                                {parts.map((part, i) => 
-                                                    i % 2 === 1 ? 
-                                                    <strong key={i}>{part}</strong> : 
-                                                    part
+                                                {parts.map((part, i) =>
+                                                    i % 2 === 1 ?
+                                                        <strong key={i}>{part}</strong> :
+                                                        part
                                                 )}
                                             </p>
                                         );

@@ -56,9 +56,9 @@ function MindMapGenerator() {
     }
 
     // Verificar rate limiting
-    const rateLimitCheck = rateLimit.canMakeCall();
+    const rateLimitCheck = await rateLimit.checkLimit();
     if (!rateLimitCheck.allowed) {
-      setError(`⏱️ ${rateLimitCheck.reason}`);
+      setError(`⏱️ ${rateLimitCheck.error}`);
       return;
     }
 
@@ -119,9 +119,12 @@ Devuelve SOLO el código Mermaid mindmap:`;
 
       setMermaidCode(generatedCode);
 
+      // Incrementar contador de uso
+      await rateLimit.incrementCount();
+
       // Renderizar con Mermaid
       setTimeout(() => {
-        mermaid.contentLoaderSync();
+        mermaid.contentLoaded();
       }, 100);
 
     } catch (err) {

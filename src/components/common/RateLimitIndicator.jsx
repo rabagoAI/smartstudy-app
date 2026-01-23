@@ -1,5 +1,6 @@
 // src/components/common/RateLimitIndicator.jsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useRateLimitStatus } from '../../hooks/useRateLimitStatus';
 import './RateLimitIndicator.css';
 
 /**
@@ -22,53 +23,24 @@ const RateLimitIndicator = ({
   isPremium = false,
   compact = false
 }) => {
-  const [timeUntilReset, setTimeUntilReset] = useState('');
-
-  useEffect(() => {
-    const updateTimer = () => {
-      if (!nextResetMinute) return;
-
-      const now = new Date();
-      const diff = nextResetMinute - now;
-
-      if (diff <= 0) {
-        setTimeUntilReset('Reseteando...');
-        return;
-      }
-
-      const seconds = Math.floor(diff / 1000);
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-
-      if (minutes > 0) {
-        setTimeUntilReset(`${minutes}m ${remainingSeconds}s`);
-      } else {
-        setTimeUntilReset(`${remainingSeconds}s`);
-      }
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(interval);
-  }, [nextResetMinute]);
-
-  // Calcular porcentaje de uso
-  const minutePercentage = ((limits.perMinute - remainingCallsMinute) / limits.perMinute) * 100;
-  const hourPercentage = ((limits.perHour - remainingCallsHour) / limits.perHour) * 100;
-
-  // Determinar color según el uso
-  const getColorClass = (percentage) => {
-    if (percentage >= 90) return 'danger';
-    if (percentage >= 70) return 'warning';
-    return 'success';
-  };
+  const {
+    timeUntilReset,
+    minutePercentage,
+    hourPercentage,
+    minuteColor,
+    hourColor
+  } = useRateLimitStatus({
+    remainingCallsMinute,
+    remainingCallsHour,
+    limits,
+    nextResetMinute
+  });
 
   if (compact) {
     return (
       <div className="rate-limit-indicator rate-limit-indicator--compact">
         <div className="rate-limit-badge">
-          <span className={`badge badge--${getColorClass(minutePercentage)}`}>
+          <span className={`badge badge--${minuteColor}`}>
             {remainingCallsMinute}/{limits.perMinute} disponibles
           </span>
         </div>
@@ -92,13 +64,13 @@ const RateLimitIndicator = ({
         <div className="rate-limit-stat">
           <div className="rate-limit-stat__header">
             <span className="rate-limit-stat__label">Por minuto</span>
-            <span className={`rate-limit-stat__value rate-limit-stat__value--${getColorClass(minutePercentage)}`}>
+            <span className={`rate-limit-stat__value rate-limit-stat__value--${minuteColor}`}>
               {remainingCallsMinute} / {limits.perMinute}
             </span>
           </div>
           <div className="rate-limit-progress">
             <div
-              className={`rate-limit-progress__bar rate-limit-progress__bar--${getColorClass(minutePercentage)}`}
+              className={`rate-limit-progress__bar rate-limit-progress__bar--${minuteColor}`}
               style={{ width: `${minutePercentage}%` }}
             />
           </div>
@@ -111,13 +83,13 @@ const RateLimitIndicator = ({
         <div className="rate-limit-stat">
           <div className="rate-limit-stat__header">
             <span className="rate-limit-stat__label">Por hora</span>
-            <span className={`rate-limit-stat__value rate-limit-stat__value--${getColorClass(hourPercentage)}`}>
+            <span className={`rate-limit-stat__value rate-limit-stat__value--${hourColor}`}>
               {remainingCallsHour} / {limits.perHour}
             </span>
           </div>
           <div className="rate-limit-progress">
             <div
-              className={`rate-limit-progress__bar rate-limit-progress__bar--${getColorClass(hourPercentage)}`}
+              className={`rate-limit-progress__bar rate-limit-progress__bar--${hourColor}`}
               style={{ width: `${hourPercentage}%` }}
             />
           </div>
