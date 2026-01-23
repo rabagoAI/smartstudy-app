@@ -9,7 +9,7 @@ const subjects = [
     id: 'lengua-espanola',
     name: 'Lengua Española',
     description: 'Apuntes, ejercicios y exámenes resueltos.',
-    image: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=500&q=60', // Libros
+    image: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=500&q=60',
     icon: 'fas fa-book',
     colorClass: 'language'
   },
@@ -17,15 +17,15 @@ const subjects = [
     id: 'matematicas',
     name: 'Matemáticas',
     description: 'Problemas resueltos paso a paso.',
-    image: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=500&q=60', // Mates
+    image: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=500&q=60',
     icon: 'fas fa-calculator',
     colorClass: 'maths'
   },
   {
     id: 'biologia',
-    name: 'Biología',
+    name: 'Biología y Geología',
     description: 'Células, seres vivos, ecosistemas y más.',
-    image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=500&q=60', // Ciencia
+    image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=500&q=60',
     icon: 'fas fa-dna',
     colorClass: 'science'
   },
@@ -33,7 +33,7 @@ const subjects = [
     id: 'geografia-e-historia',
     name: 'Geografía e Historia',
     description: 'Mapas, líneas de tiempo y resúmenes.',
-    image: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=500&q=60', // Mapa
+    image: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=500&q=60',
     icon: 'fas fa-globe-americas',
     colorClass: 'social'
   },
@@ -41,7 +41,7 @@ const subjects = [
     id: 'ingles',
     name: 'Inglés',
     description: 'Vocabulario, gramática y listening.',
-    image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=500&q=60', // Inglés/Educación
+    image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=500&q=60',
     icon: 'fas fa-language',
     colorClass: 'english'
   },
@@ -49,7 +49,7 @@ const subjects = [
     id: 'tecnologia',
     name: 'Tecnología',
     description: 'Proyectos, diseños y fundamentos técnicos.',
-    image: 'https://images.unsplash.com/photo-1531297424005-06342e7f3947?auto=format&fit=crop&w=500&q=60', // Tech
+    image: 'https://images.unsplash.com/photo-1531297424005-06342e7f3947?auto=format&fit=crop&w=500&q=60',
     icon: 'fas fa-laptop-code',
     colorClass: 'tech'
   }
@@ -65,7 +65,7 @@ const LazyImage = ({ src, alt, className }) => {
       <div
         className="lazy-placeholder"
         style={{
-          backgroundImage: `url(${src}&w=50)`, // Versión tiny para el blur 
+          backgroundImage: `url(${src}&w=50)`,
           opacity: isLoaded ? 0 : 1
         }}
         aria-hidden="true"

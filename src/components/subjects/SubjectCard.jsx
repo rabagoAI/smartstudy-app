@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import '../../App.css'; 
+import '../../App.css';
 
 function SubjectCard({ subject }) {
-  const subjectUrl = `/asignaturas/${subject.name.toLowerCase().replace(/ /g, '-')}`;
+  // ✅ CORREGIDO: Usar la propiedad 'url' explícita si existe, para coincidir con la BD
+  const subjectUrl = `/asignaturas/${subject.url || subject.name.toLowerCase().replace(/ /g, '-')}`;
 
   return (
     <div className="subject-card">
