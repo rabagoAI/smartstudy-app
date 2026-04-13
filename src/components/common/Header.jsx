@@ -6,6 +6,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
 import './Header.css';
 import { trackEvent } from '../../analytics';
+import { useT } from '../../hooks/useT';
 
 function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,6 +15,7 @@ function Header() {
     const { currentUser } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
+    const { t, changeLanguage, language } = useT();
 
     // Cierra el menú al hacer clic fuera o presionar Escape
     useEffect(() => {
@@ -56,7 +58,7 @@ function Header() {
         try {
             await signOut(auth);
             trackEvent('auth', 'logout_success', currentUser?.email);
-            setIsMenuOpen(false); // Asegurar cierre en móvil
+            setIsMenuOpen(false);
             navigate('/');
         } catch (error) {
             trackEvent('auth', 'logout_error', error.message);
@@ -80,6 +82,29 @@ function Header() {
         </svg>
     );
 
+    // Selector de idioma
+    const LanguageSelector = ({ mobile = false }) => (
+        <div className={`language-selector ${mobile ? 'mobile-lang' : ''}`} style={{ display: 'flex', gap: '5px', alignItems: 'center', marginLeft: mobile ? '0' : '15px' }}>
+            <button
+                onClick={() => changeLanguage('es')}
+                className={`lang-btn ${language === 'es' ? 'active' : ''}`}
+                style={{ fontWeight: language.startsWith('es') ? 'bold' : 'normal', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit', fontSize: '1.2rem' }}
+                aria-label="Español"
+            >
+                🇪🇸
+            </button>
+            <span style={{ opacity: 0.5 }}>|</span>
+            <button
+                onClick={() => changeLanguage('en')}
+                className={`lang-btn ${language === 'en' ? 'active' : ''}`}
+                style={{ fontWeight: language.startsWith('en') ? 'bold' : 'normal', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit', fontSize: '1.2rem' }}
+                aria-label="English"
+            >
+                🇬🇧
+            </button>
+        </div>
+    );
+
     return (
         <header className="main-header">
             <div className="header-content">
@@ -90,9 +115,9 @@ function Header() {
                 {/* Menú de navegación para desktop */}
                 <nav className="header-nav desktop-nav">
                     <ul className="nav-links">
-                        <li><Link to="/">Inicio</Link></li>
-                        <li><Link to="/asignaturas">Asignaturas</Link></li>
-                        <li><Link to="/herramientas-ia">Herramientas IA</Link></li>
+                        <li><Link to="/">{t('nav.home')}</Link></li>
+                        <li><Link to="/asignaturas">{t('nav.subjects')}</Link></li>
+                        <li><Link to="/herramientas-ia">{t('nav.aiTools')}</Link></li>
                         <li><Link to="/mapas-mentales">🧠 Mapas Mentales</Link></li>
                         <li><Link to="/chat-educativo">Chat Educativo</Link></li>
                     </ul>
@@ -100,26 +125,26 @@ function Header() {
 
                 {/* Botones de autenticación para desktop */}
                 <div className="header-actions desktop-actions">
+                    <LanguageSelector />
                     {currentUser ? (
                         <button
                             className="btn login-btn"
                             onClick={handleLogout}
                         >
-                            Cerrar Sesión
+                            {t('nav.logout')}
                         </button>
                     ) : (
                         <>
                             <Link to="/iniciar-sesion">
-                                <button className="btn login-btn">Iniciar Sesión</button>
+                                <button className="btn login-btn">{t('nav.login')}</button>
                             </Link>
                             <Link to="/registrarse">
-                                <button className="btn register-btn">Registrarse</button>
+                                <button className="btn register-btn">{t('nav.register')}</button>
                             </Link>
                         </>
                     )}
                 </div>
 
-                {/* Botón de menú hamburguesa para móvil */}
                 {/* Botón de menú hamburguesa para móvil */}
                 <div
                     className="menu-toggle"
@@ -133,12 +158,16 @@ function Header() {
                 {/* Menú móvil */}
                 <nav className={`header-nav mobile-nav ${isMenuOpen ? 'open' : ''}`} ref={menuRef}>
                     <ul className="nav-links">
-                        <li><Link to="/" onClick={() => setIsMenuOpen(false)}>Inicio</Link></li>
-                        <li><Link to="/asignaturas" onClick={() => setIsMenuOpen(false)}>Asignaturas</Link></li>
-                        <li><Link to="/herramientas-ia" onClick={() => setIsMenuOpen(false)}>Herramientas IA</Link></li>
+                        <li><Link to="/" onClick={() => setIsMenuOpen(false)}>{t('nav.home')}</Link></li>
+                        <li><Link to="/asignaturas" onClick={() => setIsMenuOpen(false)}>{t('nav.subjects')}</Link></li>
+                        <li><Link to="/herramientas-ia" onClick={() => setIsMenuOpen(false)}>{t('nav.aiTools')}</Link></li>
                         <li><Link to="/mapas-mentales" onClick={() => setIsMenuOpen(false)}>🧠 Mapas Mentales</Link></li>
                         <li><Link to="/chat-educativo" onClick={() => setIsMenuOpen(false)}>Chat Educativo</Link></li>
                     </ul>
+
+                    <div style={{ padding: '15px', display: 'flex', justifyContent: 'center' }}>
+                        <LanguageSelector mobile={true} />
+                    </div>
 
                     {/* Botones de autenticación en menú móvil */}
                     <div className="mobile-actions">
@@ -150,15 +179,15 @@ function Header() {
                                     setIsMenuOpen(false);
                                 }}
                             >
-                                Cerrar Sesión
+                                {t('nav.logout')}
                             </button>
                         ) : (
                             <>
                                 <Link to="/iniciar-sesion" onClick={() => setIsMenuOpen(false)}>
-                                    <button className="btn login-btn">Iniciar Sesión</button>
+                                    <button className="btn login-btn">{t('nav.login')}</button>
                                 </Link>
                                 <Link to="/registrarse" onClick={() => setIsMenuOpen(false)}>
-                                    <button className="btn register-btn">Registrarse</button>
+                                    <button className="btn register-btn">{t('nav.register')}</button>
                                 </Link>
                             </>
                         )}

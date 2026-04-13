@@ -10,6 +10,7 @@ import { trackEvent } from '../../analytics';
 import { fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth } from '../../firebase';
 import './Landing.css';
+import { BackgroundGradientAnimation } from '../ui/background-gradient-animation';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -195,29 +196,33 @@ export default function Landing() {
         </header>
 
         {/* Hero Section */}
-        <section className="hero">
-          <div className="landing-container hero-content">
-            <div className="hero-text">
-              <h1 className="hero-title">
-                Estudia más <span className="highlight">inteligente</span>, no más duro
-              </h1>
-              <p className="hero-subtitle">
-                Todo lo que necesitas para dominar cada tema: resúmenes, exámenes, vídeos y herramientas IA. Todo en un solo lugar.
-              </p>
-              <div className="hero-buttons">
-                <button
-                  onClick={() => openAuthModal(false)}
-                  className="btn btn-primary"
-                >
-                  Empezar Gratis <ArrowRight className="btn-icon" />
-                </button>
-                <button className="btn btn-secondary">
-                  Ver demo
-                </button>
+        <section className="relative w-full h-screen min-h-[600px] overflow-hidden bg-transparent">
+          <BackgroundGradientAnimation containerClassName="absolute inset-0 z-0 h-full w-full">
+            <div className="absolute z-50 inset-0 flex items-center justify-center w-full">
+              <div className="landing-container hero-content w-full">
+                <div className="hero-text text-center">
+                  <h1 className="hero-title drop-shadow-xl font-bold tracking-tight !text-white mb-6">
+                    Estudia más <span className="highlight text-cyan-300">inteligente</span>, no más duro
+                  </h1>
+                  <p className="hero-subtitle drop-shadow-lg !text-white text-lg md:text-xl max-w-2xl mx-auto mb-10">
+                    Todo lo que necesitas para dominar cada tema: resúmenes, exámenes, vídeos y herramientas IA. Todo en un solo lugar.
+                  </p>
+                  <div className="hero-buttons flex justify-center gap-4 mb-6">
+                    <button
+                      onClick={() => openAuthModal(false)}
+                      className="btn btn-primary bg-white text-indigo-600 hover:bg-gray-50 shadow-lg px-8 py-3 rounded-full font-semibold transition-all hover:scale-105 flex items-center gap-2"
+                    >
+                      Empezar Gratis <ArrowRight className="btn-icon w-5 h-5" />
+                    </button>
+                    <button className="btn btn-secondary bg-black/20 text-white border border-white/40 hover:bg-black/40 backdrop-blur-sm px-8 py-3 rounded-full font-semibold transition-all">
+                      Ver demo
+                    </button>
+                  </div>
+                  <p className="hero-notes !text-white text-sm tracking-wide">✓ Sin tarjeta requerida • ✓ Acceso inmediato</p>
+                </div>
               </div>
-              <p className="hero-notes">✓ Sin tarjeta requerida • ✓ Acceso inmediato</p>
             </div>
-          </div>
+          </BackgroundGradientAnimation>
         </section>
 
         {/* Problema + Solución */}
