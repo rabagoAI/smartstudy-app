@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartStudIA — Educación potenciada por IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #09080f;
+      color: #e8e4f3;
+      overflow-x: hidden;
+    }
+
+    /* ── Hero gradient animation ── */
+    @keyframes gradShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(-1deg); }
+      50%       { transform: translateY(-12px) rotate(1deg); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(32px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 40px oklch(0.55 0.28 290 / 0.4); }
+      50%       { box-shadow: 0 0 80px oklch(0.55 0.28 290 / 0.7); }
+    }
+    @keyframes orb1 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(60px,-40px) scale(1.15); }
+      66%      { transform: translate(-40px, 30px) scale(0.9); }
+    }
+    @keyframes orb2 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(-70px, 50px) scale(0.85); }
+      66%      { transform: translate(50px,-30px) scale(1.2); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes tickerScroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    @keyframes cardEntrance {
+      from { opacity: 0; transform: translateY(40px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .hero {
+      position: relative;
+      min-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1a0533, #0d1b6e, #4a0080, #0a2080, #6a00a8, #0d1b6e);
+      background-size: 400% 400%;
+      animation: gradShift 10s ease infinite;
+    }
+    .hero-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .hero-orb-1 {
+      width: 500px; height: 500px;
+      background: oklch(0.55 0.28 290 / 0.5);
+      top: -100px; left: -100px;
+      animation: orb1 12s ease-in-out infinite;
+    }
+    .hero-orb-2 {
+      width: 600px; height: 600px;
+      background: oklch(0.50 0.25 240 / 0.4);
+      bottom: -150px; right: -150px;
+      animation: orb2 15s ease-in-out infinite;
+    }
+    .hero-orb-3 {
+      width: 300px; height: 300px;
+      background: oklch(0.65 0.2 200 / 0.3);
+      top: 40%; left: 60%;
+      animation: orb1 9s ease-in-out infinite reverse;
+    }
+
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(9,8,15,0.6);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid oklch(1 0 0 / 0.08);
+    }
+    .nav-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800; font-size: 22px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .nav-links {
+      display: flex; gap: 32px; list-style: none;
+      font-size: 14px; font-weight: 500;
+    }
+    .nav-links a {
+      color: oklch(1 0 0 / 0.7);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: #fff; }
+    .nav-cta {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff; border: none; border-radius: 100px;
+      padding: 10px 24px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s, transform 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .nav-cta:hover { opacity: 0.85; transform: scale(1.04); }
+
+    .hero-content {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 0 24px;
+      animation: fadeUp 1s ease both;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: oklch(1 0 0 / 0.1);
+      border: 1px solid oklch(1 0 0 / 0.2);
+      border-radius: 100px;
+      padding: 6px 16px; font-size: 13px; font-weight: 500;
+      margin-bottom: 28px;
+      backdrop-filter: blur(8px);
+    }
+    .hero-badge-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
+    }
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(48px, 7vw, 88px);
+      font-weight: 800; line-height: 1.04;
+      letter-spacing: -2px;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    .hero-title span {
+      background: linear-gradient(90deg, #c084fc, #818cf8, #38bdf8);
+      background-size: 200% auto;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
+    }
+    .hero-sub {
+      font-size: 18px; line-height: 1.7;
+      color: oklch(1 0 0 / 0.7);
+      max-width: 520px; margin-bottom: 40px;
+    }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff; border: none; border-radius: 100px;
+      padding: 16px 36px; font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: all 0.25s;
+      font-family: 'DM Sans', sans-serif;
+      animation: pulseGlow 3s ease infinite;
+    }
+    .btn-primary:hover { transform: translateY(-2px) scale(1.03); }
+    .btn-secondary {
+      background: transparent;
+      color: #fff; border: 1px solid oklch(1 0 0 / 0.3);
+      border-radius: 100px;
+      padding: 16px 36px; font-size: 16px; font-weight: 500;
+      cursor: pointer; transition: all 0.25s;
+      font-family: 'DM Sans', sans-serif;
+      backdrop-filter: blur(8px);
+    }
+    .btn-secondary:hover { background: oklch(1 0 0 / 0.1); border-color: oklch(1 0 0 / 0.5); }
+
+    .hero-mockup {
+      position: relative; z-index: 2;
+      margin-top: 60px;
+      animation: float 6s ease-in-out infinite;
+    }
+    .hero-mockup-frame {
+      width: min(640px, 90vw);
+      background: rgba(15,12,30,0.85);
+      border: 1px solid oklch(1 0 0 / 0.15);
+      border-radius: 20px;
+      padding: 20px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 32px 80px oklch(0 0 0 / 0.6), 0 0 0 1px oklch(1 0 0 / 0.05);
+    }
+    .mockup-topbar {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+    }
+    .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mockup-url {
+      flex: 1; background: oklch(1 0 0 / 0.07); border-radius: 6px;
+      padding: 5px 12px; font-size: 12px; color: oklch(1 0 0 / 0.4);
+      font-family: monospace;
+    }
+    .mockup-screen {
+      background: linear-gradient(135deg, #0f0c1e, #0d1b6e20);
+      border-radius: 12px; padding: 20px; min-height: 200px;
+      border: 1px solid oklch(1 0 0 / 0.08);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    /* ── Ticker ── */
+    .ticker {
+      background: linear-gradient(135deg, #4c1d95, #1d4ed8);
+      padding: 14px 0; overflow: hidden;
+    }
+    .ticker-inner {
+      display: flex; width: max-content;
+      animation: tickerScroll 25s linear infinite;
+    }
+    .ticker-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 32px; font-size: 14px; font-weight: 500;
+      color: oklch(1 0 0 / 0.85); white-space: nowrap;
+    }
+    .ticker-sep { color: oklch(1 0 0 / 0.3); font-size: 20px; }
+
+    /* ── Sections ── */
+    .section { padding: 100px 48px; }
+    .section-light { background: #f4f1ff; color: #1a0f3c; }
+    .section-dark  { background: #09080f; color: #e8e4f3; }
+    .section-mid   { background: #0d0b1a; color: #e8e4f3; }
+
+    .section-header { text-align: center; margin-bottom: 64px; }
+    .section-eyebrow {
+      display: inline-block;
+      font-size: 12px; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #7c3aed, #2563eb);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 800; line-height: 1.1;
+      letter-spacing: -1.5px;
+    }
+    .section-light .section-title { color: #1a0f3c; }
+    .section-dark .section-title, .section-mid .section-title { color: #fff; }
+    .section-sub {
+      font-size: 17px; margin-top: 12px; line-height: 1.7;
+      max-width: 540px; margin-left: auto; margin-right: auto;
+    }
+    .section-light .section-sub { color: #6b5f91; }
+    .section-dark .section-sub, .section-mid .section-sub { color: oklch(1 0 0 / 0.55); }
+
+    /* ── Subject Cards ── */
+    .subjects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1200px; margin: 0 auto;
+    }
+    .subject-card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 32px 28px;
+      cursor: pointer;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative; overflow: hidden;
+      border: 1px solid oklch(0.7 0.05 280 / 0.15);
+      box-shadow: 0 4px 24px oklch(0 0 0 / 0.06);
+    }
+    .subject-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      opacity: 0; transition: opacity 0.35s;
+      border-radius: 24px;
+    }
+    .subject-card:hover {
+      transform: translateY(-8px) scale(1.02);
+    }
+    .subject-card:hover::before { opacity: 1; }
+    .subject-card:hover .subject-icon-wrap {
+      transform: scale(1.1) rotate(-5deg);
+    }
+
+    .subject-icon-wrap {
+      width: 72px; height: 72px; border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; margin-bottom: 20px;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .subject-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px; font-weight: 700; color: #1a0f3c;
+      margin-bottom: 8px;
+    }
+    .subject-desc { font-size: 14px; color: #6b5f91; line-height: 1.6; }
+    .subject-tag {
+      display: inline-block; margin-top: 16px;
+      padding: 4px 12px; border-radius: 100px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+    }
+    .subject-arrow {
+      position: absolute; right: 24px; bottom: 24px;
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      opacity: 0; transform: translateX(-8px);
+      transition: all 0.3s;
+    }
+    .subject-card:hover .subject-arrow {
+      opacity: 1; transform: translateX(0);
+    }
+
+    /* ── AI Section ── */
+    .ai-section {
+      background: linear-gradient(160deg, #0a0618 0%, #0d1b6e15 40%, #0a0618 100%);
+      position: relative; overflow: hidden;
+    }
+    .ai-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 70% 50%, oklch(0.45 0.28 280 / 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .ai-grid {
+      max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: center;
+    }
+    .ai-left { position: relative; z-index: 2; }
+    .ai-feature-list { display: flex; flex-direction: column; gap: 24px; margin-top: 40px; }
+    .ai-feature {
+      display: flex; align-items: flex-start; gap: 16px;
+      padding: 20px; border-radius: 16px;
+      background: oklch(1 0 0 / 0.04);
+      border: 1px solid oklch(1 0 0 / 0.08);
+      cursor: pointer; transition: all 0.25s;
+    }
+    .ai-feature:hover, .ai-feature.active {
+      background: oklch(0.55 0.28 280 / 0.12);
+      border-color: oklch(0.55 0.28 280 / 0.4);
+    }
+    .ai-feature-icon {
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .ai-feature-text h4 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px; font-weight: 700; color: #fff;
+      margin-bottom: 4px;
+    }
+    .ai-feature-text p { font-size: 14px; color: oklch(1 0 0 / 0.55); line-height: 1.6; }
+
+    /* Product mockup */
+    .ai-right { position: relative; z-index: 2; }
+    .product-mockup {
+      background: oklch(0.12 0.04 270);
+      border-radius: 24px;
+      border: 1px solid oklch(1 0 0 / 0.12);
+      overflow: hidden;
+      box-shadow: 0 40px 100px oklch(0 0 0 / 0.8), 0 0 60px oklch(0.5 0.28 280 / 0.2);
+    }
+    .mockup-header {
+      background: oklch(0.1 0.04 270);
+      padding: 14px 20px;
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid oklch(1 0 0 / 0.08);
+    }
+    .mockup-header-dots { display: flex; gap: 6px; }
+    .mockup-header-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mockup-header-title {
+      font-size: 13px; color: oklch(1 0 0 / 0.5); font-family: monospace;
+    }
+    .mockup-body {
+      display: flex; height: 360px;
+    }
+    .mockup-sidebar {
+      width: 64px; background: oklch(0.09 0.04 270);
+      border-right: 1px solid oklch(1 0 0 / 0.08);
+      display: flex; flex-direction: column; align-items: center;
+      gap: 6px; padding: 16px 0;
+    }
+    .mockup-sidebar-item {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .mockup-sidebar-item.active { background: oklch(0.55 0.28 280 / 0.3); }
+    .mockup-main {
+      flex: 1; padding: 20px; overflow: hidden;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .mockup-chat-row {
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .mockup-avatar {
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+    }
+    .mockup-bubble {
+      padding: 10px 14px; border-radius: 12px;
+      font-size: 12px; line-height: 1.5; max-width: 240px;
+    }
+    .mockup-bubble.user {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff; border-radius: 12px 12px 4px 12px;
+      margin-left: auto;
+    }
+    .mockup-bubble.ai {
+      background: oklch(1 0 0 / 0.08);
+      color: oklch(1 0 0 / 0.8); border-radius: 12px 12px 12px 4px;
+    }
+    .mockup-typing {
+      display: flex; gap: 4px; align-items: center; padding: 10px 14px;
+      background: oklch(1 0 0 / 0.05); border-radius: 12px; width: fit-content;
+    }
+    .mockup-dot-anim {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: oklch(1 0 0 / 0.4);
+      animation: typingDot 1.4s ease-in-out infinite;
+    }
+    .mockup-dot-anim:nth-child(2) { animation-delay: 0.2s; }
+    .mockup-dot-anim:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingDot {
+      0%, 80%, 100% { transform: scale(1); opacity: 0.4; }
+      40% { transform: scale(1.4); opacity: 1; }
+    }
+    .mockup-input-bar {
+      padding: 12px 16px;
+      background: oklch(0.09 0.04 270);
+      border-top: 1px solid oklch(1 0 0 / 0.08);
+      display: flex; gap: 10px; align-items: center;
+    }
+    .mockup-input {
+      flex: 1; background: oklch(1 0 0 / 0.07); border: 1px solid oklch(1 0 0 / 0.1);
+      border-radius: 8px; padding: 8px 12px; font-size: 12px;
+      color: oklch(1 0 0 / 0.5);
+    }
+    .mockup-send {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .stats-row {
+      display: flex; gap: 16px; margin-top: 40px;
+      flex-wrap: wrap;
+    }
+    .stat-chip {
+      background: oklch(1 0 0 / 0.06);
+      border: 1px solid oklch(1 0 0 / 0.1);
+      border-radius: 16px; padding: 16px 24px;
+      text-align: center; flex: 1; min-width: 100px;
+    }
+    .stat-chip-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px; font-weight: 800;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-chip-label { font-size: 12px; color: oklch(1 0 0 / 0.5); margin-top: 4px; }
+
+    /* ── Testimonials ── */
+    .testimonials-section { background: #f4f1ff; }
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px; max-width: 1100px; margin: 0 auto;
+    }
+    .testi-card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 8px 40px oklch(0.3 0.15 280 / 0.1);
+      border: 1px solid oklch(0.7 0.05 280 / 0.15);
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+    }
+    .testi-card:nth-child(2) { transform: translateY(-16px); }
+    .testi-card:nth-child(2):hover { transform: translateY(-24px); }
+    .testi-card:hover {
+      box-shadow: 0 16px 64px oklch(0.3 0.15 280 / 0.18);
+      transform: translateY(-8px);
+    }
+    .testi-card:nth-child(2):hover { transform: translateY(-24px); }
+    .testi-quote-icon {
+      font-size: 40px; line-height: 1;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 16px; display: block;
+    }
+    .testi-stars { display: flex; gap: 3px; margin-bottom: 16px; }
+    .testi-star { color: #f59e0b; font-size: 16px; }
+    .testi-text {
+      font-size: 15px; line-height: 1.75; color: #3d3060;
+      margin-bottom: 24px;
+    }
+    .testi-author { display: flex; align-items: center; gap: 12px; }
+    .testi-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .testi-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 15px; color: #1a0f3c;
+    }
+    .testi-grade { font-size: 13px; color: #9084c0; }
+    .testi-badge {
+      position: absolute; top: 20px; right: 20px;
+      background: linear-gradient(135deg, #7c3aed15, #2563eb15);
+      border: 1px solid oklch(0.55 0.28 280 / 0.2);
+      border-radius: 8px; padding: 4px 10px;
+      font-size: 11px; font-weight: 600; color: #6d28d9;
+    }
+
+    /* ── CTA Banner ── */
+    .cta-section {
+      padding: 100px 48px;
+      background: linear-gradient(135deg, #1a0533, #0d1b6e, #4a0080);
+      background-size: 300% 300%;
+      animation: gradShift 8s ease infinite;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 70% 80% at 50% 120%, oklch(0.55 0.28 290 / 0.3) 0%, transparent 60%);
+    }
+    .cta-section > * { position: relative; z-index: 1; }
+    .cta-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 800; color: #fff; line-height: 1.1;
+      letter-spacing: -2px; margin-bottom: 20px;
+    }
+    .cta-sub {
+      font-size: 18px; color: oklch(1 0 0 / 0.65);
+      margin-bottom: 40px; max-width: 480px; margin-left: auto; margin-right: auto;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      background: #050408;
+      padding: 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 24px;
+      border-top: 1px solid oklch(1 0 0 / 0.06);
+    }
+    .footer-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800; font-size: 18px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .footer-copy { font-size: 13px; color: oklch(1 0 0 / 0.35); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a {
+      font-size: 13px; color: oklch(1 0 0 / 0.45);
+      text-decoration: none; transition: color 0.2s;
+    }
+    .footer-links a:hover { color: oklch(1 0 0 / 0.8); }
+
+    /* ── Tweaks Panel ── */
+    .tweaks-panel {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: oklch(0.12 0.04 270);
+      border: 1px solid oklch(1 0 0 / 0.15);
+      border-radius: 20px; padding: 24px;
+      width: 280px;
+      box-shadow: 0 20px 60px oklch(0 0 0 / 0.6);
+      backdrop-filter: blur(20px);
+      display: none;
+    }
+    .tweaks-panel.visible { display: block; }
+    .tweaks-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px; font-weight: 700; color: #fff;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .tweaks-title::before {
+      content: ''; display: block;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+    }
+    .tweak-row { margin-bottom: 16px; }
+    .tweak-label { font-size: 12px; color: oklch(1 0 0 / 0.5); margin-bottom: 6px; }
+    .tweak-options { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tweak-opt {
+      padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1px solid oklch(1 0 0 / 0.15);
+      color: oklch(1 0 0 / 0.6); background: oklch(1 0 0 / 0.05);
+      transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    }
+    .tweak-opt.active {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff; border-color: transparent;
+    }
+
+    /* Entrance animations on scroll */
+    .anim-card {
+      opacity: 0; transform: translateY(40px);
+      transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+    }
+    .anim-card.visible {
+      opacity: 1; transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .ai-grid { grid-template-columns: 1fr; gap: 48px; }
+      .testimonials-grid { grid-template-columns: 1fr; }
+      .testi-card:nth-child(2) { transform: none; }
+      .section { padding: 72px 24px; }
+      .nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "cardStyle": "rounded",
+  "accentColor": "purple",
+  "testimonialLayout": "staggered"
+}/*EDITMODE-END*/;
+
+const subjects = [
+  {
+    name: "Lengua Española",
+    desc: "Gramática, literatura y expresión escrita para dominar el idioma.",
+    icon: "📖",
+    color: "#ff4f6d",
+    bg: "#fff0f3",
+    tagBg: "#ff4f6d18",
+    tagColor: "#cc1535",
+    tag: "Obligatoria"
+  },
+  {
+    name: "Matemáticas",
+    desc: "Álgebra, geometría y resolución de problemas con IA paso a paso.",
+    icon: "📐",
+    color: "#f59e0b",
+    bg: "#fffbeb",
+    tagBg: "#f59e0b18",
+    tagColor: "#b45309",
+    tag: "Obligatoria"
+  },
+  {
+    name: "Biología y Geología",
+    desc: "Ciencias de la vida y la Tierra. Ecosistemas, células y rocas.",
+    icon: "🔬",
+    color: "#10b981",
+    bg: "#ecfdf5",
+    tagBg: "#10b98118",
+    tagColor: "#047857",
+    tag: "Ciencias"
+  },
+  {
+    name: "Geografía e Historia",
+    desc: "El mundo, sus culturas y la historia de la humanidad.",
+    icon: "🗺️",
+    color: "#0ea5e9",
+    bg: "#f0f9ff",
+    tagBg: "#0ea5e918",
+    tagColor: "#0369a1",
+    tag: "Sociales"
+  },
+  {
+    name: "Inglés",
+    desc: "Speaking, writing y comprensión lectora con tutor IA nativo.",
+    icon: "🌍",
+    color: "#8b5cf6",
+    bg: "#f5f3ff",
+    tagBg: "#8b5cf618",
+    tagColor: "#6d28d9",
+    tag: "Idiomas"
+  },
+  {
+    name: "Tecnología",
+    desc: "Programación, diseño y resolución de problemas tecnológicos.",
+    icon: "⚙️",
+    color: "#ec4899",
+    bg: "#fdf2f8",
+    tagBg: "#ec489918",
+    tagColor: "#be185d",
+    tag: "Aplicada"
+  },
+];
+
+const aiFeatures = [
+  {
+    icon: "🧠",
+    bg: "oklch(0.55 0.28 280 / 0.2)",
+    title: "Tutor IA personalizado",
+    desc: "Explica cualquier concepto adaptándose a tu nivel y ritmo de aprendizaje."
+  },
+  {
+    icon: "✍️",
+    bg: "oklch(0.65 0.2 180 / 0.2)",
+    title: "Corrector inteligente",
+    desc: "Revisa redacciones, ecuaciones y problemas dando feedback detallado."
+  },
+  {
+    icon: "🎯",
+    bg: "oklch(0.65 0.25 30 / 0.2)",
+    title: "Plan de estudio adaptativo",
+    desc: "Genera un horario personalizado según tus objetivos y exámenes."
+  },
+  {
+    icon: "⚡",
+    bg: "oklch(0.65 0.25 80 / 0.2)",
+    title: "Flashcards automáticas",
+    desc: "Transforma tus apuntes en tarjetas de memoria con repaso espaciado."
+  },
+];
+
+const testimonials = [
+  {
+    text: "Antes suspendía mates todos los trimestres. Con SmartStudIA entiendo los problemas paso a paso y ahora tengo un 8. ¡No me lo podía creer!",
+    name: "Alba García",
+    grade: "2° ESO · Madrid",
+    initials: "AG",
+    grad: "linear-gradient(135deg, #7c3aed, #2563eb)",
+    stars: 5,
+    badge: "⭐ Top Review"
+  },
+  {
+    text: "El tutor de inglés IA es increíble. Practico conversación cuando quiero, sin vergüenza. He pasado de un B1 a casi B2 en tres meses.",
+    name: "Javier Molina",
+    grade: "3° ESO · Barcelona",
+    initials: "JM",
+    grad: "linear-gradient(135deg, #0ea5e9, #10b981)",
+    stars: 5,
+    badge: null
+  },
+  {
+    text: "Me ayuda a resumir los temas de Historia y hacer esquemas. Estudio el doble de rápido y me queda tiempo para mis hobbies.",
+    name: "Lucía Fernández",
+    grade: "1° ESO · Sevilla",
+    initials: "LF",
+    grad: "linear-gradient(135deg, #ec4899, #f59e0b)",
+    stars: 5,
+    badge: null
+  },
+];
+
+const chatMessages = [
+  { role: "user", text: "No entiendo las ecuaciones de 2º grado 😅" },
+  { role: "ai", text: "¡Sin problema! Vamos por pasos. Primero identifiquemos los coeficientes a, b y c..." },
+  { role: "ai", text: "Usa la fórmula: x = (-b ± √(b²-4ac)) / 2a. ¿Quieres que lo practiquemos con un ejemplo?" },
+];
+
+function SubjectCard({ s, idx, cardStyle }) {
+  const [hovered, setHovered] = useState(false);
+  const radius = cardStyle === "rounded" ? "24px" : "12px";
+  return (
+    <div
+      className="subject-card anim-card"
+      style={{
+        background: hovered ? s.bg : "#fff",
+        borderRadius: radius,
+        animationDelay: `${idx * 0.07}s`,
+        boxShadow: hovered
+          ? `0 16px 48px ${s.color}22, 0 4px 12px ${s.color}18`
+          : "0 4px 24px rgba(0,0,0,0.06)",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div
+        style={{
+          position: "absolute", inset: 0, borderRadius: radius,
+          background: `${s.color}08`,
+          opacity: hovered ? 1 : 0, transition: "opacity 0.35s"
+        }}
+      />
+      <div
+        className="subject-icon-wrap"
+        style={{ background: `${s.color}18`, borderRadius: "20px" }}
+      >
+        {s.icon}
+      </div>
+      <div className="subject-name">{s.name}</div>
+      <div className="subject-desc">{s.desc}</div>
+      <span
+        className="subject-tag"
+        style={{ background: s.tagBg, color: s.tagColor, fontSize: "12px", fontWeight: 600 }}
+      >
+        {s.tag}
+      </span>
+      <div
+        className="subject-arrow"
+        style={{ background: `${s.color}20`, color: s.color }}
+      >→</div>
+    </div>
+  );
+}
+
+function ProductMockup({ activeFeature }) {
+  return (
+    <div className="product-mockup">
+      <div className="mockup-header">
+        <div className="mockup-header-dots">
+          <div className="mockup-header-dot" style={{background:"#ff5f57"}}/>
+          <div className="mockup-header-dot" style={{background:"#febc2e"}}/>
+          <div className="mockup-header-dot" style={{background:"#28c840"}}/>
+        </div>
+        <div className="mockup-header-title">smartstudia.com — Tutor IA</div>
+      </div>
+      <div className="mockup-body">
+        <div className="mockup-sidebar">
+          {["📚","🧮","🌍","⚙️","⭐"].map((ic, i) => (
+            <div key={i} className={`mockup-sidebar-item ${i === 0 ? "active" : ""}`}>{ic}</div>
+          ))}
+        </div>
+        <div style={{flex:1, display:"flex", flexDirection:"column"}}>
+          <div className="mockup-main">
+            <div style={{fontSize:"11px", color:"oklch(1 0 0 / 0.3)", marginBottom:"4px"}}>
+              Matemáticas · Ecuaciones 2º grado
+            </div>
+            {chatMessages.map((m, i) => (
+              <div key={i} className="mockup-chat-row" style={{justifyContent: m.role==="user" ? "flex-end" : "flex-start"}}>
+                {m.role === "ai" && (
+                  <div className="mockup-avatar" style={{background:"linear-gradient(135deg,#7c3aed,#2563eb)"}}>AI</div>
+                )}
+                <div className={`mockup-bubble ${m.role}`}>{m.text}</div>
+              </div>
+            ))}
+            <div className="mockup-chat-row" style={{justifyContent:"flex-start"}}>
+              <div className="mockup-avatar" style={{background:"linear-gradient(135deg,#7c3aed,#2563eb)"}}>AI</div>
+              <div className="mockup-typing">
+                <div className="mockup-dot-anim"/>
+                <div className="mockup-dot-anim"/>
+                <div className="mockup-dot-anim"/>
+              </div>
+            </div>
+          </div>
+          <div className="mockup-input-bar">
+            <div className="mockup-input">Escribe tu duda...</div>
+            <div className="mockup-send">↑</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TestiCard({ t, idx, layout }) {
+  const offset = layout === "staggered" && idx === 1 ? -16 : 0;
+  return (
+    <div className="testi-card anim-card" style={{transform: `translateY(${offset}px)`}}>
+      {t.badge && <div className="testi-badge">{t.badge}</div>}
+      <span className="testi-quote-icon">"</span>
+      <div className="testi-stars">
+        {Array(t.stars).fill(0).map((_,i)=>(
+          <span key={i} className="testi-star">★</span>
+        ))}
+      </div>
+      <p className="testi-text">{t.text}</p>
+      <div className="testi-author">
+        <div className="testi-avatar" style={{background: t.grad}}>{t.initials}</div>
+        <div>
+          <div className="testi-name">{t.name}</div>
+          <div className="testi-grade">{t.grade}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+  const [tweaksVisible, setTweaksVisible] = useState(false);
+  const [activeFeature, setActiveFeature] = useState(0);
+  const observerRef = useRef(null);
+
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+    );
+    document.querySelectorAll(".anim-card").forEach(el => observerRef.current.observe(el));
+    return () => observerRef.current?.disconnect();
+  }, []);
+
+  // Tweaks protocol
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === "__activate_edit_mode") setTweaksVisible(true);
+      if (e.data?.type === "__deactivate_edit_mode") setTweaksVisible(false);
+    };
+    window.addEventListener("message", handler);
+    window.parent.postMessage({ type: "__edit_mode_available" }, "*");
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  const setTweak = (key, val) => {
+    const next = { ...tweaks, [key]: val };
+    setTweaks(next);
+    window.parent.postMessage({ type: "__edit_mode_set_keys", edits: next }, "*");
+  };
+
+  const tickerItems = ["Lengua Española","Matemáticas","Biología","Geografía","Inglés","Tecnología","Historia","Física"];
+
+  return (
+    <>
+      {/* NAV */}
+      <nav className="nav">
+        <div className="nav-logo">SmartStudIA</div>
+        <ul className="nav-links">
+          <li><a href="#">Inicio</a></li>
+          <li><a href="#">Asignaturas</a></li>
+          <li><a href="#">Herramientas IA</a></li>
+          <li><a href="#">Espacio Novatos</a></li>
+          <li><a href="#">Club Estudios</a></li>
+        </ul>
+        <button className="nav-cta">Cursar Gratis →</button>
+      </nav>
+
+      {/* HERO */}
+      <section className="hero">
+        <div className="hero-orb hero-orb-1"/>
+        <div className="hero-orb hero-orb-2"/>
+        <div className="hero-orb hero-orb-3"/>
+        <div className="hero-content">
+          <div className="hero-badge">
+            <div className="hero-badge-dot"/>
+            Nuevo: Tutor IA para 1° ESO · Curso 2025-26
+          </div>
+          <h1 className="hero-title">
+            Estudia más listo,<br/><span>no más duro</span>
+          </h1>
+          <p className="hero-sub">
+            La plataforma educativa con IA diseñada para estudiantes de ESO en España. Entiende cualquier asignatura con tu tutor personal.
+          </p>
+          <div className="hero-btns">
+            <button className="btn-primary">Empezar gratis →</button>
+            <button className="btn-secondary">Ver cómo funciona ▶</button>
+          </div>
+        </div>
+        <div className="hero-mockup">
+          <div className="hero-mockup-frame">
+            <div className="mockup-topbar">
+              <div className="mockup-dot" style={{background:"#ff5f57"}}/>
+              <div className="mockup-dot" style={{background:"#febc2e"}}/>
+              <div className="mockup-dot" style={{background:"#28c840"}}/>
+              <div className="mockup-url">smartstudia.com/home</div>
+            </div>
+            <div className="mockup-screen">
+              <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"4px"}}>
+                <div style={{width:"32px",height:"32px",borderRadius:"10px",background:"linear-gradient(135deg,#7c3aed,#2563eb)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"16px"}}>🧠</div>
+                <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:"15px",color:"#fff"}}>Tutor IA · Matemáticas</span>
+              </div>
+              {[
+                {role:"user", text:"¿Puedes explicarme las fracciones?"},
+                {role:"ai", text:"¡Claro! Una fracción representa una parte de un todo. El número de arriba se llama numerador y el de abajo denominador..."},
+              ].map((m,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",gap:"8px",alignItems:"flex-start"}}>
+                  {m.role==="ai" && <div style={{width:"24px",height:"24px",borderRadius:"7px",background:"linear-gradient(135deg,#7c3aed,#2563eb)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:700,color:"#fff",flexShrink:0}}>AI</div>}
+                  <div style={{
+                    padding:"9px 13px", borderRadius: m.role==="user"?"10px 10px 3px 10px":"10px 10px 10px 3px",
+                    background: m.role==="user" ? "linear-gradient(135deg,#7c3aed,#2563eb)" : "rgba(255,255,255,0.08)",
+                    color: "rgba(255,255,255,0.85)", fontSize:"12px", lineHeight:1.5, maxWidth:"280px"
+                  }}>{m.text}</div>
+                </div>
+              ))}
+              <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
+                <div style={{width:"24px",height:"24px",borderRadius:"7px",background:"linear-gradient(135deg,#7c3aed,#2563eb)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:700,color:"#fff",flexShrink:0}}>AI</div>
+                <div style={{padding:"9px 13px",borderRadius:"10px 10px 10px 3px",background:"rgba(255,255,255,0.08)",display:"flex",gap:"4px",alignItems:"center"}}>
+                  {[0,0.2,0.4].map((d,i)=>(
+                    <div key={i} style={{width:"6px",height:"6px",borderRadius:"50%",background:"rgba(255,255,255,0.4)",animation:`typingDot 1.4s ${d}s ease-in-out infinite`}}/>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TICKER */}
+      <div className="ticker">
+        <div className="ticker-inner">
+          {[...tickerItems,...tickerItems].map((item,i)=>(
+            <span key={i} className="ticker-item">
+              {item}
+              <span className="ticker-sep">·</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* SUBJECTS */}
+      <section className="section section-light" id="asignaturas">
+        <div className="section-header">
+          <div className="section-eyebrow">Asignaturas de 1° ESO</div>
+          <h2 className="section-title">Domina cada asignatura<br/>con tu IA personal</h2>
+          <p className="section-sub">Elige tu asignatura y empieza a estudiar con un tutor que nunca se cansa de explicar.</p>
+        </div>
+        <div className="subjects-grid">
+          {subjects.map((s, idx) => (
+            <SubjectCard key={s.name} s={s} idx={idx} cardStyle={tweaks.cardStyle} />
+          ))}
+        </div>
+      </section>
+
+      {/* AI TOOLS */}
+      <section className="section ai-section section-dark" id="herramientas">
+        <div className="ai-grid">
+          <div className="ai-left">
+            <div className="section-eyebrow">Herramientas IA</div>
+            <h2 className="section-title" style={{color:"#fff"}}>Potencia tu estudio<br/>con Inteligencia Artificial</h2>
+            <p className="section-sub" style={{textAlign:"left",maxWidth:"460px"}}>
+              Más que un buscador. Un tutor que te conoce, te escucha y te ayuda a entender de verdad.
+            </p>
+            <div className="ai-feature-list">
+              {aiFeatures.map((f, i) => (
+                <div
+                  key={i}
+                  className={`ai-feature anim-card ${activeFeature === i ? "active" : ""}`}
+                  onClick={() => setActiveFeature(i)}
+                  style={{cursor:"pointer"}}
+                >
+                  <div className="ai-feature-icon" style={{background: f.bg}}>{f.icon}</div>
+                  <div className="ai-feature-text">
+                    <h4>{f.title}</h4>
+                    <p>{f.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="ai-right anim-card">
+            <ProductMockup activeFeature={activeFeature} />
+            <div className="stats-row">
+              {[
+                { num: "50K+", label: "Estudiantes activos" },
+                { num: "4.9★", label: "Valoración media" },
+                { num: "98%", label: "Aprueban el curso" },
+              ].map((s, i) => (
+                <div key={i} className="stat-chip">
+                  <div className="stat-chip-num">{s.num}</div>
+                  <div className="stat-chip-label">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="section testimonials-section" id="opiniones">
+        <div className="section-header">
+          <div className="section-eyebrow">Opiniones de estudiantes</div>
+          <h2 className="section-title" style={{color:"#1a0f3c"}}>Lo dicen ellos</h2>
+          <p className="section-sub" style={{color:"#6b5f91"}}>
+            Más de 50.000 estudiantes de toda España ya estudian con SmartStudIA.
+          </p>
+        </div>
+        <div className="testimonials-grid" style={{gridTemplateColumns: tweaks.testimonialLayout === "staggered" ? "repeat(3,1fr)" : "repeat(3,1fr)"}}>
+          {testimonials.map((t, i) => (
+            <TestiCard key={i} t={t} idx={i} layout={tweaks.testimonialLayout} />
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="cta-section">
+        <div className="section-eyebrow" style={{color:"rgba(255,255,255,0.6)", WebkitTextFillColor:"rgba(255,255,255,0.6)"}}>¿Listo para empezar?</div>
+        <h2 className="cta-title">Tu próximo aprobado<br/>empieza aquí</h2>
+        <p className="cta-sub">Únete gratis hoy. Sin tarjeta de crédito. Sin excusas.</p>
+        <div style={{display:"flex",gap:"14px",justifyContent:"center",flexWrap:"wrap"}}>
+          <button className="btn-primary" style={{fontSize:"17px",padding:"18px 48px"}}>Crear cuenta gratis →</button>
+          <button className="btn-secondary" style={{fontSize:"17px",padding:"18px 48px"}}>Ver demostración</button>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="footer">
+        <div className="footer-logo">SmartStudIA</div>
+        <div className="footer-copy">© 2026 SmartStudIA. Todos los derechos reservados.</div>
+        <div className="footer-links">
+          <a href="#">Privacidad</a>
+          <a href="#">Términos</a>
+          <a href="#">Contacto</a>
+        </div>
+      </footer>
+
+      {/* TWEAKS */}
+      <div className={`tweaks-panel ${tweaksVisible ? "visible" : ""}`}>
+        <div className="tweaks-title">Tweaks</div>
+        <div className="tweak-row">
+          <div className="tweak-label">Estilo de tarjetas</div>
+          <div className="tweak-options">
+            {["rounded","sharp"].map(v=>(
+              <button key={v} className={`tweak-opt ${tweaks.cardStyle===v?"active":""}`} onClick={()=>setTweak("cardStyle",v)}>
+                {v==="rounded" ? "Redondeado" : "Cuadrado"}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="tweak-row">
+          <div className="tweak-label">Testimonios</div>
+          <div className="tweak-options">
+            {["staggered","flat"].map(v=>(
+              <button key={v} className={`tweak-opt ${tweaks.testimonialLayout===v?"active":""}`} onClick={()=>setTweak("testimonialLayout",v)}>
+                {v==="staggered" ? "Escalonado" : "Plano"}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
