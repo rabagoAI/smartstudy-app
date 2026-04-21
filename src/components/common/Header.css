@@ -1,9 +1,11 @@
 /* src/components/common/Header.css */
 .main-header {
-    background: linear-gradient(90deg, #4A148C 0%, #880E4F 100%);
+    background: rgba(9, 8, 15, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     color: #fff;
     padding: 1rem 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -20,9 +22,14 @@
 }
 
 .header-logo .logo-text {
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 1.5rem;
-    font-weight: bold;
-    color: #fff;
+    font-weight: 800;
+    background: linear-gradient(90deg, #a78bfa, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
     text-decoration: none;
     white-space: nowrap;
     flex-shrink: 0;
@@ -48,11 +55,11 @@
 }
 
 .nav-links a {
-    color: #fff;
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     font-size: 0.95rem;
     font-weight: 500;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     padding: 0.5rem 1rem;
     border-radius: 8px;
     white-space: nowrap;
@@ -60,9 +67,8 @@
 }
 
 .nav-links a:hover {
-    color: #ffcc00;
+    color: #fff;
     background-color: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
 }
 
 /* Botones desktop */
@@ -95,14 +101,14 @@
 }
 
 .register-btn {
-    background-color: #E91E63;
+    background: linear-gradient(135deg, #7c3aed, #2563eb);
     color: #fff;
-    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+    box-shadow: none;
 }
 
 .register-btn:hover {
-    background-color: #D81B60;
-    transform: scale(1.05);
+    opacity: 0.85;
+    transform: scale(1.04);
 }
 
 /* Botón hamburguesa - oculto en desktop */
@@ -173,9 +179,11 @@
         position: absolute;
         top: 100%;
         left: 0;
-        background: #4A148C;
+        background: rgba(9, 8, 15, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         padding: 1rem 0;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
         z-index: 100;
 
         /* Transiciones suaves */

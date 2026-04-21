@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Hero from './Hero';
+import Ticker from './Ticker';
 import SubjectsSection from './SubjectsSection';
 import FeaturesSection from '../common/FeaturesSection';
 import Testimonials from '../common/Testimonials';
@@ -20,6 +21,7 @@ function HomePage() {
       />
 
       <Hero />
+      <Ticker />
 
       {/* ✅ Eliminado: La sección de CTA con botones de login/register */}
       {/* <section className="home-cta">

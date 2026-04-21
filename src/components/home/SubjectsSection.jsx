@@ -8,78 +8,131 @@ const subjects = [
   {
     id: 'lengua-espanola',
     name: 'Lengua Española',
-    description: 'Apuntes, ejercicios y exámenes resueltos.',
-    image: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=500&q=60',
-    icon: 'fas fa-book',
-    colorClass: 'language'
+    description: 'Gramática, literatura y expresión escrita para dominar el idioma.',
+    icon: '📖',
+    color: '#ff4f6d',
+    bg: '#fff0f3',
+    tagBg: '#ff4f6d18',
+    tagColor: '#cc1535',
+    tag: 'Obligatoria'
   },
   {
     id: 'matematicas',
     name: 'Matemáticas',
-    description: 'Problemas resueltos paso a paso.',
-    image: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=500&q=60',
-    icon: 'fas fa-calculator',
-    colorClass: 'maths'
+    description: 'Álgebra, geometría y resolución de problemas con IA paso a paso.',
+    icon: '📐',
+    color: '#f59e0b',
+    bg: '#fffbeb',
+    tagBg: '#f59e0b18',
+    tagColor: '#b45309',
+    tag: 'Obligatoria'
   },
   {
     id: 'biologia',
     name: 'Biología y Geología',
-    description: 'Células, seres vivos, ecosistemas y más.',
-    image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=500&q=60',
-    icon: 'fas fa-dna',
-    colorClass: 'science'
+    description: 'Ciencias de la vida y la Tierra. Ecosistemas, células y rocas.',
+    icon: '🔬',
+    color: '#10b981',
+    bg: '#ecfdf5',
+    tagBg: '#10b98118',
+    tagColor: '#047857',
+    tag: 'Ciencias'
   },
   {
     id: 'geografia-e-historia',
     name: 'Geografía e Historia',
-    description: 'Mapas, líneas de tiempo y resúmenes.',
-    image: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=500&q=60',
-    icon: 'fas fa-globe-americas',
-    colorClass: 'social'
+    description: 'El mundo, sus culturas y la historia de la humanidad.',
+    icon: '🗺️',
+    color: '#0ea5e9',
+    bg: '#f0f9ff',
+    tagBg: '#0ea5e918',
+    tagColor: '#0369a1',
+    tag: 'Sociales'
   },
   {
     id: 'ingles',
     name: 'Inglés',
-    description: 'Vocabulario, gramática y listening.',
-    image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=500&q=60',
-    icon: 'fas fa-language',
-    colorClass: 'english'
+    description: 'Speaking, writing y comprensión lectora con tutor IA nativo.',
+    icon: '🌍',
+    color: '#8b5cf6',
+    bg: '#f5f3ff',
+    tagBg: '#8b5cf618',
+    tagColor: '#6d28d9',
+    tag: 'Idiomas'
   },
   {
     id: 'tecnologia',
     name: 'Tecnología',
-    description: 'Proyectos, diseños y fundamentos técnicos.',
-    image: 'https://images.unsplash.com/photo-1531297424005-06342e7f3947?auto=format&fit=crop&w=500&q=60',
-    icon: 'fas fa-laptop-code',
-    colorClass: 'tech'
+    description: 'Programación, diseño y resolución de problemas tecnológicos.',
+    icon: '⚙️',
+    color: '#ec4899',
+    bg: '#fdf2f8',
+    tagBg: '#ec489918',
+    tagColor: '#be185d',
+    tag: 'Aplicada'
   }
 ];
 
-// Componente para carga progresiva de imágenes
-const LazyImage = ({ src, alt, className }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
+// Componente de tarjeta de asignatura
+const SubjectCard = ({ subject, index }) => {
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <div className={`lazy-image-container ${className}`}>
-      {/* Placeholder con efecto blur */}
+    <Link
+      to={`/asignaturas/${subject.id}`}
+      className="subject-card-link"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <div
-        className="lazy-placeholder"
+        className="subject-card"
         style={{
-          backgroundImage: `url(${src}&w=50)`,
-          opacity: isLoaded ? 0 : 1
+          background: hovered ? subject.bg : '#fff',
+          boxShadow: hovered
+            ? `0 16px 48px ${subject.color}22, 0 4px 12px ${subject.color}18`
+            : '0 4px 24px rgba(0,0,0,0.06)',
+          animationDelay: `${index * 0.07}s`
         }}
-        aria-hidden="true"
-      />
+      >
+        <div
+          className="subject-overlay"
+          style={{
+            background: `${subject.color}08`,
+            opacity: hovered ? 1 : 0
+          }}
+        />
 
-      {/* Imagen real */}
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        className={`lazy-image-real ${isLoaded ? 'loaded' : ''}`}
-        onLoad={() => setIsLoaded(true)}
-      />
-    </div>
+        <div
+          className="subject-icon-wrap"
+          style={{ background: `${subject.color}18` }}
+        >
+          {subject.icon}
+        </div>
+
+        <div className="subject-name">{subject.name}</div>
+        <div className="subject-desc">{subject.description}</div>
+
+        <span
+          className="subject-tag"
+          style={{
+            background: subject.tagBg,
+            color: subject.tagColor
+          }}
+        >
+          {subject.tag}
+        </span>
+
+        <div
+          className="subject-arrow"
+          style={{
+            background: `${subject.color}20`,
+            color: subject.color
+          }}
+        >
+          →
+        </div>
+      </div>
+    </Link>
   );
 };
 
@@ -87,36 +140,17 @@ function SubjectsSection() {
   return (
     <section className="subjects">
       <div className="container">
-        <h2 className="section-title">Asignaturas de 1º de la ESO</h2>
-        <p className="section-subtitle">
-          Elige tu asignatura y empieza a estudiar con recursos hechos por expertos.
-        </p>
+        <div className="section-header">
+          <div className="section-eyebrow">Asignaturas de 1° ESO</div>
+          <h2 className="section-title">Domina cada asignatura<br/>con tu IA personal</h2>
+          <p className="section-subtitle">
+            Elige tu asignatura y empieza a estudiar con un tutor que nunca se cansa de explicar.
+          </p>
+        </div>
 
         <div className="subjects-grid">
-          {subjects.map((subject) => (
-            <Link
-              key={subject.id}
-              to={`/asignaturas/${subject.id}`}
-              className="subject-card-link"
-            >
-              <div className="subject-card">
-                <div className="subject-image-wrapper">
-                  <LazyImage
-                    src={subject.image}
-                    alt={subject.name}
-                    className="subject-cover"
-                  />
-                  <div className={`subject-icon-overlay ${subject.colorClass}`}>
-                    <i className={subject.icon}></i>
-                  </div>
-                </div>
-
-                <div className="subject-content">
-                  <h3>{subject.name}</h3>
-                  <p>{subject.description}</p>
-                </div>
-              </div>
-            </Link>
+          {subjects.map((subject, index) => (
+            <SubjectCard key={subject.id} subject={subject} index={index} />
           ))}
         </div>
       </div>
