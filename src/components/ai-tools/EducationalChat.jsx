@@ -24,7 +24,6 @@ const EducationalChat = () => {
   const messagesEndRef = useRef(null);
 
   const { currentUser } = useAuth();
-  const apiKey = import.meta.env.VITE_APP_GEMINI_API_KEY;
 
   // Rate limiting hook
   const rateLimit = useRateLimit(currentUser, false);
@@ -118,8 +117,6 @@ const EducationalChat = () => {
     setError(null);
     const rateLimitCheck = await rateLimit.checkLimit();
     if (!rateLimitCheck.allowed) { alert(`⏱️ ${rateLimitCheck.error}`); return; }
-    if (!apiKey) { alert('Error: Clave API de Gemini no configurada.'); return; }
-
     if (!textOverride) setInput('');
     setIsLoading(true);
 
@@ -157,15 +154,12 @@ const EducationalChat = () => {
 
       const requestBody = { contents: contentsWithSystem };
 
-      // 3. API Call
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody)
-        }
-      );
+      // 3. API Call — pasa por el proxy serverless, la clave nunca llega al cliente
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
 
       if (!response.ok) {
         const errText = await response.text();

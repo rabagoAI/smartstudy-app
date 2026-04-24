@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import PrivateRoute from './components/auth/PrivateRoute';
+import AdminRoute from './components/auth/AdminRoute';
 import Landing from './components/home/Landing'; // Landing estática para carga rápida
 import TourGuide from './components/common/TourGuide';
 
@@ -76,9 +77,12 @@ function AppContent() {
                 <Route path="/asignaturas/:subjectName" element={<SubjectDetailsPage />} />
                 <Route path="/herramientas-ia" element={<AIToolsPage />} />
                 <Route path="/mapas-mentales" element={<MindMapGenerator />} />
-                <Route path="/admin/upload" element={<UploadForm />} />
                 <Route path="/historial-ia" element={<AIHistoryPage />} />
                 <Route path="/chat-educativo" element={<EducationalChat />} />
+              </Route>
+              {/* Rutas de admin - solo usuarios con admin: true en Firestore */}
+              <Route element={<AdminRoute />}>
+                <Route path="/admin/upload" element={<UploadForm />} />
               </Route>
             </Routes>
           </Suspense>

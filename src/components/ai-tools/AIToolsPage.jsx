@@ -9,8 +9,6 @@ import useRateLimit from '../../hooks/useRateLimit';
 import RateLimitIndicator from '../common/RateLimitIndicator';
 import './AIToolsPage.css';
 
-const apiKey = import.meta.env.VITE_APP_GEMINI_API_KEY;
-
 function AIToolsPage() {
     const [tool, setTool] = useState(null);
     const [text, setText] = useState('');
@@ -232,12 +230,6 @@ function AIToolsPage() {
             return;
         }
 
-        console.log('Clave API cargada:', apiKey ? 'Sí (oculta)' : 'No');
-        if (!apiKey) {
-            setResult('Error: Clave API no encontrada. Verifica .env.local.');
-            return;
-        }
-
         setIsLoading(true);
         setResult('');
         setQuizData(null);
@@ -285,16 +277,11 @@ function AIToolsPage() {
                 ]
             };
 
-            console.log('Payload enviado a API:', JSON.stringify(payload, null, 2));
-
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }
-            );
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -309,8 +296,6 @@ function AIToolsPage() {
                 setResult("No se pudo generar el resultado.");
                 return;
             }
-
-            console.log('Respuesta cruda de la API:', generatedText);
 
             if (tool === 'cuestionario' || tool === 'tarjetas') {
                 let parsedData = null;

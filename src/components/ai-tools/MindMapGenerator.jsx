@@ -7,8 +7,6 @@ import RateLimitIndicator from '../common/RateLimitIndicator';
 import mermaid from 'mermaid';
 import './MindMapGenerator.css';
 
-const apiKey = import.meta.env.VITE_APP_GEMINI_API_KEY;
-
 // Lista de temas predefinidos
 const PREDEFINED_TOPICS = [
   { id: 'biologia', name: 'Biología', icon: 'fas fa-dna' },
@@ -62,18 +60,9 @@ function MindMapGenerator() {
       return;
     }
 
-    if (!apiKey) {
-      setError('Error: Clave API no encontrada. Verifica .env.local.');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
       const prompt = `Crea un mapa mental sobre "${topic}" en formato Mermaid mindmap.
 
 IMPORTANTE: Devuelve SOLO el código Mermaid válido, sin explicaciones ni comillas.
@@ -99,8 +88,22 @@ Requisitos:
 
 Devuelve SOLO el código Mermaid mindmap:`;
 
-      const result = await model.generateContent(prompt);
-      let generatedCode = result.response.text().trim();
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error?.message || `Error API (${response.status})`);
+      }
+
+      const data = await response.json();
+      let generatedCode = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (!generatedCode) throw new Error('Respuesta vacía de Gemini');
 
       // Limpiar la respuesta si viene con markdown
       if (generatedCode.includes('```')) {

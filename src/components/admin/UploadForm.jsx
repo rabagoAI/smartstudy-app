@@ -1,11 +1,26 @@
 // src/components/admin/UploadForm.js
 
 import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { db } from '../../firebase';
 import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 
+const ALLOWED_TYPES = {
+  pdf: ['application/pdf'],
+  video: ['video/mp4', 'video/webm', 'video/ogg'],
+  exam: ['application/pdf'],
+};
+const MAX_SIZE_MB = 100;
+
 const UploadForm = () => {
+  const { isAdmin } = useAuth();
+
+  // Segunda barrera: si por algún motivo AdminRoute falla, el componente lo bloquea
+  if (!isAdmin) {
+    return <Navigate to="/home" replace />;
+  }
   const [subjects, setSubjects] = useState([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState('');
   const [file, setFile] = useState(null);
@@ -39,7 +54,24 @@ const UploadForm = () => {
   }, []);
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selected = e.target.files[0];
+    if (!selected) return;
+
+    const allowedMimes = ALLOWED_TYPES[contentType] || [];
+    if (!allowedMimes.includes(selected.type)) {
+      setError(`Tipo de archivo no permitido para "${contentType}". Formatos válidos: ${allowedMimes.join(', ')}`);
+      e.target.value = '';
+      return;
+    }
+
+    if (selected.size > MAX_SIZE_MB * 1024 * 1024) {
+      setError(`El archivo supera el tamaño máximo permitido (${MAX_SIZE_MB} MB).`);
+      e.target.value = '';
+      return;
+    }
+
+    setError('');
+    setFile(selected);
   };
 
   const handleSubmit = async (e) => {
