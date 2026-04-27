@@ -1,6 +1,6 @@
 # SmartStudIA — Contexto del Proyecto y Seguimiento de Mejoras
 
-> Última actualización: 2026-04-24
+> Última actualización: 2026-04-27
 
 ---
 
@@ -125,42 +125,36 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 ---
 
 #### SEC-05 — Source maps activados en producción
-- **Estado:** `[ ]`
+- **Estado:** `[x]` completado (2026-04-27)
 - **Archivos:** `vite.config.js:20`
-- **Problema:** `sourcemap: true` en la build de producción genera 66 archivos `.map` que exponen el código fuente original completo a cualquier visitante. También duplica el tamaño del bundle.
-- **Acción:**
-  1. Cambiar a `sourcemap: false` para producción.
-  2. Si se necesitan source maps para Sentry, usar `sourcemap: 'hidden'` y subir los mapas a Sentry en el pipeline de CI, sin servirlos públicamente.
+- **Solución:** `sourcemap: true` → `sourcemap: false`. Si se necesitan source maps para Sentry, usar `sourcemap: 'hidden'` y subir los mapas en el pipeline de CI.
 
 ---
 
 #### SEC-06 — Emails de usuario enviados como etiquetas a Google Analytics (fuga de PII)
-- **Estado:** `[ ]`
+- **Estado:** `[x]` completado (2026-04-27)
 - **Archivos:** `src/components/home/Landing.jsx:83,86`, `src/components/common/Header.jsx:60`
-- **Problema:** Los emails de los usuarios se envían como `label` en eventos de GA4. Esto viola los ToS de Google Analytics, el GDPR y la privacidad básica de los usuarios. Los emails quedan registrados en los dashboards de GA.
-- **Acción:** Reemplazar el email por un identificador anónimo (p.ej. el `uid` hasheado, o simplemente omitir el label).
+- **Solución:** Reemplazados `formData.email` y `currentUser?.email` por `user.uid` / `currentUser?.uid` en los tres `trackEvent` de auth.
 
 ---
 
 #### SEC-07 — Inconsistencia en el campo de suscripción (posible escalada de privilegios)
-- **Estado:** `[ ]`
+- **Estado:** `[x]` completado (2026-04-27)
 - **Archivos:** `src/context/AuthContext.jsx:158`, `src/components/subjects/SubjectDetailsPage.jsx:98`, `src/components/common/PayPalSubscription.jsx:62`
-- **Problema:** `AuthContext` comprueba `userData?.subscription === 'premium'` pero `PayPalSubscription` escribe `subscriptionStatus`. Dos nombres de campo distintos para la misma propiedad. Resultado: tras un pago exitoso, `isSubscribed` en `AuthContext` sigue siendo `false`.
-- **Acción:**
-  1. Unificar el campo a un único nombre (p.ej. `subscriptionStatus`) en todo el proyecto.
-  2. Revisar las reglas de seguridad de Firestore para que los usuarios no puedan escribir `subscriptionStatus: 'premium'` en su propio documento sin pasar por el webhook de PayPal.
+- **Solución:** Unificado a `subscription`. `PayPalSubscription` ahora escribe `subscription: 'premium'`. `SubjectDetailsPage` usa `isSubscribed` del contexto en lugar de leer `userData?.subscriptionStatus` directamente.
+- **Acción pendiente (manual):**
+  - [ ] Revisar reglas de seguridad de Firestore para que usuarios no puedan escribir `subscription: 'premium'` en su propio documento sin pasar por el webhook de PayPal.
 
 ---
 
 ### 🟡 MEDIAS — Planificar en las próximas semanas
 
 #### SEC-08 — Enumeración de usuarios vía `fetchSignInMethodsForEmail`
-- **Estado:** `[ ]`
-- **Archivos:** `src/components/home/Landing.jsx:46`
-- **Problema:** La llamada se ejecuta en cada keystroke del campo email durante el registro. Permite a cualquier visitante anónimo saber qué emails están registrados en el servicio.
-- **Acción:**
-  1. Eliminar la llamada o moverla solo al submit del formulario.
-  2. Activar "Email Enumeration Protection" en Firebase Authentication Console (Authentication → Settings → User actions).
+- **Estado:** `[x]` completado (2026-04-27)
+- **Archivos:** `src/components/home/Landing.jsx`
+- **Solución:** Eliminados el import de `fetchSignInMethodsForEmail`, los estados `emailStatus`/`emailMessage` y el `useEffect` con debounce. El error `auth/email-already-in-use` de Firebase llega al `catch` de `handleSubmit` como cualquier otro error.
+- **Acción pendiente (manual):**
+  - [ ] Activar "Email Enumeration Protection" en Firebase Authentication Console → Authentication → Settings → User actions.
 
 ---
 
@@ -181,44 +175,43 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 ---
 
 #### SEC-11 — Measurement ID de GA4 hardcodeado en el código fuente
-- **Estado:** `[ ]`
-- **Archivos:** `src/analytics.js:7`
-- **Problema:** `G-VKRN1MRKG4` está hardcodeado directamente, no cargado desde una variable de entorno.
-- **Acción:** Moverlo a `VITE_APP_GA_MEASUREMENT_ID` en `.env`.
+- **Estado:** `[x]` completado (2026-04-27)
+- **Archivos:** `src/analytics.js:7`, `.env.example`
+- **Solución:** `G-VKRN1MRKG4` movido a `VITE_APP_GA_MEASUREMENT_ID`. Si la variable no está definida, GA no se inicializa (fail-safe).
+- **Acción pendiente (manual):**
+  - [ ] Añadir `VITE_APP_GA_MEASUREMENT_ID=G-VKRN1MRKG4` en `.env.local` y en Vercel → Settings → Environment Variables.
 
 ---
 
 ### 🟢 BAJAS — Deuda técnica y buenas prácticas
 
 #### BUG-01 — `ProfilePage` crashea con `.toDate()` en usuarios de `RegisterPage`
-- **Estado:** `[ ]`
+- **Estado:** `[x]` completado (2026-04-27)
 - **Archivos:** `src/components/ProfilePage.jsx:27`
-- **Problema:** Los usuarios registrados por `RegisterPage.jsx` tienen `createdAt` como `Date` nativo o string ISO, no como `Firestore.Timestamp`. Llamar `.toDate()` sobre ellos lanza `TypeError`.
-- **Acción:** Añadir una comprobación: `typeof createdAt.toDate === 'function' ? createdAt.toDate() : new Date(createdAt)`.
+- **Solución:** `createdAt.toDate()` reemplazado por `typeof createdAt?.toDate === 'function' ? createdAt.toDate() : new Date(createdAt)`. Soporta tanto `Firestore.Timestamp` como string ISO.
 
 ---
 
 #### BUG-02 — Lógica de creación de usuario duplicada e inconsistente
-- **Estado:** `[ ]`
-- **Archivos:** `src/context/AuthContext.jsx`, `src/components/auth/RegisterPage.jsx`, `src/components/common/PayPalSubscription.jsx`
-- **Problema:** El documento de usuario en Firestore se crea con esquemas distintos según el flujo de registro (3 rutas distintas con campos distintos).
-- **Acción:** Centralizar la creación del documento de usuario en `AuthContext.signup()` y que todos los flujos pasen por ahí.
+- **Estado:** `[x]` completado (2026-04-27)
+- **Archivos:** `src/components/auth/RegisterPage.jsx`
+- **Solución:** `RegisterPage` ahora usa `useAuth().signup()` en lugar de llamar a Firebase directamente. Todos los flujos de registro crean el documento con el mismo schema: `uid`, `email`, `name`, `createdAt`, `admin`, `subscription`.
 
 ---
 
 #### BUG-03 — Ambos planes de suscripción usan el mismo `planId` de PayPal
-- **Estado:** `[ ]`
-- **Archivos:** `src/components/common/SubscriptionModal.jsx:37-53`
-- **Problema:** Las tarjetas "Mensual" y "Anual" no distinguen el `planId`. Ambas usan `VITE_APP_PAYPAL_PLAN_ID`.
-- **Acción:** Crear dos planes en PayPal y añadir `VITE_APP_PAYPAL_PLAN_ID_MONTHLY` y `VITE_APP_PAYPAL_PLAN_ID_ANNUAL`.
+- **Estado:** `[x]` completado (2026-04-27)
+- **Archivos:** `src/components/common/SubscriptionModal.jsx`, `src/components/common/PayPalSubscription.jsx`
+- **Solución:** `PayPalSubscription` acepta prop `planId`. `SubscriptionModal` pasa `VITE_APP_PAYPAL_PLAN_ID_MONTHLY` y `VITE_APP_PAYPAL_PLAN_ID_ANNUAL` respectivamente.
+- **Acción pendiente (manual):**
+  - [ ] Crear los dos planes en PayPal Developer Dashboard y añadir `VITE_APP_PAYPAL_PLAN_ID_MONTHLY` y `VITE_APP_PAYPAL_PLAN_ID_ANNUAL` en `.env.local` y en Vercel.
 
 ---
 
 #### BUG-04 — `Math.random()` como key de React en mensajes del chat
-- **Estado:** `[ ]`
-- **Archivos:** `src/components/ai-tools/EducationalChat.jsx:252`
-- **Problema:** Genera claves únicas en cada render, destruyendo la reconciliación de React.
-- **Acción:** Asignar un `id` estable (p.ej. timestamp + índice) al crear el mensaje.
+- **Estado:** `[x]` completado (2026-04-27)
+- **Archivos:** `src/components/ai-tools/EducationalChat.jsx:246`
+- **Solución:** Eliminado el fallback `|| Math.random()`. Los mensajes de Firestore siempre tienen `id` estable.
 
 ---
 
@@ -255,10 +248,9 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 ---
 
 #### UX-01 — `robots.txt` permite crawling de rutas privadas
-- **Estado:** `[ ]`
+- **Estado:** `[x]` completado (2026-04-27)
 - **Archivos:** `public/robots.txt`
-- **Problema:** `Disallow:` vacío permite indexar `/admin/upload`, `/perfil`, `/historial-ia`.
-- **Acción:** Añadir `Disallow: /admin/` y `Disallow: /perfil` y `Disallow: /historial-ia`.
+- **Solución:** Añadidos `Disallow: /admin/`, `Disallow: /perfil` y `Disallow: /historial-ia`.
 
 ---
 
@@ -270,22 +262,22 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | SEC-02 | 🔴 CRÍTICA | Ruta `/admin/upload` sin verificación de rol | `[x]` |
 | SEC-03 | 🟠 ALTA | Claves de API en bundle del cliente | `[x]` |
 | SEC-04 | 🟠 ALTA | Rate limiting solo en cliente | `[ ]` |
-| SEC-05 | 🟠 ALTA | Source maps en producción | `[ ]` |
-| SEC-06 | 🟠 ALTA | Emails de usuario enviados a GA4 (PII) | `[ ]` |
-| SEC-07 | 🟠 ALTA | Campo de suscripción inconsistente | `[ ]` |
-| SEC-08 | 🟡 MEDIA | Enumeración de usuarios en registro | `[ ]` |
+| SEC-05 | 🟠 ALTA | Source maps en producción | `[x]` |
+| SEC-06 | 🟠 ALTA | Emails de usuario enviados a GA4 (PII) | `[x]` |
+| SEC-07 | 🟠 ALTA | Campo de suscripción inconsistente | `[x]` |
+| SEC-08 | 🟡 MEDIA | Enumeración de usuarios en registro | `[x]` |
 | SEC-09 | 🟡 MEDIA | Sin validación en uploads del admin | `[x]` |
 | SEC-10 | 🟡 MEDIA | API handler de Next.js bundleado en cliente | `[x]` |
-| SEC-11 | 🟡 MEDIA | GA4 Measurement ID hardcodeado | `[ ]` |
-| BUG-01 | 🟢 BAJA | Crash `.toDate()` en ProfilePage | `[ ]` |
-| BUG-02 | 🟢 BAJA | Creación de usuario duplicada e inconsistente | `[ ]` |
-| BUG-03 | 🟢 BAJA | Ambos planes PayPal usan el mismo planId | `[ ]` |
-| BUG-04 | 🟢 BAJA | `Math.random()` como key de React | `[ ]` |
+| SEC-11 | 🟡 MEDIA | GA4 Measurement ID hardcodeado | `[x]` |
+| BUG-01 | 🟢 BAJA | Crash `.toDate()` en ProfilePage | `[x]` |
+| BUG-02 | 🟢 BAJA | Creación de usuario duplicada e inconsistente | `[x]` |
+| BUG-03 | 🟢 BAJA | Ambos planes PayPal usan el mismo planId | `[x]` |
+| BUG-04 | 🟢 BAJA | `Math.random()` como key de React | `[x]` |
 | BUG-05 | 🟢 BAJA | PrivateRoute duplicado con import roto | `[x]` |
 | PERF-01 | 🟢 BAJA | `dist/` commiteado en git | `[ ]` |
 | PERF-02 | 🟢 BAJA | PDF.js cargado desde CDN en cada mount | `[ ]` |
 | PERF-03 | 🟢 BAJA | Chat filtra mensajes en cliente en lugar de en Firestore | `[ ]` |
-| UX-01 | 🟢 BAJA | `robots.txt` expone rutas privadas | `[ ]` |
+| UX-01 | 🟢 BAJA | `robots.txt` expone rutas privadas | `[x]` |
 
 ---
 
@@ -301,3 +293,13 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | 2026-04-24 | BUG-05 | Eliminado `components/common/PrivateRoute.jsx` (duplicado con import roto) | Claude Code |
 | 2026-04-24 | SEC-03 | Creado `api/gemini.js` proxy; 3 componentes migrados a `/api/gemini`; clave movida a var servidor | Claude Code |
 | 2026-04-24 | SEC-10 | Eliminado `src/pages/api/educational-chat.jsx` (dead code Next.js bundleado en cliente) | Claude Code |
+| 2026-04-27 | SEC-05 | `sourcemap: true` → `sourcemap: false` en `vite.config.js` | Claude Code |
+| 2026-04-27 | SEC-06 | Emails reemplazados por `uid` en los 3 `trackEvent` de auth (Landing + Header) | Claude Code |
+| 2026-04-27 | SEC-07 | Campo unificado a `subscription`; `SubjectDetailsPage` usa `isSubscribed` del contexto | Claude Code |
+| 2026-04-27 | SEC-08 | Eliminado `fetchSignInMethodsForEmail` en keystroke; error manejado en submit | Claude Code |
+| 2026-04-27 | SEC-11 | GA4 Measurement ID movido a `VITE_APP_GA_MEASUREMENT_ID` en env | Claude Code |
+| 2026-04-27 | BUG-01 | `createdAt.toDate()` protegido para soportar Timestamp e ISO string | Claude Code |
+| 2026-04-27 | BUG-02 | `RegisterPage` migrado a usar `AuthContext.signup()` para schema unificado | Claude Code |
+| 2026-04-27 | BUG-03 | `PayPalSubscription` acepta prop `planId`; modal pasa IDs monthly/annual separados | Claude Code |
+| 2026-04-27 | BUG-04 | Eliminado `Math.random()` como key en lista de mensajes del chat | Claude Code |
+| 2026-04-27 | UX-01 | `robots.txt` actualizado con Disallow para `/admin/`, `/perfil`, `/historial-ia` | Claude Code |

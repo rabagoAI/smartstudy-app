@@ -1,10 +1,8 @@
 // src/components/auth/RegisterPage.js
 
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../../firebase';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './Auth.css'; // Asegúrate de que esta ruta sea correcta
 
 const RegisterPage = () => {
@@ -12,24 +10,17 @@ const RegisterPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { signup } = useAuth();
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setError(''); 
+    setError('');
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      await signup(email, password, '');
 
-      await setDoc(doc(db, "users", user.uid), {
-        email: user.email,
-        createdAt: new Date(),
-      });
-
-      // 🎯 LÍNEA CRÍTICA - Marcar como nuevo usuario registrado para activar el tour
       sessionStorage.setItem('newUserRegistration', 'true');
-
-      navigate('/'); 
+      navigate('/');
 
     } catch (error) {
       console.error("Error al registrar:", error.message);
