@@ -3,8 +3,9 @@ import ReactGA from 'react-ga4';
 
 // Inicializar Google Analytics
 export const initGA = () => {
-  // REEMPLAZA "G-XXXXXXXXXX" CON TU MEASUREMENT ID
-  ReactGA.initialize('G-VKRN1MRKG4');
+  const measurementId = import.meta.env.VITE_APP_GA_MEASUREMENT_ID;
+  if (!measurementId) return;
+  ReactGA.initialize(measurementId);
   console.log('✅ Google Analytics inicializado');
 };
 

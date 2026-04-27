@@ -3,12 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { BookOpen, Brain, MessageSquare, BarChart3, Play, Zap, ArrowRight, Check, X, ChevronDown, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { BookOpen, Brain, MessageSquare, BarChart3, Play, Zap, ArrowRight, Check, X, ChevronDown, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getAuthErrorMessage } from '../../utils/errorHandler';
 import { trackEvent } from '../../analytics';
-import { fetchSignInMethodsForEmail } from 'firebase/auth';
-import { auth } from '../../firebase';
 import './Landing.css';
 import { BackgroundGradientAnimation } from '../ui/background-gradient-animation';
 
@@ -22,54 +20,15 @@ export default function Landing() {
   const [loading, setLoading] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
 
-  // Estados para validación de email
-  const [emailStatus, setEmailStatus] = useState('idle'); // idle, checking, available, taken, invalid
-  const [emailMessage, setEmailMessage] = useState('');
-
   useEffect(() => {
     if (currentUser) {
       navigate('/home');
     }
   }, [currentUser, navigate]);
 
-  // Debounce para chequear email
-  useEffect(() => {
-    const checkEmail = async () => {
-      // Solo chequear si NO estamos en modo login (en login da igual si existe) y si hay email válido
-      if (isLogin || !formData.email.includes('@') || formData.email.length < 5) {
-        setEmailStatus('idle');
-        return;
-      }
-
-      setEmailStatus('checking');
-      try {
-        const methods = await fetchSignInMethodsForEmail(auth, formData.email);
-        if (methods.length > 0) {
-          setEmailStatus('taken');
-          setEmailMessage('Este email ya está registrado. ¿Quieres iniciar sesión?');
-        } else {
-          setEmailStatus('available');
-          setEmailMessage('Email disponible.');
-        }
-      } catch (err) {
-        console.error("Error validando email", err);
-        // Si hay error (ej: protección de enumeración), asumimos válido para no bloquear
-        setEmailStatus('idle');
-      }
-    };
-
-    const timeoutId = setTimeout(() => {
-      if (formData.email) checkEmail();
-    }, 600); // 600ms debounce
-
-    return () => clearTimeout(timeoutId);
-  }, [formData.email, isLogin]);
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Si corrigen el email, reseteamos status visualmente hasta el debounce
-    if (name === 'email') setEmailStatus('idle');
   };
 
   const handleSubmit = async (e) => {
@@ -79,11 +38,11 @@ export default function Landing() {
 
     try {
       if (isLogin) {
-        await login(formData.email, formData.password);
-        trackEvent('auth', 'login_success', formData.email);
+        const user = await login(formData.email, formData.password);
+        trackEvent('auth', 'login_success', user.uid);
       } else {
-        await signup(formData.email, formData.password, formData.name);
-        trackEvent('auth', 'signup_success', formData.email);
+        const user = await signup(formData.email, formData.password, formData.name);
+        trackEvent('auth', 'signup_success', user.uid);
       }
       navigate('/home');
       setShowForm(false);

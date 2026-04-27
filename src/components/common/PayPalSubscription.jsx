@@ -59,7 +59,7 @@ const PayPalSubscription = ({ onApprove, onCancel, onError }) => {
         trackEvent('payment', 'subscription_approved_start', data.subscriptionID);
 
         await updateDoc(doc(db, "users", user.uid), {
-          subscriptionStatus: 'premium',
+          subscription: 'premium',
           subscriptionID: data.subscriptionID,
           subscriptionStartDate: new Date(),
         });

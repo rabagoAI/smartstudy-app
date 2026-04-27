@@ -57,7 +57,7 @@ function Header() {
     const handleLogout = async () => {
         try {
             await signOut(auth);
-            trackEvent('auth', 'logout_success', currentUser?.email);
+            trackEvent('auth', 'logout_success', currentUser?.uid);
             setIsMenuOpen(false);
             navigate('/');
         } catch (error) {

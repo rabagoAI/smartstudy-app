@@ -37,7 +37,7 @@ const getSafeVideoUrl = (url) => {
 
 const SubjectDetailsPage = () => {
   const { subjectName } = useParams();
-  const { userData } = useAuth();
+  const { userData, isSubscribed } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
 
   const fetchContent = async ({ pageParam = null }) => {
@@ -95,7 +95,7 @@ const SubjectDetailsPage = () => {
   const displaySubjectName =
     subjectName.charAt(0).toUpperCase() +
     subjectName.slice(1).replace(/-/g, " ");
-  const isPremiumUser = userData?.subscriptionStatus === "premium";
+  const isPremiumUser = isSubscribed;
 
   // Filtrar contenido por tipo
   const pdfs = content.filter((item) => item.type === "pdf");
