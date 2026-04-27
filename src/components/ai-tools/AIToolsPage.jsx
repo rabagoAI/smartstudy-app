@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // pdfjs-dist import removed as it is handled in worker
 import { useAuth } from '../../context/AuthContext';
+import { BackgroundGradientAnimation } from '../ui/background-gradient-animation';
 import { db } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
@@ -381,8 +382,9 @@ function AIToolsPage() {
                 url="https://smartstudy.vercel.app/herramientas-ia"
             />
 
-            <section className="ai-tools">
-                <div className="container">
+            <section className="ai-tools relative overflow-hidden">
+                <BackgroundGradientAnimation containerClassName="absolute inset-0 z-0 h-full w-full" interactive={false} />
+                <div className="container relative z-10">
                     <h2 className="section-title">Herramientas de Inteligencia Artificial</h2>
                     <p className="subtitle">Potencia tus estudios con IA: resume textos, genera cuestionarios, tarjetas o explica conceptos.</p>
 

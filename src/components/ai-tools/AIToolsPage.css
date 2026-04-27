@@ -1,18 +1,19 @@
 .ai-tools {
   padding: 60px 0;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+  background: transparent;
 }
 
 .section-title {
   text-align: center;
-  color: #3a0ca3;
+  color: #ffffff;
   margin-bottom: 15px;
   font-size: 2.2rem;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
 }
 
 .subtitle {
   text-align: center;
-  color: #6c757d;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 1.1rem;
   margin-bottom: 40px;
 }
