@@ -6,8 +6,8 @@ import { auth, db } from '../../firebase';
 import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { trackEvent } from '../../analytics';
 
-const PayPalSubscription = ({ onApprove, onCancel, onError }) => {
-  const planId = import.meta.env.VITE_APP_PAYPAL_PLAN_ID;
+const PayPalSubscription = ({ onApprove, onCancel, onError, planId: planIdProp }) => {
+  const planId = planIdProp || import.meta.env.VITE_APP_PAYPAL_PLAN_ID;
   const clientId = import.meta.env.VITE_APP_PAYPAL_CLIENT_ID;
 
   if (!planId || !clientId) {

@@ -243,7 +243,7 @@ const EducationalChat = () => {
         )}
 
         {filteredMessages.map((msg) => (
-          <div key={msg.id || Math.random()} className={`message ${msg.role}`}>
+          <div key={msg.id} className={`message ${msg.role}`}>
             <div className="message-content">
               <div className="markdown-content">
                 <ReactMarkdown

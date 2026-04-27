@@ -35,6 +35,7 @@ const SubscriptionModal = ({ isOpen, onClose }) => {
             <h4>Mensual</h4>
             <p>4,99€/mes</p>
             <PayPalSubscription
+              planId={import.meta.env.VITE_APP_PAYPAL_PLAN_ID_MONTHLY}
               onApprove={handleApprove}
               onCancel={handleCancel}
               onError={handleError}
@@ -46,6 +47,7 @@ const SubscriptionModal = ({ isOpen, onClose }) => {
             <p>49,99€/año</p>
             <div className="saving">¡Ahorras 10€ al año!</div>
             <PayPalSubscription
+              planId={import.meta.env.VITE_APP_PAYPAL_PLAN_ID_ANNUAL}
               onApprove={handleApprove}
               onCancel={handleCancel}
               onError={handleError}

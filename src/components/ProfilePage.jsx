@@ -24,7 +24,7 @@ const ProfilePage = () => {
         <h1>Perfil de Usuario</h1>
         <p>Bienvenido, {userData.email}!</p>
         <p>ID de usuario (UID): {currentUser.uid}</p>
-        <p>Fecha de registro: {userData.createdAt.toDate().toLocaleDateString()}</p>
+        <p>Fecha de registro: {(typeof userData.createdAt?.toDate === 'function' ? userData.createdAt.toDate() : new Date(userData.createdAt)).toLocaleDateString()}</p>
       </div>
     </>
   );
