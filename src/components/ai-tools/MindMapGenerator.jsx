@@ -88,9 +88,13 @@ Requisitos:
 
 Devuelve SOLO el código Mermaid mindmap:`;
 
+      const idToken = await currentUser.getIdToken();
       const response = await fetch('/api/gemini', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
         }),
@@ -98,6 +102,9 @@ Devuelve SOLO el código Mermaid mindmap:`;
 
       if (!response.ok) {
         const errData = await response.json();
+        if (response.status === 429) {
+          throw new Error(errData.error || 'Límite de uso alcanzado. Espera un momento.');
+        }
         throw new Error(errData.error?.message || `Error API (${response.status})`);
       }
 

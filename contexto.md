@@ -117,10 +117,28 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 ---
 
 #### SEC-04 — Rate limiting solo en cliente (bypasseable)
-- **Estado:** `[ ]`
-- **Archivos:** `src/hooks/useRateLimit.js`
-- **Problema:** Los contadores de rate limiting se guardan en `localStorage`. Cualquier usuario puede borrarlos en DevTools y hacer llamadas ilimitadas a la API de Gemini (que además tiene la clave expuesta — ver SEC-03).
-- **Acción:** Implementar rate limiting real en el proxy/serverless del punto SEC-03 (p.ej. con Redis o Upstash, o en Firestore con reglas de seguridad que limiten escrituras por tiempo).
+- **Estado:** `[x]` completado (2026-04-28)
+- **Archivos modificados:**
+  - `api/gemini.js` — verificación de token + rate limiting con transacción Firestore
+  - `src/components/ai-tools/EducationalChat.jsx` — envía `Authorization: Bearer <idToken>`
+  - `src/components/ai-tools/AIToolsPage.jsx` — envía `Authorization: Bearer <idToken>`
+  - `src/components/ai-tools/MindMapGenerator.jsx` — envía `Authorization: Bearer <idToken>`
+  - `.env.example` — documentadas las variables `GEMINI_API_KEY` y `FIREBASE_SERVICE_ACCOUNT_KEY`
+  - `package.json` — añadida dependencia `firebase-admin`
+- **Solución implementada:**
+  1. Los tres componentes obtienen el Firebase ID token con `currentUser.getIdToken()` y lo envían en el header `Authorization: Bearer <token>`.
+  2. El proxy `api/gemini.js` verifica el token con Firebase Admin SDK (`getAuth().verifyIdToken()`). Si es inválido o falta, devuelve 401.
+  3. Una vez verificado el UID, se ejecuta una transacción Firestore en `rate_limits/{uid}` que comprueba e incrementa atómicamente los contadores (5/min y 20/hour para usuarios free). Si se supera el límite, devuelve 429.
+  4. Los tres componentes manejan el 429 con un mensaje claro al usuario.
+  5. El hook `useRateLimit.js` se mantiene como indicador UX (muestra llamadas restantes), pero el enforcement real es ahora el servidor.
+- **Acciones pendientes (manuales):**
+  - [ ] Generar service account en Firebase Console → Project Settings → Service Accounts → "Generate new private key" → descargar JSON → añadir el contenido (como string en una línea) como `FIREBASE_SERVICE_ACCOUNT_KEY` en Vercel Dashboard → Settings → Environment Variables.
+  - [ ] Añadir regla en Firestore Security Rules para que solo el Admin SDK pueda escribir en `rate_limits`:
+    ```
+    match /rate_limits/{uid} {
+      allow read, write: if false;
+    }
+    ```
 
 ---
 
@@ -261,7 +279,7 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | SEC-01 | 🔴 CRÍTICA | Credenciales reales en `.env` | `[~]` en progreso |
 | SEC-02 | 🔴 CRÍTICA | Ruta `/admin/upload` sin verificación de rol | `[x]` |
 | SEC-03 | 🟠 ALTA | Claves de API en bundle del cliente | `[x]` |
-| SEC-04 | 🟠 ALTA | Rate limiting solo en cliente | `[ ]` |
+| SEC-04 | 🟠 ALTA | Rate limiting solo en cliente | `[x]` |
 | SEC-05 | 🟠 ALTA | Source maps en producción | `[x]` |
 | SEC-06 | 🟠 ALTA | Emails de usuario enviados a GA4 (PII) | `[x]` |
 | SEC-07 | 🟠 ALTA | Campo de suscripción inconsistente | `[x]` |
@@ -303,3 +321,4 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | 2026-04-27 | BUG-03 | `PayPalSubscription` acepta prop `planId`; modal pasa IDs monthly/annual separados | Claude Code |
 | 2026-04-27 | BUG-04 | Eliminado `Math.random()` como key en lista de mensajes del chat | Claude Code |
 | 2026-04-27 | UX-01 | `robots.txt` actualizado con Disallow para `/admin/`, `/perfil`, `/historial-ia` | Claude Code |
+| 2026-04-28 | SEC-04 | Rate limiting real en servidor: Firebase Admin verifica token + transacción Firestore en `rate_limits/{uid}`; 3 componentes envían `Authorization: Bearer <idToken>` | Claude Code |

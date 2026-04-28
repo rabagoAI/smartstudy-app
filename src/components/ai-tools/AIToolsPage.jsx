@@ -278,14 +278,21 @@ function AIToolsPage() {
                 ]
             };
 
+            const idToken = await currentUser.getIdToken();
             const response = await fetch('/api/gemini', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`,
+                },
                 body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
+                if (response.status === 429) {
+                    throw new Error(errorData.error || 'Límite de uso alcanzado. Espera un momento.');
+                }
                 console.error('❌ Error de API:', errorData);
                 throw new Error(errorData.error?.message || 'Error en la API');
             }

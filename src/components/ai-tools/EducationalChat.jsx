@@ -154,14 +154,22 @@ const EducationalChat = () => {
 
       const requestBody = { contents: contentsWithSystem };
 
-      // 3. API Call — pasa por el proxy serverless, la clave nunca llega al cliente
+      // 3. API Call — pasa por el proxy serverless con autenticación
+      const idToken = await currentUser.getIdToken();
       const response = await fetch('/api/gemini', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
         body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
+        if (response.status === 429) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Límite de uso alcanzado. Espera un momento.');
+        }
         const errText = await response.text();
         throw new Error(`Error API (${response.status}): ${errText}`);
       }
