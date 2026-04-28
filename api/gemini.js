@@ -86,14 +86,22 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid request: contents array required' });
   }
 
-  const geminiRes = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents }),
+  // Retry up to 3 times on 503 (Gemini overload) with exponential backoff
+  let geminiRes;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
     }
-  );
+    geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents }),
+      }
+    );
+    if (geminiRes.status !== 503) break;
+  }
 
   const data = await geminiRes.json();
   return res.status(geminiRes.status).json(data);

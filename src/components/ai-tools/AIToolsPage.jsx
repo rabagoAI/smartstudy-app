@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import * as pdfjsLib from 'pdfjs-dist';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 import { useAuth } from '../../context/AuthContext';
@@ -236,7 +238,31 @@ function AIToolsPage() {
             let systemInstruction = "";
 
             if (tool === 'resumen') {
-                systemInstruction = "Eres un asistente de estudio especializado en español. Resume el texto proporcionado de manera clara, estructurada y concisa. Usa viñetas, títulos y subtítulos cuando sea apropiado. El resumen debe ser fácil de entender para estudiantes de ESO.";
+                systemInstruction = `Eres un asistente de estudio especializado en español. Resume el texto con este formato Markdown exacto:
+
+# 📋 Resumen: [título del tema]
+
+Breve contexto del tema en 1-2 frases.
+
+## 🎯 Ideas principales
+
+- Primera idea clave
+- Segunda idea clave
+- Tercera idea clave
+
+## 📖 Desarrollo
+
+### [Primer subtema]
+Explicación en 2-3 frases.
+
+### [Segundo subtema]
+Explicación en 2-3 frases.
+
+## ✅ Conclusión
+
+Una frase que resuma lo más importante.
+
+Adapta el número de subtemas y bullets al contenido. Escribe en español claro y directo para estudiantes de 12-16 años.`;
             } else if (tool === 'cuestionario') {
                 systemInstruction = "Eres un profesor de ESO que enseña en español. Genera un cuestionario de 5 preguntas de opción múltiple en español. Cada pregunta debe tener 4 opciones, solo una correcta. Mezcla el orden de las opciones. Devuelve SOLO un objeto JSON válido con una propiedad `quiz` que es un array de objetos. Cada objeto debe tener: `question` (string), `options` (array de 4 strings), `correctAnswer` (string exacto de la opción correcta). No incluyas texto adicional, solo el JSON.";
             } else if (tool === 'explicar') {
@@ -737,46 +763,10 @@ function AIToolsPage() {
                                     </button>
                                 </div>
                             </div>
-                            <div className="summary-content">
-                                {result.split('\n').map((line, index) => {
-                                    if (line.trim() === '') return <br key={index} />;
-
-                                    if (line.match(/^[A-Z][A-Z\s]+:$/) ||
-                                        line.match(/^[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑ\s]+:$/) ||
-                                        line.includes('RESUMEN') ||
-                                        line.includes('CONCLUSIÓN') ||
-                                        line.includes('INTRODUCCIÓN')) {
-                                        return <h2 key={index} className="summary-main-title">{line.replace(':', '')}</h2>;
-                                    }
-                                    else if (line.match(/^[A-Z][a-z]+:/) ||
-                                        (line.length < 60 && line.endsWith(':')) ||
-                                        line.includes('•') && line.length < 80) {
-                                        return <h3 key={index} className="summary-subtitle">{line.replace('•', '').trim()}</h3>;
-                                    }
-                                    else if (line.startsWith('- ') || line.startsWith('• ') || line.startsWith('* ')) {
-                                        return (
-                                            <div key={index} className="summary-bullet-point">
-                                                <div className="bullet-icon">•</div>
-                                                <span>{line.replace(/^[-•*]\s+/, '')}</span>
-                                            </div>
-                                        );
-                                    }
-                                    else if (line.match(/^\d+\.\s/)) {
-                                        return (
-                                            <div key={index} className="summary-numbered-point">
-                                                <div className="number-badge">{line.match(/^\d+/)[0]}</div>
-                                                <span>{line.replace(/^\d+\.\s+/, '')}</span>
-                                            </div>
-                                        );
-                                    }
-                                    else if (line.includes('**') || line.match(/^[A-Z][^.]{0,100}:$/)) {
-                                        const cleanLine = line.replace(/\*\*/g, '');
-                                        return <p key={index} className="summary-highlight">{cleanLine}</p>;
-                                    }
-                                    else {
-                                        return <p key={index} className="summary-paragraph">{line}</p>;
-                                    }
-                                })}
+                            <div className="summary-content markdown-body">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {result}
+                                </ReactMarkdown>
                             </div>
                             <div className="summary-footer">
                                 <div className="summary-stats">
