@@ -1,6 +1,6 @@
 # SmartStudIA — Contexto del Proyecto y Seguimiento de Mejoras
 
-> Última actualización: 2026-04-27
+> Última actualización: 2026-04-28
 
 ---
 
@@ -131,14 +131,9 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
   3. Una vez verificado el UID, se ejecuta una transacción Firestore en `rate_limits/{uid}` que comprueba e incrementa atómicamente los contadores (5/min y 20/hour para usuarios free). Si se supera el límite, devuelve 429.
   4. Los tres componentes manejan el 429 con un mensaje claro al usuario.
   5. El hook `useRateLimit.js` se mantiene como indicador UX (muestra llamadas restantes), pero el enforcement real es ahora el servidor.
-- **Acciones pendientes (manuales):**
-  - [ ] Generar service account en Firebase Console → Project Settings → Service Accounts → "Generate new private key" → descargar JSON → añadir el contenido (como string en una línea) como `FIREBASE_SERVICE_ACCOUNT_KEY` en Vercel Dashboard → Settings → Environment Variables.
-  - [ ] Añadir regla en Firestore Security Rules para que solo el Admin SDK pueda escribir en `rate_limits`:
-    ```
-    match /rate_limits/{uid} {
-      allow read, write: if false;
-    }
-    ```
+- **Acciones completadas (manuales, 2026-04-28):**
+  - [x] `FIREBASE_SERVICE_ACCOUNT_KEY` generado desde Firebase Console y añadido como variable de entorno en Vercel. Redeploy completado sin errores.
+  - [x] Firestore Security Rules actualizadas: eliminado `|| true` de `isAdmin()` (agujero crítico que daba permisos de admin a todos), añadida regla `rate_limits/{uid}` con `allow read, write: if false`.
 
 ---
 
@@ -242,18 +237,15 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 ---
 
 #### PERF-01 — `dist/` commiteado en el repositorio
-- **Estado:** `[ ]`
-- **Archivos:** `.gitignore`, directorio `dist/`
-- **Problema:** El build compilado está trackeado en git, inflando el repo y generando conflictos en los artifacts.
-- **Acción:** `git rm -r --cached dist/` y confirmar que `dist` está en `.gitignore`.
+- **Estado:** `[x]` ya resuelto (verificado 2026-04-28)
+- **Nota:** `dist/` nunca estuvo trackeado en ninguna rama. `.gitignore` ya tenía `/dist` correctamente. No requirió acción.
 
 ---
 
 #### PERF-02 — PDF.js cargado desde CDN en cada mount del componente
-- **Estado:** `[ ]`
-- **Archivos:** `src/components/ai-tools/AIToolsPage.jsx:97-112`
-- **Problema:** Se inyecta un `<script>` desde CDN en cada mount si no está ya cargado. `pdfjs-dist` ya está en `package.json`.
-- **Acción:** Importar directamente desde el paquete npm instalado.
+- **Estado:** `[x]` completado (2026-04-28)
+- **Archivos:** `src/components/ai-tools/AIToolsPage.jsx`
+- **Solución:** Eliminado el `useEffect` que inyectaba un `<script>` desde CDN. Añadido `import * as pdfjsLib from 'pdfjs-dist'` a nivel de módulo. El `workerSrc` se configura una sola vez al cargar el módulo (CDN solo para el worker, que debe ser un archivo separado). Reemplazadas todas las referencias `window.pdfjsLib` por el módulo importado.
 
 ---
 
@@ -292,8 +284,8 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | BUG-03 | 🟢 BAJA | Ambos planes PayPal usan el mismo planId | `[x]` |
 | BUG-04 | 🟢 BAJA | `Math.random()` como key de React | `[x]` |
 | BUG-05 | 🟢 BAJA | PrivateRoute duplicado con import roto | `[x]` |
-| PERF-01 | 🟢 BAJA | `dist/` commiteado en git | `[ ]` |
-| PERF-02 | 🟢 BAJA | PDF.js cargado desde CDN en cada mount | `[ ]` |
+| PERF-01 | 🟢 BAJA | `dist/` commiteado en git | `[x]` |
+| PERF-02 | 🟢 BAJA | PDF.js cargado desde CDN en cada mount | `[x]` |
 | PERF-03 | 🟢 BAJA | Chat filtra mensajes en cliente en lugar de en Firestore | `[ ]` |
 | UX-01 | 🟢 BAJA | `robots.txt` expone rutas privadas | `[x]` |
 
@@ -322,3 +314,9 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | 2026-04-27 | BUG-04 | Eliminado `Math.random()` como key en lista de mensajes del chat | Claude Code |
 | 2026-04-27 | UX-01 | `robots.txt` actualizado con Disallow para `/admin/`, `/perfil`, `/historial-ia` | Claude Code |
 | 2026-04-28 | SEC-04 | Rate limiting real en servidor: Firebase Admin verifica token + transacción Firestore en `rate_limits/{uid}`; 3 componentes envían `Authorization: Bearer <idToken>` | Claude Code |
+| 2026-04-28 | SEC-04 | `FIREBASE_SERVICE_ACCOUNT_KEY` añadido como variable de entorno en Vercel; redeploy completado | paco rabago |
+| 2026-04-28 | REGLAS | Firestore Security Rules: eliminado `\|\| true` de `isAdmin()` (todos eran admin); añadida regla `rate_limits/{uid}` con `allow read, write: if false` | paco rabago |
+| 2026-04-28 | DOCS | Creado `rama-github.md` con explicación del flujo de ramas, commits y PRs para el proyecto | Claude Code |
+| 2026-04-28 | DOCS | Página SmartStudIA en Notion actualizada: tabla de seguridad ampliada (SEC-01…SEC-11) y sección de flujo de trabajo con GitHub | Claude Code |
+| 2026-04-28 | PERF-01 | Verificado: `dist/` nunca estuvo trackeado; `.gitignore` ya tenía `/dist` — no requirió acción | Claude Code |
+| 2026-04-28 | PERF-02 | PDF.js migrado de CDN dinámico a `import * as pdfjsLib from 'pdfjs-dist'`; eliminado `useEffect` de inyección de script | Claude Code |

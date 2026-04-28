@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-// pdfjs-dist import removed as it is handled in worker
+import * as pdfjsLib from 'pdfjs-dist';
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 import { useAuth } from '../../context/AuthContext';
 import { BackgroundGradientAnimation } from '../ui/background-gradient-animation';
 import { db } from '../../firebase';
@@ -91,30 +92,7 @@ function AIToolsPage() {
         setResult('Procesamiento cancelado por el usuario.');
     };
 
-    // Configurar worker de PDF.js (una sola vez)
-    useEffect(() => {
-        // Cargar script de PDF.js dinámicamente si no existe
-        if (!window.pdfjsLib) {
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-            script.async = true;
-            script.onload = () => {
-                if (window.pdfjsLib) {
-                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                    console.log('PDF.js cargado correctamente');
-                }
-            };
-            document.body.appendChild(script);
-        } else if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        }
-    }, []);
-
     const extractTextFromPdf = async (file) => {
-        if (!window.pdfjsLib) {
-            throw new Error("Librería PDF.js no cargada aún. Espera un momento.");
-        }
-
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = async (event) => {
@@ -122,7 +100,7 @@ function AIToolsPage() {
                     const arrayBuffer = event.target.result;
                     setProcessingProgress(10);
 
-                    const loadingTask = window.pdfjsLib.getDocument({ data: arrayBuffer });
+                    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
 
                     loadingTask.onProgress = (progressData) => {
                         if (progressData.total > 0) {
