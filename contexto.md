@@ -250,10 +250,11 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 ---
 
 #### PERF-03 — Chat carga todos los mensajes y filtra en cliente
-- **Estado:** `[ ]`
-- **Archivos:** `src/components/ai-tools/EducationalChat.jsx:55-81`
-- **Problema:** Comentario "FIX PROVISIONAL": se eliminó el `where` de la query Firestore para evitar crear un índice compuesto. Con el tiempo el usuario descargará cada vez más mensajes innecesarios.
-- **Acción:** Crear el índice compuesto en Firebase Console y restaurar el filtro en la query.
+- **Estado:** `[x]` completado (2026-04-29)
+- **Archivos:** `src/components/ai-tools/EducationalChat.jsx:55-68`, `firestore.indexes.json` (nuevo)
+- **Solución:** Restaurado `where('sessionId', '==', sessionIdRef.current)` en la query. Eliminado el filtro en cliente. Creado `firestore.indexes.json` con el índice compuesto `sessionId ASC + createdAt ASC` para la subcolección `educational_chat`.
+- **Acción pendiente (manual):**
+  - [ ] Desplegar el índice: `firebase deploy --only firestore:indexes` (requiere Firebase CLI y proyecto configurado). Alternativa: crear el índice manualmente en Firebase Console → Firestore → Indexes → Composite → Add Index con los campos `sessionId (ASC)` y `createdAt (ASC)` en la colección `educational_chat`.
 
 ---
 
@@ -286,7 +287,7 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | BUG-05 | 🟢 BAJA | PrivateRoute duplicado con import roto | `[x]` |
 | PERF-01 | 🟢 BAJA | `dist/` commiteado en git | `[x]` |
 | PERF-02 | 🟢 BAJA | PDF.js cargado desde CDN en cada mount | `[x]` |
-| PERF-03 | 🟢 BAJA | Chat filtra mensajes en cliente en lugar de en Firestore | `[ ]` |
+| PERF-03 | 🟢 BAJA | Chat filtra mensajes en cliente en lugar de en Firestore | `[x]` |
 | UX-01 | 🟢 BAJA | `robots.txt` expone rutas privadas | `[x]` |
 
 ---
@@ -320,3 +321,4 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | 2026-04-28 | DOCS | Página SmartStudIA en Notion actualizada: tabla de seguridad ampliada (SEC-01…SEC-11) y sección de flujo de trabajo con GitHub | Claude Code |
 | 2026-04-28 | PERF-01 | Verificado: `dist/` nunca estuvo trackeado; `.gitignore` ya tenía `/dist` — no requirió acción | Claude Code |
 | 2026-04-28 | PERF-02 | PDF.js migrado de CDN dinámico a `import * as pdfjsLib from 'pdfjs-dist'`; eliminado `useEffect` de inyección de script | Claude Code |
+| 2026-04-29 | PERF-03 | Restaurado `where('sessionId', ...)` en query Firestore; eliminado filtro en cliente; creado `firestore.indexes.json` con índice compuesto | Claude Code |

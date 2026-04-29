@@ -50,24 +50,14 @@ const EducationalChat = () => {
 
     const messagesRef = collection(db, 'users', currentUser.uid, 'educational_chat');
 
-    // FIX PROVISIONAL: Quitamos el 'where' para evitar el error de "Index Required"
-    // Traemos todo y filtramos en cliente (RAM).
     const q = query(
       messagesRef,
+      where('sessionId', '==', sessionIdRef.current),
       orderBy('createdAt', 'asc')
     );
 
     const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
-      // 1. Mapear todos los docs
-      const allMsgs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      // 2. Filtrar SOLO los de esta sesión
-      const sessionMsgs = allMsgs.filter(msg => msg.sessionId === sessionIdRef.current);
-
-      setMessages(sessionMsgs);
+      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
       // Chequear si hay escrituras pendientes
       setIsSyncing(snapshot.metadata.hasPendingWrites);
