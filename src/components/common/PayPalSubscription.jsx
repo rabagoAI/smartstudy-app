@@ -1,43 +1,31 @@
-// src/components/common/PayPalSubscription.js
-
 import React from 'react';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { PayPalButtons } from '@paypal/react-paypal-js';
 import { auth, db } from '../../firebase';
 import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { trackEvent } from '../../analytics';
 
 const PayPalSubscription = ({ onApprove, onCancel, onError, planId: planIdProp }) => {
   const planId = planIdProp || import.meta.env.VITE_APP_PAYPAL_PLAN_ID;
-  const clientId = import.meta.env.VITE_APP_PAYPAL_CLIENT_ID;
 
-  if (!planId || !clientId) {
-    console.error('CRITICAL: PayPal Env vars missing');
-    return <div className="text-red-500">Error de configuración de pagos.</div>;
+  if (!planId) {
+    console.error('CRITICAL: PayPal planId missing');
+    return <div style={{ color: '#f87171', fontSize: '0.85rem' }}>Error de configuración.</div>;
   }
-
-  const initialOptions = {
-    'client-id': clientId,
-    'enable-funding': 'venmo',
-    intent: 'subscription',
-    vault: true
-  };
 
   const logError = async (context, errorDetails) => {
     console.error(`❌ PayPal Error [${context}]:`, errorDetails);
-
-    // 1. Google Analytics
     trackEvent('payment', 'error', `${context}: ${errorDetails.message || errorDetails}`);
-
-    // 2. Firestore Logging (Monitoring Dashboard)
     try {
       const user = auth.currentUser;
       await addDoc(collection(db, 'transaction_logs'), {
         type: 'ERROR',
-        context: context,
-        planId: planId,
+        context,
+        planId,
         uid: user ? user.uid : 'anonymous',
         email: user ? user.email : 'unknown',
-        error: typeof errorDetails === 'object' ? JSON.stringify(errorDetails, Object.getOwnPropertyNames(errorDetails)) : errorDetails,
+        error: typeof errorDetails === 'object'
+          ? JSON.stringify(errorDetails, Object.getOwnPropertyNames(errorDetails))
+          : errorDetails,
         timestamp: new Date()
       });
     } catch (logErr) {
@@ -45,37 +33,30 @@ const PayPalSubscription = ({ onApprove, onCancel, onError, planId: planIdProp }
     }
   };
 
-  const createSubscription = (data, actions) => {
-    return actions.subscription.create({
-      'plan_id': planId
-    });
-  };
+  const createSubscription = (data, actions) =>
+    actions.subscription.create({ plan_id: planId });
 
-  const onSubscriptionApprove = async (data, actions) => {
+  const onSubscriptionApprove = async (data) => {
     try {
       const user = auth.currentUser;
-      if (user) {
-        // Log transaction start
-        trackEvent('payment', 'subscription_approved_start', data.subscriptionID);
+      if (!user) throw new Error('User not authenticated during payment approval');
 
-        await updateDoc(doc(db, "users", user.uid), {
-          subscription: 'premium',
-          subscriptionID: data.subscriptionID,
-          subscriptionStartDate: new Date(),
-        });
+      trackEvent('payment', 'subscription_approved_start', data.subscriptionID);
 
-        // Log Success
-        await addDoc(collection(db, 'transaction_logs'), {
-          type: 'SUCCESS',
-          uid: user.uid,
-          subscriptionId: data.subscriptionID,
-          timestamp: new Date()
-        });
+      await updateDoc(doc(db, 'users', user.uid), {
+        subscription: 'premium',
+        subscriptionID: data.subscriptionID,
+        subscriptionStartDate: new Date(),
+      });
 
-        if (onApprove) onApprove(data.subscriptionID);
-      } else {
-        throw new Error('User not authenticated during payment approval');
-      }
+      await addDoc(collection(db, 'transaction_logs'), {
+        type: 'SUCCESS',
+        uid: user.uid,
+        subscriptionId: data.subscriptionID,
+        timestamp: new Date()
+      });
+
+      if (onApprove) onApprove(data.subscriptionID);
     } catch (error) {
       logError('Approval_Update', error);
       if (onError) onError(error);
@@ -95,22 +76,14 @@ const PayPalSubscription = ({ onApprove, onCancel, onError, planId: planIdProp }
   };
 
   return (
-    <div className="paypal-container">
-      <PayPalScriptProvider options={initialOptions}>
-        <PayPalButtons
-          style={{
-            layout: 'vertical',
-            shape: 'rect',
-            label: 'subscribe',
-            color: 'blue',
-            height: 48
-          }}
-          createSubscription={createSubscription}
-          onApprove={onSubscriptionApprove}
-          onCancel={handleCancel}
-          onError={handleError}
-        />
-      </PayPalScriptProvider>
+    <div>
+      <PayPalButtons
+        style={{ layout: 'vertical', shape: 'rect', label: 'subscribe', color: 'blue', height: 45 }}
+        createSubscription={createSubscription}
+        onApprove={onSubscriptionApprove}
+        onCancel={handleCancel}
+        onError={handleError}
+      />
     </div>
   );
 };
