@@ -124,7 +124,7 @@ export default function Landing() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#6B7FFF" />
 
-        <meta property="og:image" content="https://res.cloudinary.com/ds7shn66t/image/upload/v1778587861/Create_a_professional_Open_Graph_202605121410_u0afby.jpg" />
+        <meta property="og:image" content="https://res.cloudinary.com/ds7shn66t/image/upload/v1778588655/Create_a_professional_Open_Graph_202605121410_1_sckige.jpg" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:locale" content="es_ES" />
@@ -138,7 +138,7 @@ export default function Landing() {
             "name": "SmartStudia",
             "url": "https://www.smartstudia.com/",
             "description": "Plataforma educativa con IA para estudiar inteligentemente",
-            "logo": "https://res.cloudinary.com/ds7shn66t/image/upload/v1778587861/Create_a_professional_Open_Graph_202605121410_u0afby.jpg",
+            "logo": "https://res.cloudinary.com/ds7shn66t/image/upload/v1778588655/Create_a_professional_Open_Graph_202605121410_1_sckige.jpg",
             "sameAs": []
           })}
         </script>

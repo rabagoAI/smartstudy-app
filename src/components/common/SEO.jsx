@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-const OG_IMAGE = 'https://res.cloudinary.com/ds7shn66t/image/upload/v1778587861/Create_a_professional_Open_Graph_202605121410_u0afby.jpg';
+const OG_IMAGE = 'https://res.cloudinary.com/ds7shn66t/image/upload/v1778588655/Create_a_professional_Open_Graph_202605121410_1_sckige.jpg';
 const BASE_URL = 'https://www.smartstudia.com';
 
 const SEO = ({ title, description, image = OG_IMAGE, url }) => {
