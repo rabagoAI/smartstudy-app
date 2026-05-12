@@ -3,3 +3,7 @@ User-agent: *
 Disallow: /admin/
 Disallow: /perfil
 Disallow: /historial-ia
+Disallow: /home
+Disallow: /dashboard
+
+Sitemap: https://www.smartstudia.com/sitemap.xml

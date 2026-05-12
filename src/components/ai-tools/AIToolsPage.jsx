@@ -390,7 +390,7 @@ Adapta el número de subtemas y bullets al contenido. Escribe en español claro 
                 title="Herramientas de IA - SmartStudy"
                 description="Resume textos, genera cuestionarios o explica conceptos con nuestra IA. Ideal para estudiantes de ESO."
                 image="https://res.cloudinary.com/ds7shn66t/image/upload/v1759232770/Banner_Producto_del_Dia_Promocion_Cafe_Azul_vi0xs4.jpg"
-                url="https://smartstudy.vercel.app/herramientas-ia"
+                url="https://www.smartstudia.com/herramientas-ia"
             />
 
             <section className="ai-tools relative overflow-hidden">

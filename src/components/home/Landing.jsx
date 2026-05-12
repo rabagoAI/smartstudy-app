@@ -124,7 +124,13 @@ export default function Landing() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#6B7FFF" />
 
-        {/* Schema.org para Google Rich Results */}
+        <meta property="og:image" content="https://res.cloudinary.com/ds7shn66t/image/upload/v1759232770/Banner_Producto_del_Dia_Promocion_Cafe_Azul_vi0xs4.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:locale" content="es_ES" />
+        <meta property="og:site_name" content="SmartStudia" />
+
+        {/* Schema.org: Organización */}
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -132,7 +138,43 @@ export default function Landing() {
             "name": "SmartStudia",
             "url": "https://www.smartstudia.com/",
             "description": "Plataforma educativa con IA para estudiar inteligentemente",
-            "logo": "https://res.cloudinary.com/ds7shn66t/image/upload/v1759232770/Banner_Producto_del_Dia_Promocion_Cafe_Azul_vi0xs4.jpg"
+            "logo": "https://res.cloudinary.com/ds7shn66t/image/upload/v1759232770/Banner_Producto_del_Dia_Promocion_Cafe_Azul_vi0xs4.jpg",
+            "sameAs": []
+          })}
+        </script>
+
+        {/* Schema.org: SoftwareApplication */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "SmartStudia",
+            "applicationCategory": "EducationalApplication",
+            "operatingSystem": "Web",
+            "url": "https://www.smartstudia.com/",
+            "description": "Plataforma educativa con IA. Resúmenes, exámenes y herramientas de estudio inteligentes.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "EUR",
+              "description": "Herramientas IA gratis. Contenido premium desde 4,99€/mes."
+            }
+          })}
+        </script>
+
+        {/* Schema.org: FAQPage */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              { "@type": "Question", "name": "¿Cuánto cuesta SmartStudia?", "acceptedAnswer": { "@type": "Answer", "text": "Las herramientas IA (tarjetas, exámenes, chat) son 100% gratis. Los contenidos premium (resúmenes, vídeos, exámenes resueltos) cuestan 4,99€/mes." } },
+              { "@type": "Question", "name": "¿Necesito tarjeta de crédito para empezar?", "acceptedAnswer": { "@type": "Answer", "text": "No. Puedes usar todas las herramientas IA gratis sin tarjeta. Solo necesitarás una tarjeta si quieres Premium." } },
+              { "@type": "Question", "name": "¿Qué asignaturas hay?", "acceptedAnswer": { "@type": "Answer", "text": "Actualmente: Matemáticas, Lengua, Biología, Historia, Inglés. Añadimos más asignaturas cada mes." } },
+              { "@type": "Question", "name": "¿Cómo funcionan las herramientas IA?", "acceptedAnswer": { "@type": "Answer", "text": "Subes un tema o apuntes. La IA genera automáticamente tarjetas de estudio, exámenes de práctica y responde tus preguntas." } },
+              { "@type": "Question", "name": "¿Puedo cancelar Premium cuando quiera?", "acceptedAnswer": { "@type": "Answer", "text": "Sí. Puedes cancelar en cualquier momento desde tu perfil. No hay compromiso a largo plazo." } },
+              { "@type": "Question", "name": "¿Es segura mi información?", "acceptedAnswer": { "@type": "Answer", "text": "Sí. Usamos encriptación de nivel empresarial y cumplimos RGPD. Tus datos nunca se venden a terceros." } }
+            ]
           })}
         </script>
       </Helmet>
