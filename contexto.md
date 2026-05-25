@@ -18,6 +18,8 @@
 | Monitoring | Sentry React v10 |
 | Analytics | react-ga4 (Google Analytics 4) |
 | PDF | pdfjs-dist (cargado desde CDN dinámicamente) |
+| Generación contenido | Python 3 + pymupdf + Anthropic SDK (`anthropic`) |
+| Firebase CLI | `firebase-tools` — deploy de rules e indexes |
 | Diagramas | Mermaid v11 |
 | Estilos | Tailwind CSS v3 + CSS custom |
 | i18n | i18next + i18next-browser-languagedetector |
@@ -243,6 +245,61 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 
 ---
 
+### 📚 CONTENIDO — Pipeline de generación educativa
+
+#### CONT-01 — Script Python de generación de temas
+- **Estado:** `[x]` completado (2026-05-25)
+- **Archivos:** `generar_tema.py`, `requirements.txt`, `README_generador.md`, `scripts/.gitkeep`
+- **Descripción:** Script CLI que extrae texto de un PDF con pymupdf y llama a Claude Haiku 4.5 para generar JSON estructurado (resumen, cuestionario de 10 preguntas, 10-15 tarjetas, guión de vídeo). Guarda el documento en Firestore con `publicado: false`.
+- **Estructura Firestore:** `contenido/{curso}/asignaturas/{asignatura}/temas/{numero_tema}`
+- **Uso:**
+  ```bash
+  python generar_tema.py \
+    --pdf "pdfs/1ESO/matematicas/tema3.pdf" \
+    --pagina_inicio 12 --pagina_fin 28 \
+    --curso "1ESO" --asignatura "Matematicas" \
+    --tema "Números enteros" --numero_tema 3
+  ```
+- **Flags opcionales:** `--no-firestore` (solo genera JSON), `--output archivo.json`
+- **Modelo:** `claude-haiku-4-5` con prompt caching en el system prompt
+- **Muestra:** tokens usados (input/output/cache) y coste estimado en €
+- **Variables necesarias en `.env` local:**
+  - `ANTHROPIC_API_KEY` — clave de Anthropic Console
+  - `FIREBASE_CREDENTIALS_PATH=scripts/serviceAccountKey.json` — JSON de Firebase Admin SDK (en `.gitignore`)
+  - `FIREBASE_PROJECT_ID` — igual que `VITE_APP_FIREBASE_PROJECT_ID`
+
+#### CONT-02 — Frontend de contenido educativo (React)
+- **Estado:** `[x]` completado (2026-05-25)
+- **Archivos nuevos:**
+  - `src/hooks/useTema.ts` — lee `contenido/{curso}/asignaturas/{asig}/temas/{n}`; controla acceso free/premium
+  - `src/components/contenido/AsignaturasHome.tsx` — selector de curso (tabs) + tarjetas de asignaturas con badge "Solo Tema 1" para usuarios free
+  - `src/components/contenido/ListaTemas.tsx` — lista temas publicados; Tema 1 libre, resto con Paywall inline
+  - `src/components/contenido/VistaTema.tsx` — 4 tabs: Resumen · Cuestionario (con puntuación) · Tarjetas (flip 3D CSS) · Vídeo/Guión
+  - `src/components/admin/PublicarTemas.tsx` — panel `/admin/publicar`; collection group query sobre `temas`; botón "Publicar" por tema
+- **Archivos modificados:**
+  - `src/App.jsx` — rutas: `/contenido`, `/contenido/:curso/:asignatura`, `/contenido/:curso/:asignatura/:numeroTema`, `/admin/publicar`
+  - `src/components/common/Header.jsx` — enlace "📚 Contenido" en desktop y móvil
+- **Reglas de acceso:**
+  - Plan free: solo Tema 1 de cada asignatura
+  - Plan básico: todos los temas
+  - El bloqueo se aplica tanto en `useTema.ts` (no fetch) como en `ListaTemas` (Paywall)
+
+#### CONT-03 — Firestore rules e indexes para contenido
+- **Estado:** `[x]` completado (2026-05-25)
+- **Archivos:** `firestore.rules`, `firestore.indexes.json`, `firebase.json`, `.firebaserc`
+- **Reglas destacadas:**
+  - Solo el Admin SDK puede escribir temas (no el cliente)
+  - Usuarios solo leen temas con `publicado: true` (o admins ven todos)
+  - El campo `premium` y otros de Stripe solo los puede actualizar el webhook (bloqueados en regla de `users/{uid}`)
+- **Índices añadidos:**
+  - `temas` (COLLECTION): `publicado ASC + numero_tema ASC` — para `ListaTemas`
+  - `temas` (COLLECTION_GROUP): `publicado ASC + numero_tema ASC` — para `PublicarTemas`
+- **Deploy completado:** `firebase deploy --only firestore` ejecutado por el usuario (2026-05-25)
+- **Acción pendiente:**
+  - [ ] Descargar `serviceAccountKey.json` desde Firebase Console → Service Accounts y guardarlo en `scripts/` para poder ejecutar `generar_tema.py`
+
+---
+
 ### 🟢 BAJAS — Deuda técnica y buenas prácticas
 
 #### BUG-01 — `ProfilePage` crashea con `.toDate()` en usuarios de `RegisterPage`
@@ -318,6 +375,9 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 |----|-----------|--------|--------|
 | PAY-02 | 💳 PAGO | Activar cuenta Stripe en modo Live | `[ ]` pendiente |
 | PAY-03 | 💳 PAGO | Añadir Plan Anual | `[ ]` pendiente |
+| CONT-01 | 📚 CONTENIDO | Script Python `generar_tema.py` | `[x]` |
+| CONT-02 | 📚 CONTENIDO | Frontend React sección Contenido | `[x]` |
+| CONT-03 | 📚 CONTENIDO | Firestore rules + indexes + Firebase CLI | `[x]` |
 | SEC-01 | 🔴 CRÍTICA | Credenciales reales en `.env` | `[~]` en progreso |
 | SEC-02 | 🔴 CRÍTICA | Ruta `/admin/upload` sin verificación de rol | `[x]` |
 | SEC-03 | 🟠 ALTA | Claves de API en bundle del cliente | `[x]` |
@@ -373,3 +433,6 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | 2026-04-29 | PERF-03 | Restaurado `where('sessionId', ...)` en query Firestore; eliminado filtro en cliente; creado `firestore.indexes.json` con índice compuesto | Claude Code |
 | 2026-05-25 | PAY-01 | Migración completa de PayPal a Stripe: 3 API routes, 2 hooks, 4 componentes React, webhook con verificación de firma. Eliminados PayPalSubscription, SubscriptionModal y @paypal/react-paypal-js | Claude Code |
 | 2026-05-25 | PAY-01 | Variables Stripe añadidas en Vercel; webhook registrado en Stripe Dashboard; prueba de pago completada con éxito en modo test | paco rabago |
+| 2026-05-25 | CONT-01 | Script `generar_tema.py` con pymupdf + Claude Haiku 4.5 + prompt caching; guarda en Firestore con `publicado: false`; muestra tokens y coste en € | Claude Code |
+| 2026-05-25 | CONT-02 | Frontend React: `AsignaturasHome`, `ListaTemas`, `VistaTema` (4 tabs + flip 3D), `PublicarTemas`; rutas y enlace en Header | Claude Code |
+| 2026-05-25 | CONT-03 | `firestore.rules` completas, 2 índices para `temas`, `firebase.json` + `.firebaserc`; deploy ejecutado con Firebase CLI | paco rabago |
