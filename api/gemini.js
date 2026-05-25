@@ -69,9 +69,20 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Invalid or expired authentication token' });
   }
 
+  // Leer premium desde Firestore para respetar el plan del usuario
+  let isPremium = false;
+  if (getApps().length) {
+    try {
+      const userSnap = await getFirestore().collection('users').doc(uid).get();
+      isPremium = userSnap.exists && userSnap.data()?.premium === true;
+    } catch {
+      // Si falla la lectura, tratamos al usuario como free
+    }
+  }
+
   // Server-side rate limiting via Firestore transaction
   try {
-    const result = await checkAndIncrementRateLimit(uid, false);
+    const result = await checkAndIncrementRateLimit(uid, isPremium);
     if (!result.allowed) {
       return res.status(429).json({ error: result.error, retryAfter: result.retryAfter });
     }

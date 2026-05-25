@@ -1,10 +1,10 @@
 // src/components/subjects/SubjectDetailsPage.js
-import React, { useState } from "react";
+import React from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { db } from "../../firebase";
 import { collection, query, getDocs, orderBy, limit, startAfter } from "firebase/firestore";
-import SubscriptionModal from "../common/SubscriptionModal";
+import Paywall from "../Paywall";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import "../../App.css";
 
@@ -37,8 +37,7 @@ const getSafeVideoUrl = (url) => {
 
 const SubjectDetailsPage = () => {
   const { subjectName } = useParams();
-  const { userData, isSubscribed } = useAuth();
-  const [modalOpen, setModalOpen] = useState(false);
+  const { isSubscribed } = useAuth();
 
   const fetchContent = async ({ pageParam = null }) => {
     const formattedSubjectName = formatSubjectName(subjectName);
@@ -132,12 +131,7 @@ const SubjectDetailsPage = () => {
                         Descargar PDF
                       </a>
                     ) : (
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => setModalOpen(true)}
-                      >
-                        Desbloquear con Premium
-                      </button>
+                      <Paywall reason="premium_content" />
                     )
                   ) : (
                     <a
@@ -182,18 +176,7 @@ const SubjectDetailsPage = () => {
                         allowFullScreen
                       ></iframe>
                     ) : (
-                      <div className="premium-gate">
-                        <h4>Contenido Premium 🌟</h4>
-                        <p>
-                          Este video solo está disponible para usuarios premium.
-                        </p>
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => setModalOpen(true)}
-                        >
-                          Ver planes de suscripción
-                        </button>
-                      </div>
+                      <Paywall reason="premium_content" />
                     )
                   ) : (
                     <div className="video-container">
@@ -240,12 +223,7 @@ const SubjectDetailsPage = () => {
                         Ver examen resuelto
                       </a>
                     ) : (
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => setModalOpen(true)}
-                      >
-                        Desbloquear con Premium
-                      </button>
+                      <Paywall reason="premium_content" />
                     )
                   ) : (
                     <a
@@ -284,10 +262,6 @@ const SubjectDetailsPage = () => {
 
       </div>
 
-      <SubscriptionModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-      />
     </div>
   );
 };

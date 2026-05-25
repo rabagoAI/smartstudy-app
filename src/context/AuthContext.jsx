@@ -78,8 +78,11 @@ export const AuthProvider = ({ children }) => {
         email: email,
         name: name,
         createdAt: new Date().toISOString(),
-        admin: false, // Por defecto no admin
-        subscription: 'free', // Plan por defecto
+        admin: false,
+        plan: 'free',
+        premium: false,
+        aiUsageThisMonth: 0,
+        aiUsageMonth: 0,
       });
 
       return user;
@@ -153,9 +156,10 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     updateProfile,
-    refreshToken, // Exportado para uso manual si es necesario
+    refreshToken,
     isAdmin: userData?.admin === true,
-    isSubscribed: userData?.subscription === 'premium',
+    // premium viene de Firestore actualizado por webhook de Stripe
+    isSubscribed: userData?.premium === true,
   };
 
   return (
