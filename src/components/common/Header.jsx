@@ -117,6 +117,7 @@ function Header() {
                     <ul className="nav-links">
                         <li><Link to="/">{t('nav.home')}</Link></li>
                         <li><Link to="/asignaturas">{t('nav.subjects')}</Link></li>
+                        <li><Link to="/contenido">📚 Contenido</Link></li>
                         <li><Link to="/herramientas-ia">{t('nav.aiTools')}</Link></li>
                         <li><Link to="/mapas-mentales">🧠 Mapas Mentales</Link></li>
                         <li><Link to="/chat-educativo">Chat Educativo</Link></li>
@@ -160,6 +161,7 @@ function Header() {
                     <ul className="nav-links">
                         <li><Link to="/" onClick={() => setIsMenuOpen(false)}>{t('nav.home')}</Link></li>
                         <li><Link to="/asignaturas" onClick={() => setIsMenuOpen(false)}>{t('nav.subjects')}</Link></li>
+                        <li><Link to="/contenido" onClick={() => setIsMenuOpen(false)}>📚 Contenido</Link></li>
                         <li><Link to="/herramientas-ia" onClick={() => setIsMenuOpen(false)}>{t('nav.aiTools')}</Link></li>
                         <li><Link to="/mapas-mentales" onClick={() => setIsMenuOpen(false)}>🧠 Mapas Mentales</Link></li>
                         <li><Link to="/chat-educativo" onClick={() => setIsMenuOpen(false)}>Chat Educativo</Link></li>

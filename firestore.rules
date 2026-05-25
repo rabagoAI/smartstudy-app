@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isLoggedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
+    }
+
+    function isPremium() {
+      return isLoggedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.premium == true;
+    }
+
+    // ── Usuarios ───────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Cada usuario lee/escribe solo su propio documento
+      allow read:  if isLoggedIn() && isOwner(userId);
+      // Solo el Admin SDK (webhook de Stripe) escribe campos premium/plan/stripe*
+      // El cliente solo puede actualizar campos de perfil seguros:
+      allow update: if isLoggedIn() && isOwner(userId) &&
+                      !('premium'            in request.resource.data) &&
+                      !('plan'               in request.resource.data) &&
+                      !('stripeCustomerId'   in request.resource.data) &&
+                      !('subscriptionId'     in request.resource.data) &&
+                      !('subscriptionStatus' in request.resource.data) &&
+                      !('trialEnd'           in request.resource.data);
+      allow create: if isLoggedIn() && isOwner(userId);
+    }
+
+    // ── Rate limits (solo Admin SDK escribe) ───────────────────────────────────
+    match /rate_limits/{userId} {
+      allow read:  if isLoggedIn() && isOwner(userId);
+      allow write: if false;
+    }
+
+    // ── Historial IA ───────────────────────────────────────────────────────────
+    match /ai_history/{docId} {
+      allow read, write: if isLoggedIn() &&
+        request.auth.uid == resource.data.userId;
+      allow create: if isLoggedIn() &&
+        request.auth.uid == request.resource.data.userId;
+    }
+
+    // ── Sesiones de chat educativo ─────────────────────────────────────────────
+    match /educational_chat/{docId} {
+      allow read, write: if isLoggedIn() &&
+        request.auth.uid == resource.data.userId;
+      allow create: if isLoggedIn() &&
+        request.auth.uid == request.resource.data.userId;
+    }
+
+    // ── Contenido educativo ────────────────────────────────────────────────────
+    // Estructura: contenido/{curso}/asignaturas/{asignatura}/temas/{temaId}
+    //
+    // Reglas:
+    //   - Leer temas publicados: cualquier usuario autenticado
+    //   - Leer temas no publicados: solo admins
+    //   - Escribir temas: solo admins (o Admin SDK)
+    //   - El frontend gestiona el paywall premium (temas > 1)
+
+    match /contenido/{curso}/asignaturas/{asignatura}/temas/{temaId} {
+      allow read: if isLoggedIn() && (
+        resource.data.publicado == true || isAdmin()
+      );
+      allow write: if isAdmin();
+    }
+
+    // Acceso al documento padre (metadatos de asignatura si los hubiera)
+    match /contenido/{curso} {
+      allow read: if isLoggedIn();
+    }
+    match /contenido/{curso}/asignaturas/{asignatura} {
+      allow read: if isLoggedIn();
+    }
+
+    // ── Bloquear todo lo demás ─────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

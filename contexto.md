@@ -1,6 +1,6 @@
 # SmartStudIA — Contexto del Proyecto y Seguimiento de Mejoras
 
-> Última actualización: 2026-04-28
+> Última actualización: 2026-05-25
 
 ---
 
@@ -12,7 +12,7 @@
 | Routing | React Router v7 |
 | Auth / DB | Firebase 12 (Auth, Firestore, Storage) |
 | IA | Google Gemini API (`@google/generative-ai`) |
-| Pagos | PayPal (`@paypal/react-paypal-js`) |
+| Pagos | Stripe (`stripe`) — modo test activo |
 | Uploads | Cloudinary (vía Axios) |
 | Estado | TanStack React Query v5 |
 | Monitoring | Sentry React v10 |
@@ -196,6 +196,53 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 
 ---
 
+### 💳 PAGOS — Stripe (migrado desde PayPal, mayo 2025)
+
+#### PAY-01 — Migración de PayPal a Stripe
+- **Estado:** `[x]` completado (2026-05-25)
+- **Archivos nuevos:** `api/create-checkout-session.ts`, `api/create-portal-session.ts`, `api/webhook.ts`, `src/hooks/useSubscription.ts`, `src/hooks/useAiUsage.ts`, `src/components/SubscribeButton.tsx`, `src/components/ManageSubscriptionButton.tsx`, `src/components/PlanBadge.tsx`, `src/components/Paywall.tsx`
+- **Archivos eliminados:** `src/components/common/PayPalSubscription.jsx`, `src/components/common/SubscriptionModal.jsx`, `src/components/common/SubscriptionModal.css`
+- **Cambios clave:**
+  - El estado premium se escribe **solo desde el webhook** de Stripe — nunca desde el cliente
+  - Campo `premium: boolean` en Firestore (antes `subscription: 'premium'`)
+  - Campo `plan: 'free' | 'basic'` en Firestore
+  - Trial de 14 días sin tarjeta al suscribirse al Plan Básico
+  - Límites de IA leídos desde Firestore por el servidor (`api/gemini.js`)
+  - Customer Portal de Stripe para gestión de suscripción (cancelar, cambiar tarjeta, facturas)
+
+#### PAY-02 — Activar cuenta Stripe en modo Live
+- **Estado:** `[ ]` pendiente
+- **Descripción:** Actualmente toda la integración funciona en **modo test** (`sk_test_...`). Los cobros son simulados.
+- **Acciones necesarias (manual):**
+  1. Completar el onboarding en [Stripe Dashboard](https://dashboard.stripe.com) → activar cuenta (datos bancarios, negocio, etc.)
+  2. En Vercel → smartstudy-app → Settings → Environment Variables, reemplazar las 4 variables por sus versiones **live**:
+     - `STRIPE_SECRET_KEY` → `sk_live_...`
+     - `VITE_STRIPE_PUBLIC_KEY` → `pk_live_...`
+     - `STRIPE_BASIC_PRICE_ID` → el `price_...` del producto en modo live
+     - `STRIPE_WEBHOOK_SECRET` → registrar nuevo endpoint en Stripe Dashboard (live) → `whsec_...`
+  3. Endpoint del webhook live: `https://www.smartstudia.com/api/webhook`
+  4. Eventos a suscribir: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
+  5. Hacer redeploy en Vercel para que coja las nuevas variables
+
+#### PAY-03 — Añadir Plan Anual
+- **Estado:** `[ ]` pendiente
+- **Descripción:** Solo existe Plan Básico mensual (4,99€/mes). Falta crear el plan anual con descuento.
+- **Acciones necesarias:**
+  1. Crear nuevo precio en Stripe Dashboard → producto "SmartStudIA Básico" → Add pricing → Recurring, anual, precio a decidir
+  2. Añadir variable en Vercel: `STRIPE_ANNUAL_PRICE_ID=price_...`
+  3. En `api/create-checkout-session.ts`, añadir el case:
+     ```ts
+     const priceId =
+       planId === 'basic'  ? process.env.STRIPE_BASIC_PRICE_ID :
+       planId === 'annual' ? process.env.STRIPE_ANNUAL_PRICE_ID :
+       null;
+     ```
+  4. Decidir si el plan anual tiene trial de 14 días o no
+  5. Añadir `<SubscribeButton planId="annual" label="Plan Anual" />` en la página de precios
+  6. Actualizar `<Paywall>` para mostrar ambas opciones
+
+---
+
 ### 🟢 BAJAS — Deuda técnica y buenas prácticas
 
 #### BUG-01 — `ProfilePage` crashea con `.toDate()` en usuarios de `RegisterPage`
@@ -269,6 +316,8 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 
 | ID | Severidad | Título | Estado |
 |----|-----------|--------|--------|
+| PAY-02 | 💳 PAGO | Activar cuenta Stripe en modo Live | `[ ]` pendiente |
+| PAY-03 | 💳 PAGO | Añadir Plan Anual | `[ ]` pendiente |
 | SEC-01 | 🔴 CRÍTICA | Credenciales reales en `.env` | `[~]` en progreso |
 | SEC-02 | 🔴 CRÍTICA | Ruta `/admin/upload` sin verificación de rol | `[x]` |
 | SEC-03 | 🟠 ALTA | Claves de API en bundle del cliente | `[x]` |
@@ -322,3 +371,5 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | 2026-04-28 | PERF-01 | Verificado: `dist/` nunca estuvo trackeado; `.gitignore` ya tenía `/dist` — no requirió acción | Claude Code |
 | 2026-04-28 | PERF-02 | PDF.js migrado de CDN dinámico a `import * as pdfjsLib from 'pdfjs-dist'`; eliminado `useEffect` de inyección de script | Claude Code |
 | 2026-04-29 | PERF-03 | Restaurado `where('sessionId', ...)` en query Firestore; eliminado filtro en cliente; creado `firestore.indexes.json` con índice compuesto | Claude Code |
+| 2026-05-25 | PAY-01 | Migración completa de PayPal a Stripe: 3 API routes, 2 hooks, 4 componentes React, webhook con verificación de firma. Eliminados PayPalSubscription, SubscriptionModal y @paypal/react-paypal-js | Claude Code |
+| 2026-05-25 | PAY-01 | Variables Stripe añadidas en Vercel; webhook registrado en Stripe Dashboard; prueba de pago completada con éxito en modo test | paco rabago |

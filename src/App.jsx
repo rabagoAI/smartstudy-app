@@ -23,6 +23,10 @@ const ResetPassword = React.lazy(() => import('./components/auth/ResetPassword')
 const UploadForm = React.lazy(() => import('./components/admin/UploadForm'));
 const AIHistoryPage = React.lazy(() => import('./components/ai-tools/AIHistoryPage'));
 const EducationalChat = React.lazy(() => import('./components/ai-tools/EducationalChat'));
+const AsignaturasHome = React.lazy(() => import('./components/contenido/AsignaturasHome'));
+const ListaTemas = React.lazy(() => import('./components/contenido/ListaTemas'));
+const VistaTema = React.lazy(() => import('./components/contenido/VistaTema'));
+const PublicarTemas = React.lazy(() => import('./components/admin/PublicarTemas'));
 import './App.css';
 
 // Loading component para Suspense
@@ -79,10 +83,15 @@ function AppContent() {
                 <Route path="/mapas-mentales" element={<MindMapGenerator />} />
                 <Route path="/historial-ia" element={<AIHistoryPage />} />
                 <Route path="/chat-educativo" element={<EducationalChat />} />
+                {/* Sección de contenido educativo */}
+                <Route path="/contenido" element={<AsignaturasHome />} />
+                <Route path="/contenido/:curso/:asignatura" element={<ListaTemas />} />
+                <Route path="/contenido/:curso/:asignatura/:numeroTema" element={<VistaTema />} />
               </Route>
               {/* Rutas de admin - solo usuarios con admin: true en Firestore */}
               <Route element={<AdminRoute />}>
                 <Route path="/admin/upload" element={<UploadForm />} />
+                <Route path="/admin/publicar" element={<PublicarTemas />} />
               </Route>
             </Routes>
           </Suspense>

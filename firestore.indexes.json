@@ -7,6 +7,22 @@
         { "fieldPath": "sessionId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "temas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "publicado", "order": "ASCENDING" },
+        { "fieldPath": "numero_tema", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "temas",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "publicado", "order": "ASCENDING" },
+        { "fieldPath": "numero_tema", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

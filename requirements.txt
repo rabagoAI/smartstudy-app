@@ -1,0 +1,7 @@
+# SmartStudIA — Generador de contenido educativo
+# Instalar: pip install -r requirements.txt
+
+anthropic>=0.40.0
+pymupdf>=1.24.0
+firebase-admin>=6.5.0
+python-dotenv>=1.0.0
