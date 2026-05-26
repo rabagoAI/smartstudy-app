@@ -1,6 +1,6 @@
 # SmartStudIA — Contexto del Proyecto y Seguimiento de Mejoras
 
-> Última actualización: 2026-05-25
+> Última actualización: 2026-05-26
 
 ---
 
@@ -275,7 +275,7 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
   - `src/components/contenido/AsignaturasHome.tsx` — selector de curso (tabs) + tarjetas de asignaturas con badge "Solo Tema 1" para usuarios free
   - `src/components/contenido/ListaTemas.tsx` — lista temas publicados; Tema 1 libre, resto con Paywall inline
   - `src/components/contenido/VistaTema.tsx` — 4 tabs: Resumen · Cuestionario (con puntuación) · Tarjetas (flip 3D CSS) · Vídeo/Guión
-  - `src/components/admin/PublicarTemas.tsx` — panel `/admin/publicar`; collection group query sobre `temas`; botón "Publicar" por tema
+  - `src/components/admin/PublicarTemas.tsx` — panel `/admin/publicar`; queries directas por ruta (curso × asignatura) en paralelo con `Promise.all`; botón "Publicar" por tema
 - **Archivos modificados:**
   - `src/App.jsx` — rutas: `/contenido`, `/contenido/:curso/:asignatura`, `/contenido/:curso/:asignatura/:numeroTema`, `/admin/publicar`
   - `src/components/common/Header.jsx` — enlace "📚 Contenido" en desktop y móvil
@@ -295,8 +295,39 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
   - `temas` (COLLECTION): `publicado ASC + numero_tema ASC` — para `ListaTemas`
   - `temas` (COLLECTION_GROUP): `publicado ASC + numero_tema ASC` — para `PublicarTemas`
 - **Deploy completado:** `firebase deploy --only firestore` ejecutado por el usuario (2026-05-25)
+- **Fixes posteriores (2026-05-26):**
+  - `isAdmin()` en Firestore rules actualizado para comprobar primero `request.auth.token.admin == true` (custom claim, funciona con collection group) y como fallback el campo `admin` en Firestore
+  - `PublicarTemas.tsx` migrado de `collectionGroup` a queries directas por ruta — evita el bug de `get()` en reglas con collection group queries
+  - `src/context/AuthContext.jsx`: corregida condición de carrera — `setLoading(false)` movido al interior del primer `onSnapshot` para que `isAdmin` no se evalúe antes de que llegue `userData`
+  - `scripts/set_admin_claim.py` creado — establece custom claim `admin: true` en Firebase Auth via Admin SDK
 - **Acción pendiente:**
-  - [ ] Descargar `serviceAccountKey.json` desde Firebase Console → Service Accounts y guardarlo en `scripts/` para poder ejecutar `generar_tema.py`
+  - [x] `serviceAccountKey.json` descargado y colocado en `scripts/` — completado 2026-05-26
+  - [ ] Ejecutar `python scripts/set_admin_claim.py --email pacoalfair@hotmail.com` para establecer el custom claim admin (opcional, el panel ya funciona sin él)
+
+#### CONT-04 — Generación de contenido 1ºESO Matemáticas
+- **Estado:** `[x]` completado (2026-05-26)
+- **Descripción:** 13 temas generados con `generar_tema.py` desde el PDF de Matemáticas LOMLOE Marea Verde (316 páginas). Subidos a Firestore con `publicado: false`. Tema 1 publicado y verificado en la app. Vídeo del Tema 1 creado con NotebookLM + subido a YouTube (`https://youtu.be/Trgl-DettEw`) y enlazado vía campo `video_url` en Firestore.
+- **Batch script:** `generar_1ESO_matematicas.bat` — genera los 13 temas de golpe
+- **Helper:** `helper_toc.py` — detecta los capítulos y rangos de páginas de cualquier PDF
+- **Rangos de páginas 1ºESO Matemáticas:**
+
+| Tema | Título | Páginas |
+|------|--------|---------|
+| 1 | Resolución de problemas | 5–21 |
+| 2 | Números naturales. Divisibilidad | 22–52 |
+| 3 | Potencias y raíces | 53–68 |
+| 4 | Números enteros | 69–86 |
+| 5 | Fracciones | 87–113 |
+| 6 | Números decimales | 114–143 |
+| 7 | Sistemas de medida | 144–166 |
+| 8 | Figuras planas | 167–201 |
+| 9 | Longitudes y áreas | 202–222 |
+| 10 | Magnitudes proporcionales. Porcentajes | 223–246 |
+| 11 | Álgebra | 247–265 |
+| 12 | Tablas y gráficas. El plano | 266–296 |
+| 13 | Estadística y probabilidad | 297–316 |
+
+- **Pendiente:** publicar Temas 2–13 cuando se generen sus vídeos en NotebookLM
 
 ---
 
@@ -378,6 +409,7 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | CONT-01 | 📚 CONTENIDO | Script Python `generar_tema.py` | `[x]` |
 | CONT-02 | 📚 CONTENIDO | Frontend React sección Contenido | `[x]` |
 | CONT-03 | 📚 CONTENIDO | Firestore rules + indexes + Firebase CLI | `[x]` |
+| CONT-04 | 📚 CONTENIDO | Generación 1ºESO Matemáticas (13 temas) | `[x]` |
 | SEC-01 | 🔴 CRÍTICA | Credenciales reales en `.env` | `[~]` en progreso |
 | SEC-02 | 🔴 CRÍTICA | Ruta `/admin/upload` sin verificación de rol | `[x]` |
 | SEC-03 | 🟠 ALTA | Claves de API en bundle del cliente | `[x]` |
@@ -436,3 +468,32 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | 2026-05-25 | CONT-01 | Script `generar_tema.py` con pymupdf + Claude Haiku 4.5 + prompt caching; guarda en Firestore con `publicado: false`; muestra tokens y coste en € | Claude Code |
 | 2026-05-25 | CONT-02 | Frontend React: `AsignaturasHome`, `ListaTemas`, `VistaTema` (4 tabs + flip 3D), `PublicarTemas`; rutas y enlace en Header | Claude Code |
 | 2026-05-25 | CONT-03 | `firestore.rules` completas, 2 índices para `temas`, `firebase.json` + `.firebaserc`; deploy ejecutado con Firebase CLI | paco rabago |
+| 2026-05-26 | CONT-04 | `generar_1ESO_matematicas.bat` ejecutado: 13 temas de Matemáticas 1ºESO generados con Claude Haiku 4.5 y subidos a Firestore | paco rabago |
+| 2026-05-26 | CONT-04 | Tema 1 publicado desde `/admin/publicar`; vídeo Tema 1 creado con NotebookLM y enlazado en Firestore (`video_url`) | paco rabago |
+| 2026-05-26 | CONT-03 | `isAdmin()` en Firestore rules actualizado para usar `request.auth.token.admin` (custom claim) como check primario | Claude Code |
+| 2026-05-26 | CONT-02 | `PublicarTemas.tsx`: migrado de `collectionGroup` a queries directas por ruta para evitar bug de permisos | Claude Code |
+| 2026-05-26 | AUTH | `AuthContext.jsx`: corregida condición de carrera en `setLoading(false)` — ahora espera el primer snapshot de Firestore | Claude Code |
+| 2026-05-26 | INFRA | `scripts/serviceAccountKey.json` añadido; `scripts/set_admin_claim.py` creado; `.env` actualizado con variables Python | Claude Code |
+
+---
+
+## 🗓️ TAREAS PENDIENTES — Próxima sesión
+
+### 🥇 Prioridad alta — Contenido
+
+- [ ] **Generar contenido 1ºESO resto de asignaturas** — crear batch scripts para LenguaEspanola, BiologiaGeologia, GeografiaHistoria, Ingles, FisicaQuimica, Tecnologia, EdFisica (descargar PDFs de Drive y repetir el proceso del bat)
+- [ ] **Crear vídeos Temas 2–13 de Matemáticas 1ºESO** con NotebookLM (copiar `guion_video` de Firestore → NotebookLM → subir a YouTube → añadir `video_url` en Firestore → publicar tema)
+- [ ] **Publicar Temas 2–13** desde `/admin/publicar` a medida que tengan su vídeo listo
+
+### 🥈 Prioridad media — Más cursos
+
+- [ ] **Generar contenido 2ºESO** — descargar PDFs de Drive, correr `helper_toc.py`, crear bat y ejecutar
+- [ ] **Generar contenido 3ºESO, 4ºESO, 1ºBACH, 2ºBACH** — misma secuencia
+- [ ] **Script bulk `video_url`** — cuando haya varios vídeos listos, usar un script Python para actualizar los campos de golpe en Firestore en vez de hacerlo manualmente
+
+### 🥉 Prioridad baja — Técnico
+
+- [ ] **Custom claim admin** (opcional): `python scripts/set_admin_claim.py --email pacoalfair@hotmail.com` + logout/login para que el token incluya `admin: true` (el panel ya funciona sin esto)
+- [ ] **Activar Stripe Live** (PAY-02): completar onboarding en Stripe Dashboard y reemplazar variables en Vercel
+- [ ] **Plan Anual Stripe** (PAY-03): crear precio anual en Stripe y actualizar `create-checkout-session.ts`
+- [ ] **Deploy índice chat** (PERF-03): `firebase deploy --only firestore:indexes`

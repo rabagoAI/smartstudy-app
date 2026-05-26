@@ -12,8 +12,12 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isLoggedIn() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
+      // Primero comprueba el custom claim (funciona con collectionGroup queries).
+      // Si no tiene claim, cae al campo admin en Firestore (compatibilidad hacia atrás).
+      return isLoggedIn() && (
+        request.auth.token.admin == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true
+      );
     }
 
     function isPremium() {

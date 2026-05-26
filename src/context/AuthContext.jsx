@@ -35,7 +35,10 @@ export const AuthProvider = ({ children }) => {
           setCurrentUser(user);
           const docRef = doc(db, 'users', user.uid);
 
-          // Usa onSnapshot para updates en tiempo real de userData
+          // Usa onSnapshot para updates en tiempo real de userData.
+          // setLoading(false) se mueve aquí para que AdminRoute/PrivateRoute
+          // no evalúen isAdmin antes de que llegue userData desde Firestore.
+          let firstSnapshot = true;
           unsubscribeFirestore = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
               setUserData(docSnap.data());
@@ -43,15 +46,19 @@ export const AuthProvider = ({ children }) => {
               console.warn('No user data found in Firestore for:', user.uid);
               setUserData(null);
             }
+            if (firstSnapshot) {
+              firstSnapshot = false;
+              setLoading(false);
+            }
           });
         } else {
           setCurrentUser(null);
           setUserData(null);
+          setLoading(false);
         }
       } catch (err) {
         console.error('Error en onAuthStateChanged:', err);
         setError(err.message);
-      } finally {
         setLoading(false);
       }
     });

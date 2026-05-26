@@ -2,11 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
-  collectionGroup, query, where, getDocs,
+  collection, query, where, getDocs,
   doc, updateDoc, Timestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
+
+// Todas las combinaciones conocidas de curso/asignatura.
+// Consultas directas por ruta en vez de collectionGroup
+// para evitar el bug de permisos con get() en reglas.
+const CURSOS = ['1ESO', '2ESO', '3ESO', '4ESO', '1BAC', '2BAC'];
+const ASIGNATURAS = [
+  'Matematicas', 'LenguaEspanola', 'BiologiaGeologia',
+  'GeografiaHistoria', 'Ingles', 'FisicaQuimica', 'Tecnologia', 'EdFisica',
+];
 
 interface TemaItem {
   ref: any;
@@ -32,14 +41,28 @@ export default function PublicarTemas() {
   const [error, setError] = useState<string | null>(null);
 
   // ── Cargar temas no publicados ───────────────────────────────────────────────
-  const cargar = () => {
+  const cargar = async () => {
     setLoading(true);
     setError(null);
+    try {
+      // Lanzamos una query por cada curso×asignatura en paralelo.
+      // Evita collectionGroup para no depender del bug de get() en reglas.
+      const snapshots = await Promise.all(
+        CURSOS.flatMap((curso) =>
+          ASIGNATURAS.map((asig) =>
+            getDocs(
+              query(
+                collection(db, 'contenido', curso, 'asignaturas', asig, 'temas'),
+                where('publicado', '==', false)
+              )
+            )
+          )
+        )
+      );
 
-    const q = query(collectionGroup(db, 'temas'), where('publicado', '==', false));
-    getDocs(q)
-      .then((snap) => {
-        const items: TemaItem[] = snap.docs.map((d) => {
+      const items: TemaItem[] = snapshots
+        .flatMap((snap) => snap.docs)
+        .map((d) => {
           const data = d.data();
           return {
             ref: d.ref,
@@ -52,19 +75,20 @@ export default function PublicarTemas() {
             createdAt:   data.createdAt ?? null,
           };
         });
-        // Ordenar por curso → asignatura → numero_tema
-        items.sort((a, b) =>
-          a.curso.localeCompare(b.curso) ||
-          a.asignatura.localeCompare(b.asignatura) ||
-          a.numero_tema - b.numero_tema
-        );
-        setTemas(items);
-      })
-      .catch((err) => {
-        console.error('PublicarTemas error:', err);
-        setError('Error al cargar los temas. Asegúrate de que el índice de Firestore está activo.');
-      })
-      .finally(() => setLoading(false));
+
+      // Ordenar por curso → asignatura → numero_tema
+      items.sort((a, b) =>
+        a.curso.localeCompare(b.curso) ||
+        a.asignatura.localeCompare(b.asignatura) ||
+        a.numero_tema - b.numero_tema
+      );
+      setTemas(items);
+    } catch (err) {
+      console.error('PublicarTemas error:', err);
+      setError('Error al cargar los temas. Revisa la consola para más detalles.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { cargar(); }, []);
