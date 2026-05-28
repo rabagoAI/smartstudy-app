@@ -1,6 +1,6 @@
 # SmartStudIA — Contexto del Proyecto y Seguimiento de Mejoras
 
-> Última actualización: 2026-05-26
+> Última actualización: 2026-05-28
 
 ---
 
@@ -329,6 +329,43 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 
 - **Pendiente:** publicar Temas 2–13 cuando se generen sus vídeos en NotebookLM
 
+#### CONT-05 — Generación de contenido 1ºESO Lengua Española
+- **Estado:** `[x]` completado (2026-05-28)
+- **Script:** `generar_1ESO_lengua.bat`
+- **Unidades generadas:** 9 · Tema 1 publicado
+- **Rangos de páginas (PDF único, 151 págs.):**
+
+| Unidad | Título | Páginas |
+|--------|--------|---------|
+| 1 | Comunicación no verbal y textos normativos | 3–16 |
+| 2 | Textos descriptivos y narrativos | 17–28 |
+| 3 | Textos formales y dialogados | 29–40 |
+| 4 | El género lírico | 41–58 |
+| 5 | El género narrativo | 59–74 |
+| 6 | El género teatral | 75–90 |
+| 7 | Las palabras variables | 91–108 |
+| 8 | El verbo y las palabras invariables | 109–119 |
+| 9 | Ortografía y comunicación | 120–151 |
+
+#### CONT-06 — Generación de contenido 1ºESO Biología y Geología
+- **Estado:** `[x]` completado (2026-05-28)
+- **Script:** `generar_1ESO_biologia.py` (Python en vez de .bat — la ruta `1ºESO` tiene `º` que cmd.exe no maneja)
+- **Temas generados:** 10 · Tema 1 publicado
+- **PDFs individuales por tema** en `C:\Users\Paco\Desktop\pdf\1ºESO\Ciencias Naturales\`
+
+| Tema | Título | Archivo |
+|------|--------|---------|
+| 1 | El Universo | 1_Tema_01_Universo.pdf |
+| 2 | La materia | 1_Tema_02_La_materia.pdf |
+| 3 | La atmósfera | 1_Tema_03_La_atmosfera.pdf |
+| 4 | La hidrosfera | 1_Tema_04_La_hidrosfera.pdf |
+| 5 | La geosfera | 1_Tema_05_La_geosfera.pdf |
+| 6 | Los seres vivos. Diversidad | 1_Tema_06_Los_SSVV_diversidad.pdf |
+| 7 | Clasificación de los seres vivos | 1_Tema_07_Clasificacion_SSVV.pdf |
+| 8 | El reino de las plantas | 1_Tema_08_Reino_plantas.pdf |
+| 9 | Los invertebrados | 1_Tema_09_Invertebrados.pdf |
+| 10 | Los vertebrados | 1_Tema_10_Vertebrados.pdf |
+
 ---
 
 ### 🟢 BAJAS — Deuda técnica y buenas prácticas
@@ -410,6 +447,8 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | CONT-02 | 📚 CONTENIDO | Frontend React sección Contenido | `[x]` |
 | CONT-03 | 📚 CONTENIDO | Firestore rules + indexes + Firebase CLI | `[x]` |
 | CONT-04 | 📚 CONTENIDO | Generación 1ºESO Matemáticas (13 temas) | `[x]` |
+| CONT-05 | 📚 CONTENIDO | Generación 1ºESO Lengua Española (9 unidades) | `[x]` |
+| CONT-06 | 📚 CONTENIDO | Generación 1ºESO Biología y Geología (10 temas) | `[x]` |
 | SEC-01 | 🔴 CRÍTICA | Credenciales reales en `.env` | `[~]` en progreso |
 | SEC-02 | 🔴 CRÍTICA | Ruta `/admin/upload` sin verificación de rol | `[x]` |
 | SEC-03 | 🟠 ALTA | Claves de API en bundle del cliente | `[x]` |
@@ -474,6 +513,8 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | 2026-05-26 | CONT-02 | `PublicarTemas.tsx`: migrado de `collectionGroup` a queries directas por ruta para evitar bug de permisos | Claude Code |
 | 2026-05-26 | AUTH | `AuthContext.jsx`: corregida condición de carrera en `setLoading(false)` — ahora espera el primer snapshot de Firestore | Claude Code |
 | 2026-05-26 | INFRA | `scripts/serviceAccountKey.json` añadido; `scripts/set_admin_claim.py` creado; `.env` actualizado con variables Python | Claude Code |
+| 2026-05-28 | CONT-05 | 9 unidades de Lengua Española 1ºESO generadas y Unidad 1 publicada | paco rabago |
+| 2026-05-28 | CONT-06 | 10 temas de Biología y Geología 1ºESO generados y Tema 1 publicado (PDFs por capítulo, script Python por problema con `º` en ruta) | paco rabago |
 
 ---
 
@@ -481,7 +522,9 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 
 ### 🥇 Prioridad alta — Contenido
 
-- [ ] **Generar contenido 1ºESO resto de asignaturas** — crear batch scripts para LenguaEspanola, BiologiaGeologia, GeografiaHistoria, Ingles, FisicaQuimica, Tecnologia, EdFisica (descargar PDFs de Drive y repetir el proceso del bat)
+- [x] ~~Lengua Española 1ºESO~~ — completado
+- [x] ~~Biología y Geología 1ºESO~~ — completado
+- [ ] **Generar contenido 1ºESO resto de asignaturas** — GeografiaHistoria, Ingles, FisicaQuimica, Tecnologia, EdFisica (descargar PDFs, correr helper_toc.py o script Python si la ruta tiene `º`)
 - [ ] **Crear vídeos Temas 2–13 de Matemáticas 1ºESO** con NotebookLM (copiar `guion_video` de Firestore → NotebookLM → subir a YouTube → añadir `video_url` en Firestore → publicar tema)
 - [ ] **Publicar Temas 2–13** desde `/admin/publicar` a medida que tengan su vídeo listo
 
