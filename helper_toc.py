@@ -2,7 +2,7 @@ import fitz
 import re
 import sys
 
-pdf = r'C:\Users\Paco\Desktop\pdf\1ESO_Matematicas.pdf'
+pdf = r'C:\Users\Paco\Desktop\pdf\1ESO_LenguaEspanola.pdf'
 
 try:
     doc = fitz.open(pdf)
@@ -20,7 +20,7 @@ cap_actual = None
 for i, page in enumerate(doc):
     text = page.get_text()
     # Busca "Capítulo N" en el texto de la página
-    m = re.search(r'Cap[ií]tulo\s+(\d+)[:\s–-]*([^\n]*)', text, re.IGNORECASE)
+    m = re.search(r'(?:Cap[ií]tulo|Unidad|Bloque|Tema|Unit)\s+(\d+)[:\s–.\-]*([^\n]*)', text, re.IGNORECASE)
     if m:
         num = int(m.group(1))
         titulo = m.group(2).strip()[:70]
