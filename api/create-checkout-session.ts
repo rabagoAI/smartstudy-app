@@ -48,9 +48,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     customerId = userDoc.data()?.stripeCustomerId;
   }
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000';
+  // Dominio canónico de la app. VERCEL_URL es el dominio interno del deploy
+  // (cambia en cada despliegue y no es el dominio real), así que solo sirve de
+  // fallback para previews. En producción define APP_BASE_URL=https://tu-dominio.
+  const baseUrl =
+    process.env.APP_BASE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
@@ -63,7 +66,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     },
     metadata: { firebaseUid: uid },
     success_url: `${baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/precios`,
+    // /precios no existe como ruta SPA; enviamos al perfil (ruta real con
+    // gestión de suscripción) para no aterrizar en una página en blanco.
+    cancel_url: `${baseUrl}/perfil`,
   });
 
   return res.status(200).json({ url: session.url });

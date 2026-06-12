@@ -41,9 +41,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(404).json({ error: 'No Stripe customer found for this user' });
   }
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000';
+  // Dominio canónico de la app. VERCEL_URL es el dominio interno del deploy
+  // (cambia en cada despliegue y no es el dominio real), así que solo sirve de
+  // fallback para previews. En producción define APP_BASE_URL=https://tu-dominio.
+  const baseUrl =
+    process.env.APP_BASE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: customerId,

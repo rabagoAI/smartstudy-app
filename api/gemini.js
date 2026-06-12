@@ -1,6 +1,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin once per cold start (module is cached on warm invocations)
 if (!getApps().length) {
@@ -14,6 +14,89 @@ const LIMITS = {
   free: { perMinute: 5, perHour: 20 },
   premium: { perMinute: 20, perHour: 100 },
 };
+
+// Cuota mensual de usos de IA por plan. Debe coincidir con AI_USAGE_LIMITS
+// del frontend (src/hooks/useSubscription.ts).
+const MONTHLY_LIMITS = { free: 3, basic: 20 };
+
+// Tope de tamaño del prompt para evitar abuso de coste (caracteres totales).
+const MAX_CONTENTS_CHARS = 30000;
+
+// Tope de entradas en el array contents (p.ej. historial de chat).
+const MAX_CONTENTS_ENTRIES = 100;
+
+// Modelos permitidos. Evita que un cliente pida modelos arbitrarios/caros.
+const ALLOWED_MODELS = new Set(['gemini-2.5-flash', 'gemini-2.0-flash']);
+
+// Roles válidos en la API de Gemini.
+const VALID_ROLES = new Set(['user', 'model']);
+
+// Valida que contents tenga la forma esperada por la API de Gemini:
+// [{ role?: 'user'|'model', parts: [{ text: string }, ...] }, ...]
+// Devuelve un string con el error, o null si es válido.
+function validateContents(contents) {
+  if (!Array.isArray(contents) || contents.length === 0) {
+    return 'Invalid request: contents must be a non-empty array';
+  }
+  if (contents.length > MAX_CONTENTS_ENTRIES) {
+    return 'Invalid request: too many content entries';
+  }
+  for (const entry of contents) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      return 'Invalid request: malformed content entry';
+    }
+    if (entry.role !== undefined && !VALID_ROLES.has(entry.role)) {
+      return 'Invalid request: invalid role';
+    }
+    if (!Array.isArray(entry.parts) || entry.parts.length === 0) {
+      return 'Invalid request: each content entry needs a non-empty parts array';
+    }
+    for (const part of entry.parts) {
+      if (!part || typeof part.text !== 'string') {
+        return 'Invalid request: each part must have a text string';
+      }
+    }
+  }
+  return null;
+}
+
+// Conteo de cuota mensual en el servidor (fuente de verdad, no evadible).
+// Devuelve el plan/premium leídos para reusarlos sin otra lectura.
+async function checkAndIncrementMonthlyUsage(uid) {
+  if (!getApps().length) return { allowed: true, plan: 'free', isPremium: false };
+
+  const db = getFirestore();
+  const ref = db.collection('users').doc(uid);
+  const now = new Date();
+  const currentMonth = now.getFullYear() * 100 + (now.getMonth() + 1);
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() : {};
+    const plan = data.plan === 'basic' ? 'basic' : 'free';
+    const isPremium = data.premium === true;
+    const limit = MONTHLY_LIMITS[plan];
+
+    const storedMonth = data.aiUsageMonth ?? 0;
+    const usage = storedMonth === currentMonth ? (data.aiUsageThisMonth ?? 0) : 0;
+
+    if (usage >= limit) {
+      return { allowed: false, plan, isPremium, usage, limit };
+    }
+
+    tx.set(
+      ref,
+      {
+        aiUsageThisMonth: usage + 1,
+        aiUsageMonth: currentMonth,
+        aiUsageUpdatedAt: Date.now(),
+      },
+      { merge: true }
+    );
+
+    return { allowed: true, plan, isPremium, usage: usage + 1, limit };
+  });
+}
 
 async function checkAndIncrementRateLimit(uid, isPremium) {
   // If Admin SDK is not initialized (missing env var), skip enforcement
@@ -69,7 +152,25 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Invalid or expired authentication token' });
   }
 
-  // Leer premium desde Firestore para respetar el plan del usuario
+  // ── Validación de entrada (antes de consumir cuota o llamar a Gemini) ──────────
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  const { contents, model = 'gemini-2.5-flash' } = body;
+
+  const contentsError = validateContents(contents);
+  if (contentsError) {
+    return res.status(400).json({ error: contentsError });
+  }
+
+  if (!ALLOWED_MODELS.has(model)) {
+    return res.status(400).json({ error: 'Invalid model' });
+  }
+
+  // Tope de tamaño del prompt para evitar abuso de coste
+  if (JSON.stringify(contents).length > MAX_CONTENTS_CHARS) {
+    return res.status(413).json({ error: 'El contenido es demasiado largo. Reduce el texto e inténtalo de nuevo.' });
+  }
+
+  // Leer premium desde Firestore para respetar el plan del usuario (rate limit/min)
   let isPremium = false;
   if (getApps().length) {
     try {
@@ -80,21 +181,36 @@ export default async function handler(req, res) {
     }
   }
 
-  // Server-side rate limiting via Firestore transaction
+  // Server-side rate limiting por minuto/hora (anti-ráfagas)
   try {
     const result = await checkAndIncrementRateLimit(uid, isPremium);
     if (!result.allowed) {
-      return res.status(429).json({ error: result.error, retryAfter: result.retryAfter });
+      return res.status(429).json({ error: result.error, reason: 'rate_limit', retryAfter: result.retryAfter });
     }
   } catch (err) {
     // Allow the request through if rate limit infra fails — don't punish users for it
     console.error('Rate limit check failed:', err.message);
   }
 
-  const { contents, model = 'gemini-2.5-flash' } = req.body;
-
-  if (!contents || !Array.isArray(contents)) {
-    return res.status(400).json({ error: 'Invalid request: contents array required' });
+  // Cuota mensual por plan (fuente de verdad en el servidor, NO evadible).
+  // Se consume solo después de pasar el rate-limit, justo antes de llamar a Gemini.
+  let monthly = { allowed: true };
+  try {
+    monthly = await checkAndIncrementMonthlyUsage(uid);
+    if (!monthly.allowed) {
+      const upsell = monthly.plan === 'free'
+        ? ' Actualiza al Plan Básico para 20 usos al mes.'
+        : '';
+      return res.status(429).json({
+        error: `Has alcanzado tu límite mensual de IA (${monthly.usage}/${monthly.limit}).${upsell}`,
+        reason: 'monthly_limit',
+        plan: monthly.plan,
+        limit: monthly.limit,
+      });
+    }
+  } catch (err) {
+    // Si la infra de cuota falla, no bloqueamos al usuario (igual que el rate limit).
+    console.error('Monthly usage check failed:', err.message);
   }
 
   // Retry up to 3 times on 503 (Gemini overload) with exponential backoff
@@ -112,6 +228,18 @@ export default async function handler(req, res) {
       }
     );
     if (geminiRes.status !== 503) break;
+  }
+
+  // Si Gemini falla tras los reintentos, reembolsamos el crédito mensual consumido
+  // para no cobrar al usuario un uso que no obtuvo respuesta.
+  if (!geminiRes.ok && monthly.allowed && getApps().length) {
+    try {
+      await getFirestore().collection('users').doc(uid).update({
+        aiUsageThisMonth: FieldValue.increment(-1),
+      });
+    } catch (err) {
+      console.error('Failed to refund monthly usage credit:', err.message);
+    }
   }
 
   const data = await geminiRes.json();

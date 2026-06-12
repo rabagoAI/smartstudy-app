@@ -27,18 +27,45 @@ service cloud.firestore {
 
     // ── Usuarios ───────────────────────────────────────────────────────────────
     match /users/{userId} {
-      // Cada usuario lee/escribe solo su propio documento
+      // Campos privilegiados que SOLO el Admin SDK (webhooks/servidor) puede tocar.
+      // El cliente nunca puede crearlos con valores arbitrarios ni modificarlos.
+      // Incluye el contador de cuota de IA: lo escribe el servidor (api/gemini.js),
+      // así el usuario no puede resetear su propio límite mensual desde el cliente.
+      function privilegedFields() {
+        return [
+          'admin', 'premium', 'plan',
+          'stripeCustomerId', 'subscriptionId', 'subscriptionStatus', 'trialEnd',
+          'aiUsageThisMonth', 'aiUsageMonth', 'aiUsageUpdatedAt'
+        ];
+      }
+
+      // True si ninguno de los campos que llegan en el write es privilegiado.
+      function noPrivilegedFields() {
+        return !request.resource.data.diff(resource.data)
+                 .affectedKeys()
+                 .hasAny(privilegedFields());
+      }
+
+      // Cada usuario lee solo su propio documento
       allow read:  if isLoggedIn() && isOwner(userId);
-      // Solo el Admin SDK (webhook de Stripe) escribe campos premium/plan/stripe*
-      // El cliente solo puede actualizar campos de perfil seguros:
-      allow update: if isLoggedIn() && isOwner(userId) &&
-                      !('premium'            in request.resource.data) &&
-                      !('plan'               in request.resource.data) &&
+
+      // El cliente solo puede actualizar campos de perfil seguros.
+      // Cualquier intento de modificar admin/premium/plan/stripe*/ai* se rechaza.
+      allow update: if isLoggedIn() && isOwner(userId) && noPrivilegedFields();
+
+      // En el registro, el cliente solo puede crear el documento con admin/premium
+      // en sus valores por defecto seguros. El resto (stripe*, subscription*) no
+      // puede existir todavía.
+      allow create: if isLoggedIn() && isOwner(userId) &&
+                      request.resource.data.admin == false &&
+                      request.resource.data.premium == false &&
+                      request.resource.data.plan == 'free' &&
+                      request.resource.data.get('aiUsageThisMonth', 0) == 0 &&
+                      request.resource.data.get('aiUsageMonth', 0) == 0 &&
                       !('stripeCustomerId'   in request.resource.data) &&
                       !('subscriptionId'     in request.resource.data) &&
                       !('subscriptionStatus' in request.resource.data) &&
                       !('trialEnd'           in request.resource.data);
-      allow create: if isLoggedIn() && isOwner(userId);
     }
 
     // ── Rate limits (solo Admin SDK escribe) ───────────────────────────────────
@@ -73,8 +100,20 @@ service cloud.firestore {
     //   - El frontend gestiona el paywall premium (temas > 1)
 
     match /contenido/{curso}/asignaturas/{asignatura}/temas/{temaId} {
+      // Lectura:
+      //   - Admin: cualquier tema (publicado o no).
+      //   - Premium: cualquier tema publicado.
+      //   - Free: SOLO el tema gratuito (tema 1) o temas marcados gratis == true.
+      // El paywall ya no depende del frontend: se aplica aquí.
+      // Orden optimizado: las comprobaciones sin get() van primero para que el
+      // caso común (free leyendo el tema 1) no genere lecturas facturadas extra.
       allow read: if isLoggedIn() && (
-        resource.data.publicado == true || isAdmin()
+        (resource.data.publicado == true && (
+          temaId == '1' ||
+          resource.data.get('gratis', false) == true ||
+          isPremium()
+        )) ||
+        isAdmin()
       );
       allow write: if isAdmin();
     }
