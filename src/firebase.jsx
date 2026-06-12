@@ -1,6 +1,10 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // Variables de entorno para la configuración de Firebase
@@ -19,17 +23,17 @@ const app = initializeApp(firebaseConfig);
 
 // Obtiene los servicios de Firebase y los exporta
 const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
 
-// Habilitar persistencia offline
-import { enableIndexedDbPersistence } from "firebase/firestore";
-enableIndexedDbPersistence(db).catch((err) => {
-  if (err.code === 'failed-precondition') {
-    console.warn('Persistencia fallida: Múltiples pestañas abiertas.');
-  } else if (err.code === 'unimplemented') {
-    console.warn('Persistencia no soportada por el navegador.');
-  }
+// Firestore con caché local persistente (IndexedDB) para soporte offline.
+// initializeFirestore + persistentLocalCache sustituye a la API deprecada
+// enableIndexedDbPersistence. persistentMultipleTabManager sincroniza la caché
+// entre pestañas de forma nativa (antes esto solo se logueaba como warning).
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
 });
+
+const storage = getStorage(app);
 
 export { auth, db, storage };

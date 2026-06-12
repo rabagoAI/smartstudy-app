@@ -15,6 +15,18 @@ const LIMITS = {
   premium: { perMinute: 20, perHour: 100 },
 };
 
+// Emite una línea de alerta estructurada (un solo JSON) que Vercel captura en
+// los logs. El prefijo [ALERT] permite configurar una alerta de log/drain:
+// cada vez que un control de abuso falla y la petición pasa SIN límite (fail-open),
+// queda registrado con contexto para poder reaccionar.
+function logAlert(event, detail = {}) {
+  try {
+    console.error(`[ALERT] ${event} ${JSON.stringify({ event, ...detail, at: new Date().toISOString() })}`);
+  } catch {
+    console.error(`[ALERT] ${event}`);
+  }
+}
+
 // Cuota mensual de usos de IA por plan. Debe coincidir con AI_USAGE_LIMITS
 // del frontend (src/hooks/useSubscription.ts).
 const MONTHLY_LIMITS = { free: 3, basic: 20 };
@@ -188,8 +200,9 @@ export default async function handler(req, res) {
       return res.status(429).json({ error: result.error, reason: 'rate_limit', retryAfter: result.retryAfter });
     }
   } catch (err) {
-    // Allow the request through if rate limit infra fails — don't punish users for it
-    console.error('Rate limit check failed:', err.message);
+    // Fail-open: dejamos pasar para no penalizar al usuario por un fallo de infra,
+    // pero lo registramos como alerta porque deja la puerta abierta a ráfagas.
+    logAlert('rate_limit_fail_open', { uid, error: err.message });
   }
 
   // Cuota mensual por plan (fuente de verdad en el servidor, NO evadible).
@@ -209,8 +222,10 @@ export default async function handler(req, res) {
       });
     }
   } catch (err) {
-    // Si la infra de cuota falla, no bloqueamos al usuario (igual que el rate limit).
-    console.error('Monthly usage check failed:', err.message);
+    // Fail-open: si la infra de cuota falla no bloqueamos al usuario, pero esto
+    // reabre la exposición de coste (llamadas a Gemini sin tope mensual), así que
+    // lo registramos como alerta para poder reaccionar ante un fallo sostenido.
+    logAlert('monthly_quota_fail_open', { uid, error: err.message });
   }
 
   // Retry up to 3 times on 503 (Gemini overload) with exponential backoff

@@ -1,6 +1,6 @@
 # SmartStudIA — Contexto del Proyecto y Seguimiento de Mejoras
 
-> Última actualización: 2026-05-28
+> Última actualización: 2026-06-12
 
 ---
 
@@ -515,10 +515,42 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | 2026-05-26 | INFRA | `scripts/serviceAccountKey.json` añadido; `scripts/set_admin_claim.py` creado; `.env` actualizado con variables Python | Claude Code |
 | 2026-05-28 | CONT-05 | 9 unidades de Lengua Española 1ºESO generadas y Unidad 1 publicada | paco rabago |
 | 2026-05-28 | CONT-06 | 10 temas de Biología y Geología 1ºESO generados y Tema 1 publicado (PDFs por capítulo, script Python por problema con `º` en ruta) | paco rabago |
+| 2026-06-12 | SEC-12 | Escalada de privilegios cerrada en `firestore.rules`: `admin`/`premium`/`plan`/`stripe*`/`subscription*` no escribibles por el cliente (update vía `diff().affectedKeys()`; create fuerza valores por defecto). **Desplegado a Firebase.** | Claude Code |
+| 2026-06-12 | SEC-13 | Paywall de contenido movido a servidor: `temas/{id}` solo legible por free si es tema 1 o `gratis==true`; premium vía `isPremium()`; admin todo. **Desplegado a Firebase.** | Claude Code |
+| 2026-06-12 | SEC-14 | URLs de Stripe corregidas: `APP_BASE_URL` como dominio canónico (antes `VERCEL_URL` interno); `cancel_url` `/precios`→`/perfil`. Variable creada en Vercel + redeploy. | Claude Code / paco rabago |
+| 2026-06-12 | SEC-15 | Cuota mensual de IA aplicada en servidor (`api/gemini.js`, transacción Firestore, reembolso si Gemini falla); contador `aiUsage*` lockeado en rules; transacción cliente eliminada de `useAiUsage.ts`. **Reglas desplegadas; código en deploy Vercel.** | Claude Code |
+| 2026-06-12 | SEC-16 | Validación de entrada en `/api/gemini`: guarda `req.body`, allowlist de modelos, tope 30k chars, máx 100 entradas, validación de estructura `contents`. | Claude Code |
+| 2026-06-12 | SEC-17 | Cabeceras de seguridad en `vercel.json`: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy. ⚠️ CSP por verificar en preview. | Claude Code |
+| 2026-06-12 | SEC-18 | Fail-open de rate-limit y cuota ahora emiten alerta estructurada `[ALERT]` con `uid`/error/timestamp en `api/gemini.js`. | Claude Code |
+| 2026-06-12 | BUG-05 | `firebase.jsx`: persistencia offline migrada de `enableIndexedDbPersistence` (deprecada) a `initializeFirestore` + `persistentLocalCache` + `persistentMultipleTabManager` (multi-pestaña nativo). | Claude Code |
+| 2026-06-12 | PERF-04 | `useSubscription` deriva de `userData` de AuthContext en vez de abrir su propio `onSnapshot`: un solo listener sobre `users/{uid}`, fin de la doble fuente de verdad. | Claude Code |
 
 ---
 
 ## 🗓️ TAREAS PENDIENTES — Próxima sesión
+
+### 🔒 EMPEZAR AQUÍ — Continuación auditoría seguridad/calidad (2026-06-12)
+
+Sesión del 2026-06-12: se revisó el proyecto y se cerraron 9 mejoras (SEC-12…SEC-18, BUG-05, PERF-04). Quedaron pendientes los siguientes puntos de la lista original. **Retomar por aquí.**
+
+**Verificación post-deploy (hacer primero, ya está todo desplegado):**
+- [ ] **Probar CSP en producción** (SEC-17): abrir la app con la consola del navegador y navegar por login, herramientas IA, chat, mapas mentales (mermaid), contenido y perfil. Si aparece `Refused to ... Content-Security-Policy`, pasar el origen bloqueado para añadirlo a `vercel.json`. Alternativa: cambiar a `Content-Security-Policy-Report-Only` para fase de observación.
+- [ ] **Probar flujo de pago Stripe** (SEC-14): checkout → verificar que tras pagar/cancelar aterriza en `www.smartstudia.com`, no en `*.vercel.app`.
+- [ ] **Auditar usuarios con `admin:true`** (SEC-12): comprobar en Firestore si alguien se auto-asignó admin antes del fix (la app estuvo expuesta). Script Admin SDK o consola Firebase.
+
+**Mejoras pendientes de la lista (orden recomendado):**
+- [ ] **#10 — Tracking de page views sin implementar** (`src/App.jsx`): el `useEffect` solo hace `console.log`; `react-ga4` está instalado pero no se usa para page views, y solo corre una vez (deps `[]`) en lugar de en cada cambio de ruta. Cablear `trackPageView` de `src/analytics.js` al cambio de ruta.
+- [ ] **#11 — Reset de cuota mensual frágil**: depende de que el cliente compare el mes; si nadie abre la app no se resetea. Considerar reset en servidor (ya se incrementa en `api/gemini.js`, que recalcula el mes en cada llamada — verificar si basta o conviene un job).
+- [ ] **#12 — Mezcla JS/TS sin typecheck**: conviven `.jsx` y `.tsx` sin `tsconfig.json` ni chequeo de tipos en build/CI. Añadir tsconfig + typecheck.
+- [ ] **#13 — Sin tests ni CI**: hay `App.test.jsx`/`setupTests.jsx` pero no hay script `test` ni runner. Para algo que cobra, añadir tests del webhook Stripe y de las reglas Firestore (`@firebase/rules-unit-testing`).
+- [ ] **#14 — Scripts en la raíz**: mover `generar_*.py/.bat` y `helper_toc.py` a `scripts/` (ya existe) para limpiar la raíz.
+- [ ] **#15 — `LoadingSpinner` con estilos inline y "Cargando..." sin i18n** pese a tener i18next configurado.
+
+**Follow-ups menores de los fixes de hoy:**
+- [ ] **Decidir fail-open vs fail-closed** en la cuota mensual (SEC-18): hoy queda fail-open + alerta. Pasar a fail-closed solo si se ven dispararse las alertas `[ALERT]`.
+- [ ] **Truncar historial en `EducationalChat`**: chats largos pueden chocar con el tope de 30k chars / 100 entradas (SEC-16) y recibir un 400.
+- [ ] **Limpiar variables PayPal residuales** en Vercel: `VITE_APP_PAYPAL_CLIENT_ID` y `VITE_APP_PAYPAL_PLAN_ID` ya no se usan tras la migración a Stripe.
+- [ ] **(Opcional) Sentry en backend**: añadir `@sentry/node` a las funciones `/api` para convertir los `[ALERT]` en avisos reales por email/Slack.
 
 ### 🥇 Prioridad alta — Contenido
 
