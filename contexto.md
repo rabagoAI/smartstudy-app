@@ -530,6 +530,8 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 | 2026-06-15 | #12 | `tsconfig.json` (allowJs, checkJs off, strict, alias `@/*`) + devDeps TS + script `typecheck`; pasa sin errores | Claude Code |
 | 2026-06-15 | #14 | `generar_*.py/.bat` y `helper_toc.py` movidos a `scripts/` con wrappers anclados a su dir; README y `.gitignore` (Python) actualizados | Claude Code |
 | 2026-06-15 | #13 | Vitest configurado (jsdom) + scripts `test`/`test:watch` + workflow CI (`.github/workflows/ci.yml`); 9 tests (`chatHistory`, `cn`); eliminado `App.test.jsx` boilerplate | Claude Code |
+| 2026-06-15 | SEC-19 | **Reglas Firestore corregidas** (estaban rotas desde SEC-12/13): el catch-all `if false` bloqueaba `subjects/{id}` + `subjects/{id}/content` (rompía /asignaturas), `user_usage/{uid}` (RateLimitIndicator) y las subcolecciones `users/{uid}/educational_chat` y `/ai_history` (estaban declaradas como colecciones de nivel raíz, ruta equivocada → chat e historial IA rotos). Anidadas bajo `users/{uid}` (propiedad por ruta) + reglas subjects (read logueado / write admin) y user_usage (owner). **Desplegado a Firebase.** | Claude Code |
+| 2026-06-15 | SEC-20 | **CSP ampliado** (`vercel.json`): `frame-src` añade YouTube (vídeos de `contenido/temas`) y `res.cloudinary.com`; nueva directiva `media-src 'self' blob: res.cloudinary.com`. Los vídeos de Asignaturas se sirven desde Cloudinary vía iframe y estaban bloqueados. Parser de URL YouTube robusto en `VistaTema.tsx`. | Claude Code |
 
 ---
 
