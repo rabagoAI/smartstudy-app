@@ -537,12 +537,13 @@ Esto significa que las claves estuvieron expuestas en el historial de git. Si el
 
 ## 🗓️ TAREAS PENDIENTES — Próxima sesión
 
-### 🔒 EMPEZAR AQUÍ — Continuación auditoría seguridad/calidad (2026-06-12)
+### 🔒 EMPEZAR AQUÍ — Continuación auditoría seguridad/calidad (actualizado 2026-06-15)
 
-Sesión del 2026-06-12: se revisó el proyecto y se cerraron 9 mejoras (SEC-12…SEC-18, BUG-05, PERF-04). Quedaron pendientes los siguientes puntos de la lista original. **Retomar por aquí.**
+Sesión del 2026-06-12: se cerraron 9 mejoras (SEC-12…SEC-18, BUG-05, PERF-04).
+Sesión del 2026-06-15: se cerraron #10, #12, #13, #14, #15 + truncado de chat, y se **arreglaron en producción** dos regresiones que arrastraban las reglas (SEC-19) y el CSP (SEC-20). Verificado en producción por el usuario: GA4 ✅, Asignaturas ✅, Chat educativo ✅, vídeos Cloudinary ✅. **Retomar por aquí.**
 
-**Verificación post-deploy (hacer primero, ya está todo desplegado):**
-- [ ] **Probar CSP en producción** (SEC-17): abrir la app con la consola del navegador y navegar por login, herramientas IA, chat, mapas mentales (mermaid), contenido y perfil. Si aparece `Refused to ... Content-Security-Policy`, pasar el origen bloqueado para añadirlo a `vercel.json`. Alternativa: cambiar a `Content-Security-Policy-Report-Only` para fase de observación.
+**Verificación post-deploy:**
+- [x] **CSP en producción** (SEC-17/20): navegado login, IA, chat, contenido, asignaturas. Se detectaron y arreglaron bloqueos de YouTube y Cloudinary (SEC-20). CSP estable.
 - [ ] **Probar flujo de pago Stripe** (SEC-14): checkout → verificar que tras pagar/cancelar aterriza en `www.smartstudia.com`, no en `*.vercel.app`.
 - [ ] **Auditar usuarios con `admin:true`** (SEC-12): comprobar en Firestore si alguien se auto-asignó admin antes del fix (la app estuvo expuesta). Script Admin SDK o consola Firebase.
 
