@@ -66,28 +66,46 @@ service cloud.firestore {
                       !('subscriptionId'     in request.resource.data) &&
                       !('subscriptionStatus' in request.resource.data) &&
                       !('trialEnd'           in request.resource.data);
+
+      // ── Subcolecciones del usuario (cada uno solo las suyas) ─────────────────
+      // OJO: las reglas de Firestore NO cascadean; hay que declararlas explícitas.
+      // El historial de IA y el chat educativo se guardan como subcolecciones de
+      // users/{uid}, no como colecciones de nivel raíz. La propiedad va por la
+      // ruta (userId), no por un campo userId del documento.
+      match /ai_history/{docId} {
+        allow read, write: if isLoggedIn() && isOwner(userId);
+      }
+
+      match /educational_chat/{docId} {
+        allow read, write: if isLoggedIn() && isOwner(userId);
+      }
     }
 
-    // ── Rate limits (solo Admin SDK escribe) ───────────────────────────────────
+    // ── Rate limits (solo Admin SDK escribe; cliente lo lee como indicador) ─────
     match /rate_limits/{userId} {
       allow read:  if isLoggedIn() && isOwner(userId);
       allow write: if false;
     }
 
-    // ── Historial IA ───────────────────────────────────────────────────────────
-    match /ai_history/{docId} {
-      allow read, write: if isLoggedIn() &&
-        request.auth.uid == resource.data.userId;
-      allow create: if isLoggedIn() &&
-        request.auth.uid == request.resource.data.userId;
+    // ── Contador de uso (UX en cliente) ─────────────────────────────────────────
+    // Indicador suave de uso que mantiene useRateLimit. NO es la fuente de verdad:
+    // el enforcement real está en el servidor (rate_limits + cuota en api/gemini.js),
+    // así que es seguro que el propio usuario lo lea y escriba.
+    match /user_usage/{userId} {
+      allow read, write: if isLoggedIn() && isOwner(userId);
     }
 
-    // ── Sesiones de chat educativo ─────────────────────────────────────────────
-    match /educational_chat/{docId} {
-      allow read, write: if isLoggedIn() &&
-        request.auth.uid == resource.data.userId;
-      allow create: if isLoggedIn() &&
-        request.auth.uid == request.resource.data.userId;
+    // ── Asignaturas (apuntes/recursos por asignatura) ───────────────────────────
+    // subjects/{subjectId} + subjects/{subjectId}/content/{contentId}
+    // Lectura: cualquier usuario autenticado. Escritura: solo admin (UploadForm).
+    match /subjects/{subjectId} {
+      allow read:  if isLoggedIn();
+      allow write: if isAdmin();
+
+      match /content/{contentId} {
+        allow read:  if isLoggedIn();
+        allow write: if isAdmin();
+      }
     }
 
     // ── Contenido educativo ────────────────────────────────────────────────────
