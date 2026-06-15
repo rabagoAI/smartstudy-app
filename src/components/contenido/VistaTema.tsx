@@ -6,6 +6,24 @@ import Paywall from '../Paywall';
 
 type Tab = 'resumen' | 'cuestionario' | 'tarjetas' | 'video';
 
+// Extrae el ID de vídeo de cualquier forma de URL de YouTube
+// (youtu.be/ID, watch?v=ID, /embed/ID, /shorts/ID, con o sin parámetros)
+// y devuelve la URL de inserción canónica. Devuelve null si no la reconoce.
+function getYoutubeEmbedUrl(url?: string): string | null {
+  if (!url) return null;
+  const patterns = [
+    /youtu\.be\/([\w-]{11})/,
+    /[?&]v=([\w-]{11})/,
+    /\/embed\/([\w-]{11})/,
+    /\/shorts\/([\w-]{11})/,
+  ];
+  for (const re of patterns) {
+    const m = url.match(re);
+    if (m) return `https://www.youtube.com/embed/${m[1]}`;
+  }
+  return null;
+}
+
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'resumen',      label: 'Resumen',      icon: '📝' },
   { id: 'cuestionario', label: 'Cuestionario', icon: '❓' },
@@ -287,8 +305,8 @@ function TabTarjetas({ tarjetas }: { tarjetas: any[] }) {
 function TabVideo({ videoUrl, guionVideo }: { videoUrl?: string; guionVideo: string }) {
   const [mostrarGuion, setMostrarGuion] = useState(false);
 
-  if (videoUrl) {
-    const embedUrl = videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'www.youtube.com/embed/');
+  const embedUrl = getYoutubeEmbedUrl(videoUrl);
+  if (embedUrl) {
     return (
       <div>
         <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
