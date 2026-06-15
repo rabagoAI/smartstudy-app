@@ -8,6 +8,7 @@ import useRateLimit from '../../hooks/useRateLimit';
 import RateLimitIndicator from '../common/RateLimitIndicator';
 import { db } from '../../firebase';
 import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, writeBatch } from 'firebase/firestore';
+import { buildChatHistory } from '../../lib/chatHistory';
 import './EducationalChat.css';
 
 const EducationalChat = () => {
@@ -122,17 +123,9 @@ const EducationalChat = () => {
         createdAt: serverTimestamp()
       });
 
-      // 2. Construir historial saneado
-      // Excluir mensajes vacíos o corruptos para evitar error 500
-      const validMessages = messages.filter(m => m.content && typeof m.content === 'string');
-
-      const chatHistory = validMessages.slice(-10).map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
-      }));
-
-      // Añadir el actual
-      chatHistory.push({ role: 'user', parts: [{ text: textToSend }] });
+      // 2. Construir historial saneado y recortado por presupuesto de chars.
+      // (El servidor rechaza con 413 si contents supera 30k chars — ver lib/chatHistory.)
+      const chatHistory = buildChatHistory(messages, textToSend);
 
       const systemMessage = `Eres un profesor de ESO experto. Responde en Markdown rico.`;
 

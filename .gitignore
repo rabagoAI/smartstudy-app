@@ -45,3 +45,9 @@ Thumbs.db
 # Firebase Admin SDK credentials (generar_tema.py)
 scripts/serviceAccountKey.json
 *.json.bak
+
+# Python (scripts/)
+__pycache__/
+*.py[cod]
+venv/
+.venv/

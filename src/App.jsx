@@ -1,7 +1,7 @@
 // src/App.jsx - CON MAPAS MENTALES AGREGADO
 
 import React, { useEffect, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
@@ -9,6 +9,8 @@ import PrivateRoute from './components/auth/PrivateRoute';
 import AdminRoute from './components/auth/AdminRoute';
 import Landing from './components/home/Landing'; // Landing estática para carga rápida
 import TourGuide from './components/common/TourGuide';
+import LoadingSpinner from './components/common/LoadingSpinner';
+import { trackPageView } from './analytics';
 
 // Lazy Loading de rutas para optimizar bundle inicial
 const HomePage = React.lazy(() => import('./components/home/HomePage'));
@@ -29,28 +31,20 @@ const VistaTema = React.lazy(() => import('./components/contenido/VistaTema'));
 const PublicarTemas = React.lazy(() => import('./components/admin/PublicarTemas'));
 import './App.css';
 
-// Loading component para Suspense
-function LoadingSpinner() {
-  return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      fontSize: '24px',
-    }}>
-      Cargando...
-    </div>
-  );
+// Dispara un page view en Google Analytics cada vez que cambia la ruta.
+// Debe vivir dentro del <Router> para poder usar useLocation().
+function RouteTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search]);
+
+  return null;
 }
 
 function AppContent() {
   const { loading, currentUser } = useAuth();
-
-  // Trackear page views cuando cambia la ruta
-  useEffect(() => {
-    console.log('📄 Página actual:', window.location.pathname);
-  }, []);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -58,6 +52,7 @@ function AppContent() {
 
   return (
     <Router>
+      <RouteTracker />
       <div className="App">
         {currentUser && <Header />}
 

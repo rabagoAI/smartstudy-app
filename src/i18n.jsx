@@ -64,6 +64,10 @@ const resources = {
         showAnswers: "Mostrar Respuestas",
         hideAnswers: "Ocultar Respuestas"
       },
+      // --- Comunes ---
+      common: {
+        loading: "Cargando..."
+      },
       // --- Footer ---
       footer: {
         title: "SmartStudIA",
@@ -130,6 +134,10 @@ const resources = {
         copy: "Copy",
         showAnswers: "Show Answers",
         hideAnswers: "Hide Answers"
+      },
+      // --- Common ---
+      common: {
+        loading: "Loading..."
       },
       // --- Footer ---
       footer: {

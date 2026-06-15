@@ -7,8 +7,12 @@ import i18n from './i18n';
 import App from './App.jsx'
 import './index.css'
 import * as Sentry from "@sentry/react";
+import { initGA } from './analytics';
 
 const queryClient = new QueryClient();
+
+// Inicializa Google Analytics una sola vez (no-op si falta el measurement ID)
+initGA();
 
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({

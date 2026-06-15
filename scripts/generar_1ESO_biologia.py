@@ -1,5 +1,11 @@
-﻿import subprocess
+﻿import os
+import subprocess
 import sys
+
+# Rutas ancladas al script (funcionan desde cualquier CWD).
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)  # raiz del repo, para resolver FIREBASE_CREDENTIALS_PATH=scripts/...
+GENERAR = os.path.join(SCRIPT_DIR, "generar_tema.py")
 
 DIR = r"C:\Users\Paco\Desktop\pdf\1ºESO\Ciencias Naturales"
 CURSO = "1ESO"
@@ -23,7 +29,7 @@ for numero, titulo, archivo in temas:
     pdf = f"{DIR}\\{archivo}"
     print(f"\n[{numero}/{total}] {titulo}...")
     cmd = [
-        sys.executable, "generar_tema.py",
+        sys.executable, GENERAR,
         "--pdf", pdf,
         "--pagina_inicio", "1",
         "--pagina_fin", "999",
@@ -32,7 +38,7 @@ for numero, titulo, archivo in temas:
         "--tema", titulo,
         "--numero_tema", str(numero),
     ]
-    result = subprocess.run(cmd)
+    result = subprocess.run(cmd, cwd=REPO_ROOT)
     if result.returncode != 0:
         print(f"ERROR en tema {numero}. Abortando.")
         sys.exit(1)

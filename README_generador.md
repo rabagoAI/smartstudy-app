@@ -53,8 +53,11 @@ Para obtener las credenciales de Firebase:
 
 ## Uso
 
+Los scripts viven en `scripts/`. Ejecútalos **desde la raíz del repo** para que
+`FIREBASE_CREDENTIALS_PATH=scripts/serviceAccountKey.json` resuelva correctamente:
+
 ```bash
-python generar_tema.py \
+python scripts/generar_tema.py \
   --pdf "pdfs/1ESO/matematicas/tema3.pdf" \
   --pagina_inicio 12 \
   --pagina_fin 28 \
@@ -63,6 +66,10 @@ python generar_tema.py \
   --tema "Números enteros" \
   --numero_tema 3
 ```
+
+Los wrappers por asignatura (`scripts/generar_1ESO_*.bat` y
+`scripts/generar_1ESO_biologia.py`) fijan ellos mismos el directorio de trabajo
+a la raíz del repo, así que funcionan tanto desde la raíz como con doble clic.
 
 ### Parámetros
 
