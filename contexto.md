@@ -545,7 +545,7 @@ Sesión del 2026-06-15: se cerraron #10, #12, #13, #14, #15 + truncado de chat, 
 **Verificación post-deploy:**
 - [x] **CSP en producción** (SEC-17/20): navegado login, IA, chat, contenido, asignaturas. Se detectaron y arreglaron bloqueos de YouTube y Cloudinary (SEC-20). CSP estable.
 - [ ] **Probar flujo de pago Stripe** (SEC-14): checkout → verificar que tras pagar/cancelar aterriza en `www.smartstudia.com`, no en `*.vercel.app`.
-- [ ] **Auditar usuarios con `admin:true`** (SEC-12): comprobar en Firestore si alguien se auto-asignó admin antes del fix (la app estuvo expuesta). Script Admin SDK o consola Firebase.
+- [x] **Auditar usuarios con `admin:true`** (SEC-12) — hecho 2026-06-16 con `scripts/auditar_admin.py`. **Sin explotación**: solo el admin legítimo (`pacoalfair@hotmail.com`), claim de Auth sincronizado, y ningún premium sin rastro de Stripe.
 
 **Mejoras pendientes de la lista (orden recomendado):**
 - [x] **#10 — Tracking de page views** (2026-06-15): `initGA()` se llama en `main.jsx` (antes no se invocaba en ningún sitio) y un componente `RouteTracker` dentro del `<Router>` dispara `trackPageView` en cada cambio de ruta vía `useLocation`.
