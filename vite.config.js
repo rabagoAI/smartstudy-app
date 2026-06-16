@@ -25,7 +25,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/setupTests.jsx',
     css: false,
-    // Evita recoger tests de copias de worktrees y dependencias.
-    exclude: ['node_modules', 'dist', '.claude/**'],
+    // Evita recoger tests de copias de worktrees, dependencias y los tests de
+    // reglas Firestore (esos corren con el emulador vía `npm run test:rules`).
+    exclude: ['node_modules', 'dist', '.claude/**', '**/*.rules.test.ts'],
   },
 })

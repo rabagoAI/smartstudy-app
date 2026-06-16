@@ -31,3 +31,29 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  rules:
+    name: Firestore rules
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Java (para el emulador de Firestore)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test Firestore rules (emulador)
+        run: npm run test:rules

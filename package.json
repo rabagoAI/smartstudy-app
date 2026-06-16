@@ -33,6 +33,7 @@
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -41,6 +42,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.27",
+    "firebase-tools": "^13.35.1",
     "jsdom": "^25.0.1",
     "postcss": "^8.5.9",
     "tailwindcss": "^3.4.19",
@@ -54,7 +56,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:rules": "firebase emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\""
   },
   "browserslist": {
     "production": [

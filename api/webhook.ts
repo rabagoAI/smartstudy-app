@@ -1,7 +1,8 @@
 import Stripe from 'stripe';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { handleStripeEvent } from './_lib/stripeWebhook';
 
 if (!getApps().length) {
   const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
@@ -48,87 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const db = getFirestore();
 
   try {
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const uid = session.metadata?.firebaseUid;
-        if (!uid) break;
-
-        const subscription = await stripe.subscriptions.retrieve(
-          session.subscription as string
-        );
-
-        await db.collection('users').doc(uid).set(
-          {
-            premium: true,
-            plan: 'basic',
-            stripeCustomerId: session.customer as string,
-            subscriptionId: subscription.id,
-            subscriptionStatus: subscription.status,
-            trialEnd: subscription.trial_end
-              ? new Date(subscription.trial_end * 1000)
-              : null,
-          },
-          { merge: true }
-        );
-        break;
-      }
-
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription;
-        const uid = subscription.metadata?.firebaseUid;
-        if (!uid) {
-          // Buscar por customerId si no hay metadata
-          const snap = await db
-            .collection('users')
-            .where('stripeCustomerId', '==', subscription.customer)
-            .limit(1)
-            .get();
-          if (!snap.empty) {
-            await snap.docs[0].ref.set(
-              {
-                subscriptionStatus: subscription.status,
-                trialEnd: subscription.trial_end
-                  ? new Date(subscription.trial_end * 1000)
-                  : null,
-              },
-              { merge: true }
-            );
-          }
-          break;
-        }
-        await db.collection('users').doc(uid).set(
-          {
-            subscriptionStatus: subscription.status,
-            trialEnd: subscription.trial_end
-              ? new Date(subscription.trial_end * 1000)
-              : null,
-          },
-          { merge: true }
-        );
-        break;
-      }
-
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription;
-        const snap = await db
-          .collection('users')
-          .where('stripeCustomerId', '==', subscription.customer)
-          .limit(1)
-          .get();
-        if (!snap.empty) {
-          await snap.docs[0].ref.set(
-            { premium: false, subscriptionStatus: 'canceled', plan: 'free' },
-            { merge: true }
-          );
-        }
-        break;
-      }
-
-      default:
-        // Ignorar eventos no manejados
-        break;
-    }
+    await handleStripeEvent(event, db, stripe);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('Webhook handler error:', message);
