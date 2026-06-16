@@ -17,22 +17,54 @@ const formatSubjectName = (name) => {
     .replace(/ /g, "-");
 };
 
-// Función para evitar autoplay en videos
-const getSafeVideoUrl = (url) => {
-  if (!url) return "";
-  try {
-    const urlObj = new URL(url);
-    // Eliminar autoplay si existe
-    if (urlObj.searchParams.has("autoplay")) {
-      urlObj.searchParams.set("autoplay", "0");
-    }
-    // Si es YouTube, asegurar mute y autoplay off si fuera necesario, 
-    // pero principal objetivo es quitar autoplay=1
-    return urlObj.toString();
-  } catch (e) {
-    // Si no es una URL válida, devolver tal cual pero intentando string replacement básico
-    return url.replace("autoplay=1", "autoplay=0");
+// Extrae el ID de un vídeo de YouTube de cualquier forma de URL y devuelve la
+// URL de inserción canónica, o null si no es de YouTube.
+const getYoutubeEmbedUrl = (url) => {
+  if (!url) return null;
+  const patterns = [
+    /youtu\.be\/([\w-]{11})/,
+    /[?&]v=([\w-]{11})/,
+    /\/embed\/([\w-]{11})/,
+    /\/shorts\/([\w-]{11})/,
+  ];
+  for (const re of patterns) {
+    const m = url.match(re);
+    if (m) return `https://www.youtube.com/embed/${m[1]}`;
   }
+  return null;
+};
+
+// Reproductor de vídeo: usa <iframe> para YouTube y <video> nativo para archivos
+// directos (Cloudinary). El <video> da controles nativos y no depende de frame-src.
+const VideoPlayer = ({ url, title }) => {
+  const embed = getYoutubeEmbedUrl(url);
+  if (embed) {
+    return (
+      <iframe
+        width="100%"
+        height="315"
+        src={embed}
+        title={title}
+        frameBorder="0"
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    );
+  }
+  return (
+    <video
+      controls
+      preload="metadata"
+      style={{ width: "100%", borderRadius: "8px", background: "#000" }}
+    >
+      <source src={url} />
+      Tu navegador no soporta el vídeo.{" "}
+      <a href={url} target="_blank" rel="noopener noreferrer">
+        Ábrelo aquí
+      </a>
+      .
+    </video>
+  );
 };
 
 const SubjectDetailsPage = () => {
@@ -166,29 +198,13 @@ const SubjectDetailsPage = () => {
                   <p>{video.description}</p>
                   {video.isPremium ? (
                     isPremiumUser ? (
-                      <iframe
-                        width="100%"
-                        height="315"
-                        src={getSafeVideoUrl(video.url)}
-                        title={video.title}
-                        frameBorder="0"
-                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      ></iframe>
+                      <VideoPlayer url={video.url} title={video.title} />
                     ) : (
                       <Paywall reason="premium_content" />
                     )
                   ) : (
                     <div className="video-container">
-                      <iframe
-                        width="100%"
-                        height="315"
-                        src={getSafeVideoUrl(video.url)}
-                        title={video.title}
-                        frameBorder="0"
-                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      ></iframe>
+                      <VideoPlayer url={video.url} title={video.title} />
                     </div>
                   )}
                 </div>
