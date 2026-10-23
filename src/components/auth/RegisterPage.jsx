@@ -9,12 +9,19 @@ const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const navigate = useNavigate();
   const { signup } = useAuth();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
+
+    // RGPD: el registro exige aceptar expresamente la Política de Privacidad
+    if (!acceptedPrivacy) {
+      setError('Debes aceptar la Política de Privacidad para crear tu cuenta.');
+      return;
+    }
 
     try {
       await signup(email, password, '');
@@ -61,8 +68,30 @@ const RegisterPage = () => {
               required
             />
           </div>
-          
-          <button type="submit" className="btn-primary">Registrarse</button> 
+
+          {/* Primera capa informativa (art. 13 RGPD) */}
+          <p className="privacy-first-layer">
+            <strong>Responsable:</strong> SmartStudia. <strong>Finalidad:</strong> crear y gestionar tu cuenta
+            y prestarte el servicio. <strong>Derechos:</strong> acceso, rectificación, supresión y otros, como
+            se explica en la{' '}
+            <Link to="/politica-de-privacidad" target="_blank" rel="noopener noreferrer">Política de Privacidad</Link>.
+          </p>
+          <label className="privacy-checkbox">
+            <input
+              type="checkbox"
+              checked={acceptedPrivacy}
+              onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+              required
+            />
+            <span>
+              He leído y acepto la{' '}
+              <Link to="/politica-de-privacidad" target="_blank" rel="noopener noreferrer">Política de Privacidad</Link>
+              {' '}y el{' '}
+              <Link to="/aviso-legal" target="_blank" rel="noopener noreferrer">Aviso Legal</Link>.
+            </span>
+          </label>
+
+          <button type="submit" className="btn-primary">Registrarse</button>
         </form>
         <p className="auth-footer">
           ¿Ya tienes una cuenta? <Link to="/iniciar-sesion">Iniciar Sesión</Link>

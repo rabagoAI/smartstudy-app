@@ -9,6 +9,7 @@ import PrivateRoute from './components/auth/PrivateRoute';
 import AdminRoute from './components/auth/AdminRoute';
 import Landing from './components/home/Landing'; // Landing estática para carga rápida
 import TourGuide from './components/common/TourGuide';
+import CookieBanner from './components/common/CookieBanner';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import { trackPageView } from './analytics';
 
@@ -29,6 +30,9 @@ const AsignaturasHome = React.lazy(() => import('./components/contenido/Asignatu
 const ListaTemas = React.lazy(() => import('./components/contenido/ListaTemas'));
 const VistaTema = React.lazy(() => import('./components/contenido/VistaTema'));
 const PublicarTemas = React.lazy(() => import('./components/admin/PublicarTemas'));
+const AvisoLegal = React.lazy(() => import('./components/legal/AvisoLegal'));
+const PoliticaPrivacidad = React.lazy(() => import('./components/legal/PoliticaPrivacidad'));
+const PoliticaCookies = React.lazy(() => import('./components/legal/PoliticaCookies'));
 import './App.css';
 
 // Dispara un page view en Google Analytics cada vez que cambia la ruta.
@@ -67,6 +71,11 @@ function AppContent() {
               <Route path="/registrarse" element={<RegisterPage />} />
               <Route path="/restablecer-contrasena" element={<ResetPassword />} />
 
+              {/* Textos legales - públicos (LSSI-CE / RGPD) */}
+              <Route path="/aviso-legal" element={<AvisoLegal />} />
+              <Route path="/politica-de-privacidad" element={<PoliticaPrivacidad />} />
+              <Route path="/politica-de-cookies" element={<PoliticaCookies />} />
+
               {/* Rutas privadas - solo usuarios logueados */}
               <Route element={<PrivateRoute />}>
                 <Route path="/home" element={<HomePage />} />
@@ -94,6 +103,7 @@ function AppContent() {
 
         {currentUser && <Footer />}
         <TourGuide />
+        <CookieBanner />
       </div>
     </Router>
   );

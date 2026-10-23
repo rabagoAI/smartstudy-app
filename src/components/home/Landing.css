@@ -1523,3 +1523,56 @@
     line-height: 1.6;
   }
 }
+/* Enlaces legales del footer (LSSI-CE / RGPD) */
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.5rem;
+  margin-top: 1.25rem;
+  font-size: 0.875rem;
+}
+
+.footer-legal a {
+  color: #cbd5e1;
+  text-decoration: none;
+}
+
+.footer-legal a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* Primera capa informativa + checkbox de consentimiento en el registro */
+.modal-content .privacy-first-layer {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #6b7280;
+}
+
+.modal-content .privacy-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+}
+
+.modal-content .privacy-checkbox input {
+  flex-shrink: 0;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.1rem;
+  cursor: pointer;
+}
+
+.modal-content .privacy-first-layer a,
+.modal-content .privacy-checkbox a {
+  color: #4f5fe0;
+  font-weight: 600;
+  text-decoration: underline;
+}

@@ -11,7 +11,7 @@ import { initGA } from './analytics';
 
 const queryClient = new QueryClient();
 
-// Inicializa Google Analytics una sola vez (no-op si falta el measurement ID)
+// Inicializa Google Analytics una sola vez (no-op sin consentimiento de cookies o sin measurement ID)
 initGA();
 
 if (import.meta.env.VITE_SENTRY_DSN) {

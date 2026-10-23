@@ -118,3 +118,36 @@
   background-color: white;
   cursor: pointer;
 }
+/* Primera capa informativa + checkbox de consentimiento en el registro (RGPD) */
+.auth-form-card .privacy-first-layer {
+  margin: 0 0 12px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #6b7280;
+}
+
+.auth-form-card .privacy-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  cursor: pointer;
+  text-align: left;
+}
+
+.auth-form-card .privacy-checkbox input {
+  flex-shrink: 0;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.15rem;
+  cursor: pointer;
+}
+
+.auth-form-card .privacy-first-layer a,
+.auth-form-card .privacy-checkbox a {
+  color: #4f5fe0;
+  font-weight: 600;
+  text-decoration: underline;
+}

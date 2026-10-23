@@ -1,7 +1,7 @@
 // src/components/home/Landing.jsx - CON SEO + HELMET + FAQ
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { BookOpen, Brain, MessageSquare, BarChart3, Play, Zap, ArrowRight, Check, X, ChevronDown, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -18,6 +18,7 @@ export default function Landing() {
   const [isLogin, setIsLogin] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
 
   useEffect(() => {
@@ -34,6 +35,13 @@ export default function Landing() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // RGPD: el registro exige aceptar expresamente la Política de Privacidad
+    if (!isLogin && !acceptedPrivacy) {
+      setError('Debes aceptar la Política de Privacidad para crear tu cuenta.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -65,6 +73,7 @@ export default function Landing() {
     setShowForm(true);
     setIsLogin(isLoginMode);
     setFormData({ email: '', password: '', name: '' });
+    setAcceptedPrivacy(false);
     setError('');
   };
 
@@ -431,6 +440,11 @@ export default function Landing() {
           <div className="landing-container">
             <p className="footer-text">© 2025 SmartStudia. Todos los derechos reservados.</p>
             <p className="footer-tagline">Estudia inteligente, no duro.</p>
+            <nav className="footer-legal" aria-label="Textos legales">
+              <Link to="/aviso-legal">Aviso Legal</Link>
+              <Link to="/politica-de-privacidad">Política de Privacidad</Link>
+              <Link to="/politica-de-cookies">Política de Cookies</Link>
+            </nav>
           </div>
         </footer>
 
@@ -477,6 +491,32 @@ export default function Landing() {
                   minLength="6"
                 />
 
+                {!isLogin && (
+                  <>
+                    {/* Primera capa informativa (art. 13 RGPD) */}
+                    <p className="privacy-first-layer">
+                      <strong>Responsable:</strong> SmartStudia. <strong>Finalidad:</strong> crear y gestionar tu cuenta
+                      y prestarte el servicio. <strong>Derechos:</strong> acceso, rectificación, supresión y otros, como
+                      se explica en la{' '}
+                      <Link to="/politica-de-privacidad" target="_blank" rel="noopener noreferrer">Política de Privacidad</Link>.
+                    </p>
+                    <label className="privacy-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={acceptedPrivacy}
+                        onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                        required
+                      />
+                      <span>
+                        He leído y acepto la{' '}
+                        <Link to="/politica-de-privacidad" target="_blank" rel="noopener noreferrer">Política de Privacidad</Link>
+                        {' '}y el{' '}
+                        <Link to="/aviso-legal" target="_blank" rel="noopener noreferrer">Aviso Legal</Link>.
+                      </span>
+                    </label>
+                  </>
+                )}
+
                 {error && (
                   <div className="error-message">
                     <p>{error}</p>
@@ -496,6 +536,7 @@ export default function Landing() {
                       setIsLogin(!isLogin);
                       setError('');
                       setFormData({ email: '', password: '', name: '' });
+                      setAcceptedPrivacy(false);
                     }}
                     className="toggle-btn"
                     type="button"
@@ -505,9 +546,6 @@ export default function Landing() {
                 </p>
               </div>
 
-              <p className="modal-terms">
-                Al registrarte, aceptas nuestros términos de servicio
-              </p>
             </div>
           </div>
         )}
