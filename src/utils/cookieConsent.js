@@ -5,20 +5,44 @@
 
 const STORAGE_KEY = 'cookie_consent_v1';
 
-// Devuelve 'accepted' | 'rejected' | null (null = el usuario no ha decidido aún)
+// La AEPD recomienda renovar el consentimiento como máximo cada 24 meses.
+// Pasado ese plazo la decisión caduca y el banner vuelve a mostrarse.
+const CONSENT_MAX_AGE_MS = 24 * 30 * 24 * 60 * 60 * 1000; // ~24 meses
+
+const isValidValue = (value) => value === 'accepted' || value === 'rejected';
+
+const saveConsent = (value, date) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ value, date }));
+};
+
+// Devuelve 'accepted' | 'rejected' | null
+// (null = el usuario no ha decidido aún o su decisión ha caducado)
 export const getCookieConsent = () => {
   try {
-    const value = localStorage.getItem(STORAGE_KEY);
-    return value === 'accepted' || value === 'rejected' ? value : null;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+
+    // Formato antiguo: solo 'accepted'/'rejected', sin fecha. Lo migramos
+    // fechándolo hoy para no volver a preguntar a quien ya decidió.
+    if (isValidValue(raw)) {
+      saveConsent(raw, new Date().toISOString());
+      return raw;
+    }
+
+    const { value, date } = JSON.parse(raw);
+    const savedAt = Date.parse(date);
+    if (!isValidValue(value) || Number.isNaN(savedAt)) return null;
+    if (Date.now() - savedAt > CONSENT_MAX_AGE_MS) return null; // caducado
+    return value;
   } catch {
-    // localStorage no disponible (p. ej. modo privado)
+    // localStorage no disponible (p. ej. modo privado) o dato corrupto
     return null;
   }
 };
 
 export const setCookieConsent = (value) => {
   try {
-    localStorage.setItem(STORAGE_KEY, value);
+    saveConsent(value, new Date().toISOString());
   } catch {
     // Si no se puede persistir, la decisión solo vale para esta sesión.
   }

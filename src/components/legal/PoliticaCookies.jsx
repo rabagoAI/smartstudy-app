@@ -27,7 +27,7 @@ export default function PoliticaCookies() {
           </thead>
           <tbody>
             <tr><td>firebase:authUser:* (almacenamiento local)</td><td>Google Firebase</td><td>Mantener la sesión iniciada</td><td>Hasta cerrar sesión</td></tr>
-            <tr><td>cookie_consent_v1 (almacenamiento local)</td><td>SmartStudia</td><td>Recordar tu decisión sobre cookies</td><td>Hasta que la cambies o borres los datos del navegador</td></tr>
+            <tr><td>cookie_consent_v1 (almacenamiento local)</td><td>SmartStudia</td><td>Recordar tu decisión sobre cookies</td><td>24 meses; después te volveremos a preguntar</td></tr>
             <tr><td>__stripe_mid, __stripe_sid</td><td>Stripe</td><td>Prevención del fraude en los pagos</td><td>1 año / 30 minutos</td></tr>
           </tbody>
         </table>
