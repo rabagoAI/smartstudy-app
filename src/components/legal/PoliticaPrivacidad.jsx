@@ -1,21 +1,20 @@
 // src/components/legal/PoliticaPrivacidad.jsx
-// Política de Privacidad (arts. 13 y 14 RGPD + LOPDGDD). PLANTILLA: completar
-// los huecos marcados con <Todo> y hacer revisar por un profesional.
+// Política de Privacidad (arts. 13 y 14 RGPD + LOPDGDD). Conviene que la
+// revise un profesional. Actualizar la tabla si se añade un proveedor nuevo.
 
 import React from 'react';
 import LegalLayout from './LegalLayout';
 
-const Todo = ({ children }) => <span className="legal-todo">[COMPLETAR: {children}]</span>;
 
 export default function PoliticaPrivacidad() {
   return (
     <LegalLayout title="Política de Privacidad" updatedAt="23 de octubre de 2026">
       <h2>1. Responsable del tratamiento</h2>
       <ul>
-        <li><strong>Responsable:</strong> <Todo>nombre y apellidos o razón social</Todo></li>
-        <li><strong>NIF:</strong> <Todo>NIF</Todo></li>
-        <li><strong>Domicilio:</strong> <Todo>dirección postal</Todo></li>
-        <li><strong>Email para temas de privacidad:</strong> <Todo>email de contacto</Todo></li>
+        <li><strong>Responsable:</strong> Francisco García Rabago</li>
+        <li><strong>NIF:</strong> 50982280-C</li>
+        <li><strong>Domicilio:</strong> Calle Arena Alta, 45, 45291 Cobeja (Toledo)</li>
+        <li><strong>Email para temas de privacidad:</strong> pacoalfair@hotmail.com</li>
       </ul>
 
       <h2>2. Qué datos tratamos</h2>
@@ -81,7 +80,7 @@ export default function PoliticaPrivacidad() {
             <tr><th>Proveedor</th><th>Servicio</th><th>Ubicación / garantías</th></tr>
           </thead>
           <tbody>
-            <tr><td>Google (Firebase)</td><td>Autenticación y base de datos</td><td><Todo>región de Firestore</Todo>; Data Privacy Framework UE-EE. UU. y cláusulas contractuales tipo</td></tr>
+            <tr><td>Google (Firebase)</td><td>Autenticación y base de datos</td><td>Unión Europea (Madrid, europe-southwest1); para soporte o servicios auxiliares desde EE. UU., Data Privacy Framework y cláusulas contractuales tipo</td></tr>
             <tr><td>Google (Gemini API)</td><td>Generación de respuestas de IA</td><td>EE. UU.; Data Privacy Framework y cláusulas contractuales tipo</td></tr>
             <tr><td>Stripe</td><td>Pagos y suscripciones</td><td>Irlanda / EE. UU.; Data Privacy Framework</td></tr>
             <tr><td>Cloudinary</td><td>Alojamiento de imágenes y vídeos</td><td>EE. UU.; Data Privacy Framework / cláusulas contractuales tipo</td></tr>
@@ -93,8 +92,8 @@ export default function PoliticaPrivacidad() {
       </div>
       <p>
         El contenido que envías a las herramientas de IA se transmite a la API de Google Gemini
-        para generar la respuesta y <strong>no se utiliza para entrenar modelos públicos</strong>.{' '}
-        <Todo>verificar que usas la API de pago de Gemini; en el nivel gratuito Google puede usar los datos para mejorar sus productos</Todo>
+        únicamente para generar la respuesta, y Google lo trata conforme a las condiciones de
+        uso de la API de Gemini. Por eso te pedimos que no incluyas datos personales en él.
       </p>
 
       <h2>6. Tus derechos</h2>
@@ -108,7 +107,7 @@ export default function PoliticaPrivacidad() {
         <li><strong>Retirar tu consentimiento</strong> (por ejemplo, el de cookies analíticas) sin que afecte a la licitud del tratamiento previo.</li>
       </ul>
       <p>
-        Para ejercerlos, escribe a <Todo>email de contacto</Todo> indicando el derecho que
+        Para ejercerlos, escribe a pacoalfair@hotmail.com indicando el derecho que
         quieres ejercer. Responderemos en el plazo máximo de un mes. Si consideras que no hemos
         atendido correctamente tu solicitud, puedes reclamar ante la Agencia Española de
         Protección de Datos (<a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer">www.aepd.es</a>).

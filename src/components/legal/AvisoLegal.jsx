@@ -1,11 +1,10 @@
 // src/components/legal/AvisoLegal.jsx
-// Aviso Legal (art. 10 LSSI-CE). PLANTILLA: completar los huecos marcados
-// con <Todo> y hacer revisar por un profesional antes de publicar.
+// Aviso Legal (art. 10 LSSI-CE). Conviene que lo revise un profesional
+// (ver el comentario PENDIENTE sobre menores).
 
 import React from 'react';
 import LegalLayout from './LegalLayout';
 
-const Todo = ({ children }) => <span className="legal-todo">[COMPLETAR: {children}]</span>;
 
 export default function AvisoLegal() {
   return (
@@ -17,14 +16,10 @@ export default function AvisoLegal() {
         este sitio web:
       </p>
       <ul>
-        <li><strong>Titular:</strong> <Todo>nombre y apellidos o razón social</Todo></li>
-        <li><strong>NIF/DNI:</strong> <Todo>NIF</Todo></li>
-        <li><strong>Domicilio:</strong> <Todo>dirección postal completa</Todo></li>
-        <li><strong>Email de contacto:</strong> <Todo>email de contacto</Todo></li>
-        <li>
-          <strong>Datos registrales (solo sociedades):</strong>{' '}
-          <Todo>Registro Mercantil, tomo, folio, hoja — o eliminar esta línea si eres autónomo</Todo>
-        </li>
+        <li><strong>Titular:</strong> Francisco García Rabago</li>
+        <li><strong>NIF/DNI:</strong> 50982280-C</li>
+        <li><strong>Domicilio:</strong> Calle Arena Alta, 45, 45291 Cobeja (Toledo)</li>
+        <li><strong>Email de contacto:</strong> pacoalfair@hotmail.com</li>
         <li><strong>Sitio web:</strong> https://www.smartstudia.com</li>
       </ul>
 
@@ -77,7 +72,8 @@ export default function AvisoLegal() {
       <p>
         Para registrarse, el usuario debe tener al menos 14 años (art. 7 LOPDGDD). Los menores
         de 14 años solo podrán usar la plataforma con el consentimiento de sus padres o tutores
-        legales. <Todo>revisar con un profesional el tratamiento de menores y la contratación de Premium por menores</Todo>
+        legales.
+        {/* PENDIENTE: revisar con un profesional el tratamiento de menores y la contratación de Premium por menores */}
       </p>
 
       <h2>8. Legislación aplicable y jurisdicción</h2>
